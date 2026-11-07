@@ -1,5 +1,5 @@
 // 旅冊 service worker: app shell offline + font cache. Bump VERSION when icons or the manifest change (pages are network-first).
-const VERSION = 'tabisatsu-v15';
+const VERSION = 'tabisatsu-v16';
 const FONTS = 'tabisatsu-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-64.png',
   './assets/travel-book/style-tokens.css',
