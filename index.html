@@ -201,7 +201,12 @@ html.dark .empty.ill img{opacity:.88}
 .tdstat{margin:8px 2px 10px;font-size:15px;line-height:1.6}.tdstat b{color:var(--ui-acc)}
 .tdcard{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .tdcard h3{margin:0 0 8px;font-size:15px}
-.tdl{list-style:none;margin:0;padding:0}.tdl li{display:grid;grid-template-columns:3.6em 1fr;gap:8px;padding:9px 0;border-top:1px dashed var(--ui-line)}
+.tdl{list-style:none;margin:0;padding:0}.tdl li{display:grid;grid-template-columns:34px 3.4em 1fr;gap:8px;align-items:start;padding:9px 0;border-top:1px dashed var(--ui-line)}
+.tdone{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ui-line);background:var(--ui-panel);color:transparent;font-weight:900;padding:0;margin-top:-4px}.tdone:hover{border-color:var(--ui-acc)}.tdone.on{background:var(--ui-acc);border-color:var(--ui-acc);color:#fff}
+.tdl li.done .tn,.tdl li.done .tt{text-decoration:line-through;color:var(--ui-mute)}.tdl li.done{opacity:.6}.tdl li.pbi .tt{color:#8a5a14}
+.tdnext{border:2px solid var(--ui-acc)}.tdnh small{display:block;color:var(--ui-acc);font-weight:700;font-size:12px;letter-spacing:.1em}.tdnh b{font-size:19px;line-height:1.4}
+.tdinfo{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 10px;font-size:14px}.tdinfo dt{color:var(--ui-mute);white-space:nowrap}.tdinfo dd{margin:0}.tdnext .tacts{display:flex;flex-wrap:wrap;gap:8px}.tdnext .btn{min-height:44px;text-decoration:none;display:inline-flex;align-items:center}
+.tdplanb button{margin-top:6px}.tdplanb.on{background:#fdf6e3}
 .tdl li:first-child{border-top:0}.tdl li.past{opacity:.45}.tdl li.next{background:#fdf6e3;margin:0 -8px;padding:9px 8px;border-radius:8px}
 .tt{font-weight:700;color:var(--ui-acc);font-variant-numeric:tabular-nums}.tn{font-weight:700;font-size:15px}.ts{font-size:12px;color:var(--ui-mute);line-height:1.6}
 .tacts{display:flex;gap:6px;margin-top:6px}.tacts a{text-decoration:none;color:inherit}
@@ -334,6 +339,8 @@ html.dark .thumb{background-color:#333}
 .place .pill{position:absolute;left:0;right:0;top:0;height:230px;background:var(--tint)}
 .tpl-journal .place .pill{left:32px;right:32px;top:32px;height:200px;border:6px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .place.has-ill .body{top:252px}
+.plist{display:flex;flex-direction:column}.pl1{display:flex;gap:12px;align-items:flex-start;padding:.7em 0;border-bottom:1px dashed var(--line)}.pl1t{flex:1;min-width:0}.pl1t b{font-size:1.1em}.pl1t small{color:var(--mute);margin-left:.6em}.pl1v{display:inline-block;margin-left:.6em;font-size:.8em;color:var(--c);font-weight:700}.pl1i,.pl1a{font-size:.85em;color:var(--mute);margin-top:.2em}.pl1q{width:64px;flex:0 0 64px}.pl1q svg{width:100%;height:auto;display:block}
+.tl .pinfo1{color:var(--c)}
 .route svg{width:100%;height:auto;display:block;margin-bottom:.6em}
 .pg .body.col{display:flex;flex-direction:column}
 .pg .body.col>*{flex-shrink:0}
@@ -513,7 +520,8 @@ html.dark .thumb{background-color:#333}
     <button data-m="a4">印成對折小冊（A4）<small>一張 A4 印兩頁，對折就是一本，適合 7-11 ibon。會下載一個檔案，打開後按「列印」</small></button>
     <button data-m="print">印成單頁小冊（A5）<small>一頁一張，直接列印或存成 PDF</small></button>
     <div class="mg">傳給旅伴</div>
-    <button data-m="html">手機閱讀版<small>下載一個檔案傳 LINE，沒網路也能翻，也能從裡面列印</small></button>
+    <button data-m="digi">手機閱讀版<small>為手機設計：點了就開地圖、可展開景點介紹、自動跳到今天、清單能打勾。沒網路也能看</small></button>
+    <button data-m="html">小冊原樣檔<small>和印出來的 A5 頁面一樣，可以在手機上翻、或從裡面列印</small></button>
     <button data-m="png">每頁存成圖片<small>傳 LINE、發限動用</small></button>
     <button data-m="ics">加入手機行事曆<small>iPhone、Google 日曆都能匯入（.ics）</small></button>
     <div class="mg">送給別人</div>
@@ -583,6 +591,12 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nl=s=>esc(s).replace(/\n/g,'<br>');
 const paras=s=>String(s||'').split(/\n\s*\n/).filter(x=>x.trim()).map(p=>'<p>'+nl(p.trim())+'</p>').join('');
+/* long text → pieces that can flow onto continuation pages: paragraphs, and very long paragraphs cut at sentence ends */
+function textChunks(s){const out=[];for(const p of String(s||'').split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean)){
+  if(p.length<=180){out.push(p);continue}let cur='';for(const sen of p.split(/(?<=[。！？!?；;])/)){if(cur&&cur.length+sen.length>140){out.push(cur);cur=''}cur+=sen}if(cur)out.push(cur)}return out}
+const txKey=pg=>pg.k==='place'?'p:'+pg.p.id:pg.k==='stay'?'s:'+pg.s.id:pg.k==='custom'&&pg.c.kind==='text'?'c:'+pg.c.id:'';
+function txText(t,key){const[k,id]=[key.slice(0,1),key.slice(2)];return k==='p'?t.places.find(x=>x.id===id)?.desc:k==='s'?t.stays.find(x=>x.id===id)?.desc:t.custom.find(x=>x.id===id)?.body}
+const txBody=(pg,text)=>pg.tx?textChunks(text).slice(pg.tx.from,pg.tx.to).map(p=>'<p>'+nl(p)+'</p>').join(''):paras(text);
 const getPath=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
 function setPath(o,p,v){const ks=p.split('.');const last=ks.pop();const t=ks.reduce((a,k)=>a[k],o);t[last]=v}
 const PW=559,PH=794;
@@ -601,14 +615,33 @@ const inFrame=()=>{try{return window.self!==window.top}catch(e){return true}};
 const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'旅冊').slice(0,40);
 
 /* ---------- templates & colors ---------- */
+/* ---------- booklet templates ----------
+   One entry per template. CSS for a template lives under `.bk.tpl-<id>` in #bkcss.
+   paper: page colour (used to tint soft backgrounds) · softMix: how strongly --soft is tinted
+   cover: which cover picker the editor shows · hooks (all optional):
+     load(t,retry) → Promise   fetch template assets (called before render/export)
+     prepare(t) / finish()     wrap one render pass
+     decorate(html,t) → html   post-process each page
+     bkStyle(t) → css text     extra custom properties on the .bk container
+     onSelect(t)               when the user switches to this template */
+const COVER_STYLES={key:'opts.coverStyle',label:'封面樣式',options:[['top','照片在上'],['full','滿版照片'],['frame','拱門框'],['note','手帳（紙膠帶＋印章）']]};
 const TEMPLATES=[
-  {id:'clean',name:'簡約白',desc:'乾淨俐落，適合列印',tier:'free',prev:'background:#fffdf9;border-left:5px solid var(--sw)'},
-  {id:'journal',name:'手帳風',desc:'米色紙感、襯線標題',tier:'free',prev:'background:#f5eee1;box-shadow:inset 0 0 0 4px #f5eee1,inset 0 0 0 5px #d8c9ae'},
-  {id:'wafu',name:'和風',desc:'雙線框、藍染色調',tier:'free',prev:'background:#f7f4ec;box-shadow:inset 0 0 0 5px #f7f4ec,inset 0 0 0 6px var(--sw),inset 0 0 0 8px #f7f4ec,inset 0 0 0 9px var(--sw)'},
-  {id:'minimal',name:'極簡',desc:'黑白細線、留白多',tier:'free',prev:'background:#fff;border-top:2px solid #111'},
-  {id:'matcha',name:'抹茶手帳',desc:'水彩插圖、季節裝飾',tier:'free',prev:'background:#fbf7ef url(assets/booklet/cat-temple.webp) right 6px center/auto 70% no-repeat;box-shadow:inset 0 0 0 4px #fbf7ef,inset 0 0 0 5px #d8d4cb;border-radius:6px'},
+  {id:'clean',name:'簡約白',desc:'乾淨俐落，適合列印',tier:'free',paper:'#ffffff',softMix:.1,cover:COVER_STYLES,prev:'background:#fffdf9;border-left:5px solid var(--sw)'},
+  {id:'journal',name:'手帳風',desc:'米色紙感、襯線標題',tier:'free',paper:'#f5eee1',softMix:.13,cover:COVER_STYLES,prev:'background:#f5eee1;box-shadow:inset 0 0 0 4px #f5eee1,inset 0 0 0 5px #d8c9ae'},
+  {id:'wafu',name:'和風',desc:'雙線框、藍染色調',tier:'free',paper:'#f7f4ec',softMix:.13,cover:COVER_STYLES,prev:'background:#f7f4ec;box-shadow:inset 0 0 0 5px #f7f4ec,inset 0 0 0 6px var(--sw),inset 0 0 0 8px #f7f4ec,inset 0 0 0 9px var(--sw)'},
+  {id:'minimal',name:'極簡',desc:'黑白細線、留白多',tier:'free',paper:'#ffffff',softMix:.1,cover:COVER_STYLES,prev:'background:#fff;border-top:2px solid #111'},
+  {id:'matcha',name:'抹茶手帳',desc:'水彩插圖、季節裝飾',tier:'free',paper:'#fbf7ef',softMix:.13,
+   cover:{key:'opts.mcover',label:'封面底圖',options:[['a','A．角落綠葉'],['b','B．遠山小樹'],['c','C．藍天草地']]},
+   prev:'background:#fbf7ef url(assets/booklet/cat-temple.webp) right 6px center/auto 70% no-repeat;box-shadow:inset 0 0 0 4px #fbf7ef,inset 0 0 0 5px #d8d4cb;border-radius:6px',
+   load:(t,retry)=>loadMatcha(t,retry),missing:t=>mtMissing(t),
+   prepare:t=>{if(mtMissing(t).some(n=>!MATCHA.failed.has(n)&&!MATCHA.busy[n]))loadMatcha(t);MTON=MATCHA.state==='ok';MTSEASON=seasonOf(t)},
+   finish:()=>{MTON=false},
+   decorate:(h,t)=>MTON?mtDecorate(h,t):h,
+   bkStyle:t=>MATCHA.img['paper-tile']?`;--mt-paper:url(${MATCHA.img['paper-tile']})`:'',
+   onSelect:t=>{if(t.theme.color==='#2f5d50')t.theme.color='#5f7c6c'}},
 ];
-const PAPER={clean:'#ffffff',journal:'#f5eee1',wafu:'#f7f4ec',minimal:'#ffffff',matcha:'#fbf7ef'};
+const TPL=Object.fromEntries(TEMPLATES.map(x=>[x.id,x]));
+const tplOf=t=>TPL[t&&t.theme&&t.theme.template]||TEMPLATES[0];
 const COLORS=['#5f7c6c','#2f5d50','#b5452c','#c0872b','#3d5a80','#7b4b94','#c8607e','#4a4a4a','#5b7f3a'];
 
 /* ---------- storage ---------- */
@@ -690,9 +723,17 @@ function parseStayText(raw,base){
 
 const okColor=v=>/^#[0-9a-f]{6}$/i.test(v||'')?v:COLORS[0];
 const str=v=>typeof v==='string'?v:(v==null?'':String(v));
+/* ---------- data schema ----------
+   Every stored trip carries `schema`. When the data model changes, bump SCHEMA and add a step to MIGRATE
+   (keyed by the version it upgrades FROM). Steps run in order on load/import, before normalize fills defaults. */
+const SCHEMA=2;
+const MIGRATE={
+  1:t=>{/* v1→v2: adds days[].done, days[].planBOn, opts.detail — all have safe defaults in normalize */},
+};
+function migrate(t){let v=+t.schema||1;while(v<SCHEMA){(MIGRATE[v]||(()=>{}))(t);v++}return t}
 function normalize(t){
-  t=t&&typeof t==='object'?t:{};
-  const o={id:str(t.id)||uid(),title:str(t.title),subtitle:str(t.subtitle),start:str(t.start),end:str(t.end),travelers:str(t.travelers),
+  t=t&&typeof t==='object'?t:{};if((+t.schema||1)<SCHEMA)migrate(t);
+  const o={schema:SCHEMA,id:str(t.id)||uid(),title:str(t.title),subtitle:str(t.subtitle),start:str(t.start),end:str(t.end),travelers:str(t.travelers),
     cover:okImg(t.cover),coverPos:okPos(t.coverPos),created:+t.created||Date.now(),backupAt:+t.backupAt||0,notes:str(t.notes),updated:t.updated||Date.now(),
     theme:{template:TEMPLATES.some(x=>x.id===t.theme?.template)?t.theme.template:'clean',color:okColor(t.theme?.color)},
     opts:{placeOrder:t.opts?.placeOrder==='after-day'?'after-day':'end',notesPage:t.opts?.notesPage!==false,
@@ -700,14 +741,14 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
     budget:(Array.isArray(t.budget)?t.budget:[]).map(b=>({id:str(b?.id)||uid(),name:str(b?.name),amount:str(b?.amount),cur:b?.cur==='TWD'?'TWD':'JPY'})),
     gift:{to:str(t.gift?.to),from:str(t.gift?.from),letter:str(t.gift?.letter)},
-    days:(Array.isArray(t.days)?t.days:[]).map(d=>({id:str(d?.id)||uid(),title:str(d?.title),area:str(d?.area),photo:okImg(d?.photo),photoPos:okPos(d?.photoPos),planB:str(d?.planB),memText:str(d?.memText),memPhotos:(Array.isArray(d?.memPhotos)?d.memPhotos:[]).map(okImg).filter(Boolean),
+    days:(Array.isArray(t.days)?t.days:[]).map(d=>({id:str(d?.id)||uid(),title:str(d?.title),area:str(d?.area),photo:okImg(d?.photo),photoPos:okPos(d?.photoPos),planB:str(d?.planB),planBOn:!!d?.planBOn,done:(Array.isArray(d?.done)?d.done:[]).map(String).slice(0,200),memText:str(d?.memText),memPhotos:(Array.isArray(d?.memPhotos)?d.memPhotos:[]).map(okImg).filter(Boolean),
       items:(Array.isArray(d?.items)?d.items:[]).map(i=>({id:str(i?.id)||uid(),time:str(i?.time),text:str(i?.text),placeId:str(i?.placeId),transport:str(i?.transport),note:str(i?.note),secret:!!i?.secret,reserve:['need','done'].includes(i?.reserve)?i.reserve:'',resNo:str(i?.resNo)}))})),
     places:(Array.isArray(t.places)?t.places:[]).map(p=>({id:str(p?.id)||uid(),name:str(p?.name),area:str(p?.area),cat:CATS.some(c=>c[0]===p?.cat)?p.cat:'',photo:okImg(p?.photo),photoPos:okPos(p?.photoPos),mapUrl:okUrl(p?.mapUrl),lat:isFinite(+p?.lat)&&p?.lat!==''&&p?.lat!=null?+p.lat:null,lng:isFinite(+p?.lng)&&p?.lng!==''&&p?.lng!=null?+p.lng:null,desc:str(p?.desc),hours:str(p?.hours),price:str(p?.price),address:str(p?.address),tips:str(p?.tips),jaName:str(p?.jaName),jaAddress:str(p?.jaAddress),closed:(Array.isArray(p?.closed)?p.closed:[]).map(Number).filter(n=>n>=0&&n<=6)})),
     shops:(Array.isArray(t.shops)?t.shops:[]).map(s=>({id:str(s?.id)||uid(),name:str(s?.name),store:str(s?.store),price:str(s?.price),dayId:str(s?.dayId),photo:okImg(s?.photo),note:str(s?.note),bought:!!s?.bought})),
@@ -792,8 +833,10 @@ async function loadMatcha(t=T,retry=false){if(!t)return MATCHA;const need=mtNeed
   if(MATCHA.state==='fail'&&first)toast('抹茶手帳的插圖載入失敗，先用一般插圖顯示');
   if(typeof renderPreview==='function'&&T)setTimeout(renderPreview,0);return MATCHA}
 const mtMissing=t=>mtNeeded(t).filter(n=>!MATCHA.img[n]);
-async function ensureMatcha(t){if(!t||t.theme.template!=='matcha')return;await loadMatcha(t);
-  if(mtMissing(t).length)await loadMatcha(t,true);const miss=mtMissing(t).length;if(miss&&MATCHA.state==='ok')setTimeout(()=>toast(`注意：有 ${miss} 張抹茶手帳插圖載入失敗，這次的檔案少了這些圖。連上網路後再匯出一次就會補上。`),2600)}
+/* before any export: make sure the template's artwork is loaded (one retry), warn if some is still missing */
+async function ensureTplAssets(t){const tp=tplOf(t);if(!t||!tp.load)return;await tp.load(t);
+  if(tp.missing&&tp.missing(t).length)await tp.load(t,true);const miss=tp.missing?tp.missing(t).length:0;
+  if(miss&&MATCHA.state==='ok')setTimeout(()=>toast(`注意：有 ${miss} 張「${tp.name}」插圖載入失敗，這次的檔案少了這些圖。連上網路後再匯出一次就會補上。`),2600)}
 const mtI=(n,cls,st='')=>MATCHA.img[n]?`<img class="mt ${cls}" src="${MATCHA.img[n]}" alt=""${st?` style="${st}"`:''}>`:'';
 function mtBits(seed){const n=MT_BITS[MTSEASON];if(!n)return'';let r=seed||5;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};
   const spots=[[6,8],[84,58],[78,6],[10,64]];let out='';for(let k=0;k<2;k++){const[x,y]=spots[(Math.floor(rnd()*4)+k*2)%4];out+=mtI(`season-${MTSEASON}-bit${1+Math.floor(rnd()*n)}`,'mt-dec mt-bit',`left:${x}%;top:${y}%;transform:rotate(${Math.round(rnd()*50-25)}deg)`)}return out}
@@ -955,8 +998,9 @@ function buildPages(t,splits={},mode={}){
       parts.forEach((cnt,pi)=>{pages.push({k:'day',d,i,from,to:pi===parts.length-1?L:from+cnt,cont:pi>0,last:pi===parts.length-1});from+=cnt});
       if(mem&&(d.memText.trim()||d.memPhotos.length)){const ph=d.memPhotos,np=Math.max(1,Math.ceil(ph.length/4));for(let q=0;q<np;q++)pages.push({k:'memory',d,i,photos:ph.slice(q*4,q*4+4),first:q===0,part:q+1,parts:np})}
       pushC('day:'+d.id);
-      if(t.opts.placeOrder==='after-day'&&!off.has('places'))for(const it of d.items){if(vis(it)&&it.placeId&&placeById[it.placeId]&&!hidden.has(it.placeId)&&!placed.has(it.placeId)){placed.add(it.placeId);pages.push({k:'place',p:placeById[it.placeId]})}}})},
-    places(){for(const p of t.places)if(!placed.has(p.id)&&!hidden.has(p.id))pages.push({k:'place',p});pushC('places')},
+      if(t.opts.placeOrder==='after-day'&&t.opts.detail!=='brief'&&!off.has('places'))for(const it of d.items){if(vis(it)&&it.placeId&&placeById[it.placeId]&&!hidden.has(it.placeId)&&!placed.has(it.placeId)){placed.add(it.placeId);pages.push({k:'place',p:placeById[it.placeId]})}}})},
+    places(){const L=t.places.filter(p=>!placed.has(p.id)&&!hidden.has(p.id));
+      if(t.opts.detail==='brief'){for(let i=0;i<L.length;i+=5)pages.push({k:'plist',list:L.slice(i,i+5),part:i/5+1,parts:Math.ceil(L.length/5)})}else for(const p of L)pages.push({k:'place',p});pushC('places')},
     taxi(){if(!mem&&t.opts.taxiCards){const tg=[...t.stays.filter(s=>s.name&&(s.jaName||s.jaAddress)),...t.places.filter(p=>!hidden.has(p.id)&&(p.jaName||p.jaAddress))];for(let i=0;i<tg.length;i+=2)pages.push({k:'taxi',list:tg.slice(i,i+2)})}},
     phrases(){if(!mem&&t.opts.phrasePage){const L=PHRASES.filter(g=>t.opts.phraseCats.includes(g[0]));const flat=[];L.forEach(g=>{flat.push({h:g[1]});g[2].forEach(x=>flat.push({p:x}))});
       for(let i=0;i<flat.length;i+=14)pages.push({k:'phrases',list:flat.slice(i,i+14),part:i/14+1,parts:Math.ceil(flat.length/14)})}},
@@ -966,8 +1010,10 @@ function buildPages(t,splits={},mode={}){
   pages.push({k:'cover'});pushC('cover');
   for(const k of secOrder(t)){if(off.has(k)){if(k==='overview')pushC('overview');else if(k==='info')pushC('info');else if(k==='places')pushC('places');else if(k==='days')days.forEach(d=>pushC('day:'+d.id));continue}S[k]()}
   pushC('end');
+  for(let ix=pages.length-1;ix>=0;ix--){const pg=pages[ix],key=txKey(pg),sp=key&&splits[key];if(!sp)continue;let from=0;
+    pages.splice(ix,1,...sp.map((c,pi)=>{const o={...pg,tx:{from,to:from+c,first:pi===0,last:pi===sp.length-1,part:pi+1,parts:sp.length}};from+=c;return o}))}
   const ref={day:{},place:{},shop:{},stay:{}};
-  pages.forEach((pg,ix)=>{const no=ix+1;if(pg.k==='day'&&!pg.cont)ref.day[pg.d.id]=no;if(pg.k==='place')ref.place[pg.p.id]=no;if(pg.k==='stay')ref.stay[pg.s.id]=no;if(pg.k==='shop')pg.list.forEach(s=>ref.shop[s.id]=no)});
+  pages.forEach((pg,ix)=>{const no=ix+1,first=!pg.tx||pg.tx.first;if(pg.k==='day'&&!pg.cont)ref.day[pg.d.id]=no;if(pg.k==='place'&&first)ref.place[pg.p.id]=no;if(pg.k==='stay'&&first)ref.stay[pg.s.id]=no;if(pg.k==='plist')pg.list.forEach(p=>ref.place[p.id]=no);if(pg.k==='shop')pg.list.forEach(s=>ref.shop[s.id]=no)});
   const visits={};days.forEach((d,i)=>d.items.forEach(it=>{if(it.placeId&&vis(it)){(visits[it.placeId]=visits[it.placeId]||[]);if(!visits[it.placeId].includes(i))visits[it.placeId].push(i)}}));
   return {pages,ref,days,dIdx,visits,placeById,entries,vis};
 }
@@ -986,9 +1032,8 @@ function fmtRange(t){const a=pd(t.start),b=pd(t.end);if(!a)return'';const A=t.st
 const pn=no=>`<div class="pn">${no}</div>`;
 
 function renderPages(t,splits,mode={}){
-  if(t.theme.template==='matcha'&&mtMissing(t).some(n=>!MATCHA.failed.has(n)&&!MATCHA.busy[n]))loadMatcha(t);
-  MTON=t.theme.template==='matcha'&&MATCHA.state==='ok';MTSEASON=seasonOf(t);
-  try{const out=renderPages0(t,splits,mode);return MTON?out.map(h=>mtDecorate(h,t)):out}finally{MTON=false}
+  const tp=tplOf(t);tp.prepare&&tp.prepare(t);
+  try{const out=renderPages0(t,splits,mode);return tp.decorate?out.map(h=>tp.decorate(h,t)):out}finally{tp.finish&&tp.finish()}
 }
 function renderPages0(t,splits,mode={}){
   const C=buildPages(t,splits,mode),{ref,days,dIdx,visits,placeById,entries,vis}=C;
@@ -1020,7 +1065,9 @@ function renderPages0(t,splits,mode={}){
       if(!vis(it))return `<li class="secret"><span class="t">${esc(it.time)}</span><div><div class="tx">？？？<span class="chip">驚喜</span></div><div class="tr0">出發當天揭曉</div></div></li>`;
       const p=placeById[it.placeId];const txt=it.text||p?.name||'';const r=p&&ref.place[p.id]?`<span class="ref">P.${ref.place[p.id]}</span>`:'';
       const rv=it.reserve==='need'?'<span class="chip warn">需預約</span>':it.reserve==='done'?`<span class="chip">已預約${it.resNo?' '+esc(it.resNo):''}</span>`:'';
-      return `<li><span class="t">${esc(it.time)}</span><div><div class="tx">${esc(txt)}${r}${rv}</div>${it.transport?`<div class="tr">${esc(it.transport)}</div>`:''}${it.note?`<div class="nt">${nl(it.note)}</div>`:''}</div></li>`}).join('');
+      const brief=t.opts.detail==='brief',full=t.opts.detail==='full';
+      const pinfo=full&&p?[p.hours&&'營業 '+p.hours,p.price,p.closed.includes(pd(date).getUTCDay())&&'⚠ 你填的公休日是這天'].filter(Boolean).join('｜'):'';
+      return `<li><span class="t">${esc(it.time)}</span><div><div class="tx">${esc(txt)}${r}${rv}</div>${it.transport&&!brief?`<div class="tr">${esc(it.transport)}</div>`:''}${pinfo?`<div class="tr pinfo1">${esc(pinfo)}</div>`:''}${it.note&&!brief?`<div class="nt">${nl(it.note)}</div>`:''}${full&&p&&p.tips?`<div class="nt">${nl(p.tips)}</div>`:''}</div></li>`}).join('');
     const sh=t.shops.filter(s=>s.dayId===d.id&&s.name);
     const pb=pg.last&&d.planB.trim()?`<div class="planb"><b>備案</b>${nl(d.planB.trim())}</div>`:'';
     const foot=!pg.last?'':(st?`<div><b>今晚住宿</b>${esc(st.name)}${sref(st)}</div>`:'')+(sh.length?`<div><b>今日採買</b>${sh.map(s=>esc(s.name)).join('、')}<span class="ref">P.${ref.shop[sh[0].id]}</span></div>`:'');
@@ -1034,13 +1081,19 @@ function renderPages0(t,splits,mode={}){
     const when=(dt,tm,lab)=>dt?`<div class="sw1"><small>${lab}</small><b>${md(dt)}（${wk(dt)}）</b>${tm?`<span>${esc(tm)}</span>`:''}</div>`:'';
     const info=[['地址',s.address],['日文地址',s.jaAddress],['最近車站',s.station],['電話',s.phone],['房型',s.room],['訂房代號',s.booking]].filter(x=>x[1]).map(x=>`<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join('');
     const sq=t.opts.qr&&(s.mapUrl||s.address||s.jaAddress||s.jaName)?qrSVG(s.mapUrl||mapsURL(placeQuery(s))):'';
-    const sil=!s.photo&&useIll;
-    return `<section class="pg place stay ${s.photo?'has-img':sil?'has-ill':''}">${s.photo?`<div class="pimg"${bg(s.photo,s.photoPos)}></div>`:sil?`<div class="pill">${scene('hotel',season,559,230,s.name.length*5+9)}</div>`:''}<div class="body fit"><div class="ptag">STAY${n?` · ${n} NIGHT${n>1?'S':''}`:''}</div><h2>${esc(s.name)}</h2>${span?`<div class="pvisit">住宿期間 ${span}</div>`:''}<div class="swhen">${when(s.checkin,s.cinTime,'入住')}<div class="arr">→</div>${when(s.checkout,s.coutTime,'退房')}</div><div class="pdesc">${paras(s.desc)}</div>${info||sq?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${sq?`<div class="pqr">${sq}<span>掃描開地圖</span></div>`:''}</div>`:''}${s.note?`<div class="ptips"><b>小提醒</b>${nl(s.note)}</div>`:''}</div>${pn(no)}</section>`}
+    const sil=!s.photo&&useIll,tx=pg.tx,cont=tx&&!tx.first,end=!tx||tx.last,txa=tx?` data-tx="s:${s.id}" data-from="${tx.from}"`:` data-tx="s:${s.id}"`;
+    if(cont)return `<section class="pg place stay txc"${txa}><div class="body fit"><div class="ptag">STAY</div><h2>${esc(s.name)}<span class="cont">（續）</span></h2><div class="pdesc">${txBody(pg,s.desc)}</div>${end&&(info||sq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${sq?`<div class="pqr">${sq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&s.note?`<div class="ptips"><b>小提醒</b>${nl(s.note)}</div>`:''}</div>${pn(no)}</section>`;
+    return `<section class="pg place stay ${s.photo?'has-img':sil?'has-ill':''}"${txa}>${s.photo?`<div class="pimg"${bg(s.photo,s.photoPos)}></div>`:sil?`<div class="pill">${scene('hotel',season,559,230,s.name.length*5+9)}</div>`:''}<div class="body fit"><div class="ptag">STAY${n?` · ${n} NIGHT${n>1?'S':''}`:''}</div><h2>${esc(s.name)}</h2>${span?`<div class="pvisit">住宿期間 ${span}</div>`:''}<div class="swhen">${when(s.checkin,s.cinTime,'入住')}<div class="arr">→</div>${when(s.checkout,s.coutTime,'退房')}</div><div class="pdesc">${txBody(pg,s.desc)}</div>${end&&(info||sq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${sq?`<div class="pqr">${sq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&s.note?`<div class="ptips"><b>小提醒</b>${nl(s.note)}</div>`:''}</div>${pn(no)}</section>`}
   case'place':{const p=pg.p,v=(visits[p.id]||[]).map(i=>`DAY.${i+1}（P.${ref.day[days[i].id]}）`).join('、');
     const info=[['營業時間',p.hours],['公休',p.closed.length?p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'):''],['費用',p.price],['地址',p.address],['日文地址',p.jaAddress]].filter(x=>x[1]).map(x=>`<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join('');
     const pq=t.opts.qr&&p.name?qrSVG(placeLink(p)):'';
-    const pil=!p.photo&&useIll;
-    return `<section class="pg place ${p.photo?'has-img':pil?'has-ill':''}">${p.photo?`<div class="pimg"${bg(p.photo,p.photoPos)}></div>`:pil?`<div class="pill">${scene(placeCat(p),season,559,230,p.name.length*7+5)}</div>`:''}<div class="body fit"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}</h2>${p.jaName&&p.jaName!==p.name?`<div class="pja">${esc(p.jaName)}</div>`:''}${v?`<div class="pvisit">安排在 ${v}</div>`:''}<div class="pdesc">${paras(p.desc)}</div>${info||pq?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}</div>${pn(no)}</section>`}
+    const pil=!p.photo&&useIll,tx=pg.tx,cont=tx&&!tx.first,end=!tx||tx.last,txa=tx?` data-tx="p:${p.id}" data-from="${tx.from}"`:` data-tx="p:${p.id}"`;
+    if(cont)return `<section class="pg place txc"${txa}><div class="body fit"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}<span class="cont">（續）</span></h2><div class="pdesc">${txBody(pg,p.desc)}</div>${end&&(info||pq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}</div>${pn(no)}</section>`;
+    return `<section class="pg place ${p.photo?'has-img':pil?'has-ill':''}"${txa}>${p.photo?`<div class="pimg"${bg(p.photo,p.photoPos)}></div>`:pil?`<div class="pill">${scene(placeCat(p),season,559,230,p.name.length*7+5)}</div>`:''}<div class="body fit"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}</h2>${p.jaName&&p.jaName!==p.name?`<div class="pja">${esc(p.jaName)}</div>`:''}${v?`<div class="pvisit">安排在 ${v}</div>`:''}<div class="pdesc">${txBody(pg,p.desc)}</div>${end&&(info||pq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}</div>${pn(no)}</section>`}
+  case'plist':{const rows=pg.list.map(p=>{const v=(visits[p.id]||[]).map(i=>'DAY.'+(i+1)).join('、');const pq=t.opts.qr&&p.name?qrSVG(placeLink(p)):'';
+      const info=[p.hours&&'營業 '+p.hours,p.closed.length&&'公休 '+p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'),p.price].filter(Boolean).join('｜');
+      return `<div class="pl1"><div class="pl1t"><b>${esc(p.name||'未命名景點')}</b>${p.area?`<small>${esc(p.area)}</small>`:''}${v?`<span class="pl1v">${v}</span>`:''}${info?`<div class="pl1i">${esc(info)}</div>`:''}${p.jaAddress||p.address?`<div class="pl1a">${esc(p.jaAddress||p.address)}</div>`:''}</div>${pq?`<div class="pl1q">${pq}</div>`:''}</div>`}).join('');
+    return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">SPOTS${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>景點速查</h2></div><div class="plist">${rows}</div></div>${pn(no)}</section>`}
   case'shop':{const cards=pg.list.map(s=>{const di=dIdx[s.dayId];return `<div class="sc"><div class="si"${bg(s.photo)}>${s.photo?'':esc((s.name||'？').slice(0,1))}</div><div class="sx"><div class="sn">${esc(s.name)}</div>${s.store?`<div class="ss">${esc(s.store)}</div>`:''}${s.price?`<div class="sp">${esc(s.price)}</div>`:''}</div>${di!=null?`<div class="sd"${dayColor(t,di)?` style="background:${dayColor(t,di)}"`:''}>DAY.${di+1}</div>`:''}<div class="cb"></div></div>`}).join('');
     return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">SHOPPING LIST${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>購物清單</h2></div><div class="sgrid">${cards}</div></div>${pn(no)}</section>`}
   case'res':{
@@ -1065,7 +1118,7 @@ function renderPages0(t,splits,mode={}){
     const grid=ph.length?`<div class="mgrid n${ph.length}">${ph.map(x=>`<div class="mph"${bg(x)}></div>`).join('')}</div>`:'';
     return `<section class="pg memory${ph.length?'':' noph'}"${dc?` style="${cvars(dc,t.theme.template)}"`:''}><div class="body fit"><div class="ph"><span class="ph-en">MEMORIES · DAY.${i+1}${pg.parts>1?` (${pg.part}/${pg.parts})`:''}</span><h2>${esc(d.title||md(date)+' 的回憶')}</h2></div>${grid}${pg.first&&d.memText.trim()?`<div class="mtext">${paras(d.memText)}</div>`:''}</div>${pn(no)}</section>`}
   case'custom':{const c=pg.c;
-    if(c.kind==='text')return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">NOTE</span><h2>${esc(c.title)}</h2></div><div class="pdesc">${paras(c.body)}</div></div>${pn(no)}</section>`;
+    if(c.kind==='text'){const tx=pg.tx;return `<section class="pg" data-tx="c:${c.id}"${tx?` data-from="${tx.from}"`:''}><div class="body fit"><div class="ph"><span class="ph-en">NOTE${tx&&tx.parts>1?` ${tx.part}/${tx.parts}`:''}</span><h2>${esc(c.title)}${tx&&!tx.first?'<span class="cont">（續）</span>':''}</h2></div><div class="pdesc">${txBody(pg,c.body)}</div></div>${pn(no)}</section>`}
     if(c.kind==='spread')return `<section class="pg cimg spread ${pg.half}">${c.img?`<div class="sprimg"${bg(c.img)}></div>`:''}${pg.half==='L'&&c.title?`<div class="ccap">${esc(c.title)}</div>`:''}</section>`;
     return `<section class="pg cimg">${c.img?`<div class="cimgbox" style="background-image:url('${c.img}');background-size:${c.fit}"></div>`:''}${c.title?`<div class="ccap">${esc(c.title)}</div>`:''}${pn(no)}</section>`}
   case'filler':return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">MEMO</span><h2>筆記</h2></div><div class="lines"></div></div>${pn(no)}</section>`;
@@ -1095,18 +1148,29 @@ function computeSplits(t,mode={}){
     }
     if(start>0&&parts.length>1)splits[d.id]=parts;
   }
+  /* long place / stay / note pages: if they would need more than a small font shrink, flow the text onto continuation pages */
+  const MINFS=0.86,over=b=>{b.style.setProperty('--fs',MINFS);return b.scrollHeight>b.clientHeight+1};
+  m.innerHTML=bkOpen(t,mode)+renderPages(t,splits,mode).join('')+'</div>';
+  const keys=[...new Set($$('section[data-tx]',m).filter(sec=>{const b=$('.body.fit',sec);return b&&over(b)}).map(sec=>sec.dataset.tx))];
+  for(const key of keys){const N=textChunks(txText(t,key)).length;if(N<2)continue;const parts=[];let start=0;
+    while(start<N&&parts.length<8){const trial={...splits,[key]:[...parts,N-start]};if(!parts.length&&start===0)trial[key]=[N];
+      m.innerHTML=bkOpen(t,mode)+renderPages(t,trial,mode).filter(h=>h.includes('data-tx="'+key+'"')&&h.includes('data-from="'+start+'"')).join('')+'</div>';
+      const b=$('.body.fit',m);if(!b)break;if(!over(b)){parts.push(N-start);break}
+      const H=b.clientHeight;let k=0;for(const p of $$('.pdesc p',b)){if(p.offsetTop+p.offsetHeight<=H-4)k++;else break}
+      if(k>=N-start)k=N-start-1;k=Math.max(1,k);parts.push(k);start+=k}
+    if(parts.length>1)splits[key]=parts}
   m.innerHTML='';return splits;
 }
 const pagesFor=(t,mode={})=>renderPages(t,computeSplits(t,mode),mode);
 function mixHex(a,b,p){const A=[1,3,5].map(i=>parseInt(a.substr(i,2),16)),B=[1,3,5].map(i=>parseInt(b.substr(i,2),16));return '#'+A.map((v,i)=>Math.round(v*p+B[i]*(1-p)).toString(16).padStart(2,'0')).join('')}
-function cvars(c,tpl){c=okColor(c);const j=tpl==='journal'||tpl==='wafu'||tpl==='matcha';return `--c:${c};--soft:${mixHex(c,PAPER[tpl]||'#ffffff',j?.13:.1)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`}
-const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${t.theme.template==='matcha'&&MATCHA.img['paper-tile']?`;--mt-paper:url(${MATCHA.img['paper-tile']})`:''}">`;
+function cvars(c,tpl){c=okColor(c);const tp=TPL[tpl]||TEMPLATES[0];return `--c:${c};--soft:${mixHex(c,tp.paper,tp.softMix)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`}
+const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${tplOf(t).bkStyle?tplOf(t).bkStyle(t):''}">`;
 function fitEl(el){let fs=1;el.style.setProperty('--fs',fs);while(el.scrollHeight>el.clientHeight+1&&fs>0.72){fs=+(fs-0.04).toFixed(2);el.style.setProperty('--fs',fs)}return el.scrollHeight>el.clientHeight+1}
 function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.body.fit',p);if(b&&fitEl(b))bad.push(i)});return bad}
 
 /* ---------- app state ---------- */
 let trips=[],T=null,tab='basic';const openSet=new Set();
-let saveTimer=null,prevTimer=null,saveTarget=null,SHARING=false;
+let saveTimer=null,prevTimer=null,saveTarget=null,SHARING=false,SAVE_LOCK=false;
 /* every pending save is bound to the trip object it belongs to, so switching trips or undo/redo can never save the wrong one */
 function scheduleSave(t,ms){clearTimeout(saveTimer);saveTarget=t;saveTimer=setTimeout(()=>{saveTimer=null;save(t)},ms)}
 function flushSave(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null;return save(saveTarget||T)}}
@@ -1125,7 +1189,7 @@ function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?
 function saveState(k){const el=$('#savest');if(!el)return;el.classList.toggle('bad',k==='bad'||!DB.db);
   el.textContent=!DB.db?'⚠ 這個瀏覽器不能儲存，關掉就會消失，請下載備份':k==='ing'?'儲存中…':k==='bad'?'⚠ 儲存失敗，請下載備份':'✓ 已儲存在這台裝置';
   el.title=!DB.db?'可能是無痕模式或瀏覽器設定擋住了儲存':'資料只存在這台裝置的瀏覽器，不會自動同步到其他裝置'}
-async function save(t=T){if(SHARING&&t===T)return;try{await DB.put(t);if(t===T||!saveTimer)saveState('ok')}catch(e){saveState('bad');toast('儲存失敗：瀏覽器空間可能不足，建議先下載備份檔')}}
+async function save(t=T){if(SHARING&&t===T)return;if(SAVE_LOCK){saveState('bad');return}try{await DB.put(t);if(t===T||!saveTimer)saveState('ok')}catch(e){saveState('bad');toast('儲存失敗：瀏覽器空間可能不足，建議先下載備份檔')}}
 function commit(){touch(true);renderEditor()}
 
 /* ---------- editor ---------- */
@@ -1148,7 +1212,8 @@ function edBasic(){
   <div class="card"><h4>外觀</h4>
   <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${x.prev}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
-  <div class="row">${T.theme.template==='matcha'?`<label class="f"><span>封面底圖</span><select data-k="opts.mcover"><option value="a">A．角落綠葉</option><option value="b">B．遠山小樹</option><option value="c">C．藍天草地</option></select></label>`:`<label class="f"><span>封面樣式</span><select data-k="opts.coverStyle"><option value="top">照片在上</option><option value="full">滿版照片</option><option value="frame">拱門框</option><option value="note">手帳（紙膠帶＋印章）</option></select></label>`}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
+  <div class="row">${(c=>`<label class="f"><span>${c.label}</span><select data-k="${c.key}">${c.options.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>`)(tplOf(T).cover)}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
+  <label class="f"><span>資訊詳細程度</span><select data-k="opts.detail"><option value="brief">精簡：每日只列時間和名稱，景點合併成「景點速查」</option><option value="std">標準</option><option value="full">完整：每日行程加上營業時間、費用、景點提醒</option></select></label>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
   <label class="chk"><input type="checkbox" data-k="opts.dayColors" ${T.opts.dayColors?'checked':''}> 每天用不同顏色</label>
   <label class="chk"><input type="checkbox" data-k="opts.illus" ${T.opts.illus?'checked':''}> 自動插圖（沒放照片的封面、景點頁、住宿頁會畫插圖）</label>
@@ -1353,7 +1418,7 @@ function openReader(){
 
 /* ---------- export ---------- */
 async function offscreenPages(mode=curMode()){
-  await ensureMatcha(T);
+  await ensureTplAssets(T);
   const a=$('#printArea');a.innerHTML=bkOpen(T,mode)+pagesFor(T,mode).join('')+'</div>';
   try{await document.fonts.ready}catch(e){}
   fitAll(a);return a;
@@ -1398,6 +1463,82 @@ const EXPORT_CSS=`body{margin:0;background:#4a4744;font-family:"Noto Sans TC","P
 .pg{box-shadow:0 4px 18px rgba(0,0,0,.35);zoom:var(--z,1)}
 @page{size:148mm 210mm;margin:0}
 @media print{body{background:none}.bar{display:none}.bk{display:block;padding:0}.pg{box-shadow:none;zoom:1;break-after:page;page-break-after:always}}`;
+
+/* ---------- digital reading version: same data, laid out for a phone (scroll, tap, expand) instead of A5 pages ---------- */
+const DIGI_CSS=`:root{--c:#5f7c6c;--bg:#f7f4ee;--card:#fffdfa;--ink:#2e2e2a;--mute:#66655f;--line:#e2ddd2}
+@media (prefers-color-scheme:dark){:root{--bg:#121615;--card:#1b201f;--ink:#e7e3db;--mute:#a19c93;--line:#323a38}}
+*{box-sizing:border-box}html{scroll-padding-top:64px}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--c)}header.hd{padding:22px 18px 8px;max-width:680px;margin:0 auto}.hd h1{font-size:24px;line-height:1.35;margin:0 0 4px}.hd p{margin:0;color:var(--mute);font-size:13px}
+.cover{width:100%;max-height:260px;object-fit:cover;display:block}
+nav.dn{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav.dn div{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;max-width:680px;margin:0 auto;scrollbar-width:none}
+nav.dn a{flex:0 0 auto;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;white-space:nowrap}
+nav.dn a.today{background:var(--c);color:#fff;border-color:var(--c)}
+main{max-width:680px;margin:0 auto;padding:6px 12px 60px}section{margin-top:18px}
+.dh{display:flex;align-items:baseline;gap:10px;margin:0 4px 8px}.dh b{font-size:20px;color:var(--c)}.dh span{color:var(--mute);font-size:13px}.dh h2{font-size:18px;margin:0}
+.badge{font-size:11px;background:var(--c);color:#fff;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin-bottom:10px}
+.it{display:grid;grid-template-columns:3.4em 1fr;gap:8px;padding:10px 0;border-top:1px dashed var(--line)}.it:first-child{border-top:0}
+.tm{font-weight:700;color:var(--c);font-variant-numeric:tabular-nums}.nm{font-weight:700}.sub{font-size:13px;color:var(--mute)}
+.chip{display:inline-block;font-size:11px;border:1px solid var(--c);color:var(--c);border-radius:4px;padding:0 5px;margin-left:6px;font-weight:700;vertical-align:1px}.chip.w{border-color:#c0392b;color:#c0392b}
+details{margin-top:6px}summary{cursor:pointer;font-size:13px;color:var(--c);list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:"▸ ";}details[open] summary::before{content:"▾ "}
+.pd{font-size:14px;margin:6px 0}.pd p{margin:0 0 .6em}.ph{width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0}
+dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:6px 0;font-size:14px}dt{color:var(--mute);white-space:nowrap}dd{margin:0}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 2px}.btn{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font:inherit;font-size:14px;cursor:pointer}.btn.p{background:var(--c);border-color:var(--c);color:#fff}
+.pb{border:1.5px dashed var(--c);border-radius:12px;padding:8px 12px;font-size:14px;margin:6px 0 10px}.pb b{color:var(--c);margin-right:6px}
+.foot{font-size:13px;color:var(--mute);padding:8px 4px}
+label.ck{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:15px}label.ck:first-child{border-top:0}label.ck input{width:20px;height:20px;accent-color:var(--c)}label.ck input:checked+span{text-decoration:line-through;color:var(--mute)}
+h3.sh{font-size:13px;color:var(--mute);margin:12px 4px 4px;letter-spacing:.08em}
+.drv{position:fixed;inset:0;background:#fff;color:#111;z-index:20;display:none;flex-direction:column;justify-content:center;padding:24px}.drv.on{display:flex}.drv .l{font-size:20px;color:#555}.drv .j{font-size:40px;font-weight:900;line-height:1.3;margin:14px 0;word-break:break-all}.drv .a{font-size:22px;word-break:break-all}.drv .z{margin-top:16px;color:#666}.drv button{position:absolute;top:14px;right:14px}
+.card:empty{display:none}.em{display:flex;gap:10px}.em a{flex:1;text-align:center;text-decoration:none;border:2px solid #c0392b;color:#c0392b;border-radius:12px;padding:8px;font-weight:700}.em a b{display:block;font-size:26px}
+@media print{nav.dn,.acts,.drv{display:none!important}details>*{display:block}}`;
+function digitalHTML(t){
+  const n=dayCount(t),pb=Object.fromEntries(t.places.map(p=>[p.id,p])),c=okColor(t.theme.color);
+  const mapA=(x,label='開地圖')=>`<a class="btn p" href="${esc(x.mapUrl||mapsURL(placeQuery(x)))}" target="_blank" rel="noopener">${label}</a>`;
+  const drvB=x=>x.jaName||x.jaAddress||x.address?`<button class="btn" data-drv="${esc(JSON.stringify([x.jaName||x.name,x.jaAddress||x.address||'',x.name]))}">給司機看</button>`:'';
+  const dl=rows=>{const r=rows.filter(x=>x[1]).map(x=>`<dt>${x[0]}</dt><dd>${x[2]?x[1]:esc(x[1])}</dd>`).join('');return r?`<dl>${r}</dl>`:''};
+  const placeBox=p=>`${p.photo?`<img class="ph" src="${p.photo}" alt="">`:''}${p.desc?`<div class="pd">${paras(p.desc)}</div>`:''}${dl([['營業時間',p.hours],['公休',p.closed.length?p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'):''],['費用',p.price],['地址',p.address],['日文地址',p.jaAddress]])}${p.tips?`<div class="pd"><b>小提醒</b> ${nl(p.tips)}</div>`:''}<div class="acts">${mapA(p)}${drvB(p)}</div>`;
+  const stayBox=s=>`${s.photo?`<img class="ph" src="${s.photo}" alt="">`:''}${dl([['入住',s.checkin?md(s.checkin)+'（'+wk(s.checkin)+'）'+(s.cinTime?' '+s.cinTime:''):''],['退房',s.checkout?md(s.checkout)+'（'+wk(s.checkout)+'）'+(s.coutTime?' '+s.coutTime:''):''],['地址',s.address],['日文地址',s.jaAddress],['最近車站',s.station],['電話',s.phone?`<a href="tel:${esc(s.phone.replace(/[^\d+]/g,''))}">${esc(s.phone)}</a>`:'',1],['房型',s.room],['訂房代號',s.booking]])}${s.desc?`<div class="pd">${paras(s.desc)}</div>`:''}${s.note?`<div class="pd"><b>小提醒</b> ${nl(s.note)}</div>`:''}<div class="acts">${mapA(s)}${drvB(s)}</div>`;
+  const days=Array.from({length:n},(_,i)=>{const d=t.days[i],date=dayDate(t,i),st=stayFor(t,date),sh=t.shops.filter(x=>x.dayId===d.id&&x.name);
+    const its=dayEntries(t,i).map(e=>{if(e.auto){const s=t.stays.find(x=>x.id===e.stayId);return `<div class="it"><div class="tm">${esc(e.time)||'—'}</div><div><div class="nm">${esc(e.text)}</div><details><summary>住宿資訊</summary>${stayBox(s)}</details></div></div>`}
+      const p=pb[e.placeId],rv=e.reserve==='need'?'<span class="chip w">需預約</span>':e.reserve==='done'?`<span class="chip">已預約${e.resNo?' '+esc(e.resNo):''}</span>`:'';
+      return `<div class="it"><div class="tm">${esc(e.time)||'—'}</div><div><div class="nm">${esc(e.text||p?.name||'')}${rv}</div>${e.transport?`<div class="sub">→ ${esc(e.transport)}</div>`:''}${e.note?`<div class="sub">${nl(e.note)}</div>`:''}${p?`<details><summary>${esc(p.name)}的介紹、地圖</summary>${placeBox(p)}</details>`:''}</div></div>`}).join('');
+    return `<section id="d${i+1}" data-date="${date}"><div class="dh"><b>DAY.${i+1}</b><span>${md(date)}（${wk(date)}）${d.area?'・'+esc(d.area):''}</span></div>${d.title?`<div class="dh"><h2>${esc(d.title)}</h2></div>`:''}
+      <div class="card">${its||'<div class="it"><div></div><div class="sub">這天還沒有行程</div></div>'}</div>${d.planB.trim()?`<div class="pb"><b>備案</b>${nl(d.planB)}</div>`:''}
+      ${st||sh.length?`<div class="foot">${st?`今晚住：<a href="#stays">${esc(st.name)}</a>`:''}${st&&sh.length?'　':''}${sh.length?'今天要買：'+sh.map(x=>esc(x.name)).join('、'):''}</div>`:''}</section>`}).join('');
+  const stays=t.stays.filter(s=>s.name).map(s=>`<div class="card" style="padding:10px 14px"><div class="nm">${esc(s.name)}</div>${stayBox(s)}</div>`).join('');
+  const flights=t.flights.filter(f=>f.from||f.to||f.code).map(f=>`<div class="it"><div class="tm">${esc(f.time)||'—'}</div><div><div class="nm">${esc(f.label||'交通')} ${esc(f.code)}</div><div class="sub">${f.date?md(f.date)+'（'+wk(f.date)+'）':''} ${esc(f.from)} → ${esc(f.to)}</div>${f.note?`<div class="sub">${esc(f.note)}</div>`:''}</div></div>`).join('');
+  const places=t.places.filter(p=>p.name).map(p=>`<details class="card" style="padding:10px 14px"><summary style="font-size:15px;color:var(--ink);font-weight:700">${esc(p.name)}${p.area?`<span class="sub">　${esc(p.area)}</span>`:''}</summary>${placeBox(p)}</details>`).join('');
+  const ck=(id,txt,sub='')=>`<label class="ck"><input type="checkbox" data-ck="${esc(id)}"><span>${esc(txt)}${sub?`<small class="sub">　${esc(sub)}</small>`:''}</span></label>`;
+  const shops=t.shops.filter(x=>x.name).map(x=>ck('s'+x.id,x.name,[x.store,x.price].filter(Boolean).join('・'))).join('');
+  const pack=t.packing.split('\n').map(x=>x.trim()).filter(Boolean).map((x,k)=>x.startsWith('#')?`</div><h3 class="sh">${esc(x.replace(/^#+\s*/,''))}</h3><div class="card">`:ck('k'+k+x,x)).join('');
+  const e=t.emg,lab=Object.fromEntries(EMG_FIELDS),mine=EMG_FIELDS.filter(([k])=>e[k]&&e[k].trim()).map(([k])=>[lab[k],e[k]]);
+  const emg=(t.opts.emgJapan?`<div class="em"><a href="tel:110"><b>110</b>警察</a><a href="tel:119"><b>119</b>救護車・消防</a></div><div class="card" style="margin-top:10px;padding:10px 14px">${dl([['訪日旅客熱線','<a href="tel:05038162787">050-3816-2787</a>（JNTO，24 小時，中英韓文）',1]])}</div>`:'')+(mine.length?`<div class="card" style="padding:10px 14px">${dl(mine)}</div>`:'');
+  const nav=[...Array.from({length:n},(_,i)=>`<a href="#d${i+1}" data-day="${dayDate(t,i)}">DAY.${i+1} ${md(dayDate(t,i))}</a>`),stays&&'<a href="#stays">住宿</a>',flights&&'<a href="#flights">交通</a>',places&&'<a href="#places">景點</a>',shops&&'<a href="#shops">購物</a>',pack&&'<a href="#pack">打包</a>',emg&&'<a href="#emg">緊急</a>'].filter(Boolean).join('');
+  const data=JSON.stringify({id:t.id,tz:+t.tz||0}).replace(/</g,'\\u003c');
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="${c}"><title>${esc(t.title||'旅冊')}</title><style>${DIGI_CSS.replace('--c:#5f7c6c','--c:'+c)}</style></head><body>
+${t.cover?`<img class="cover" src="${t.cover}" alt="">`:''}<header class="hd"><h1>${esc(t.title||'未命名的旅行')}</h1><p>${fmtRange(t)}${t.travelers?'・'+esc(t.travelers):''}</p>${t.subtitle?`<p>${esc(t.subtitle)}</p>`:''}</header>
+<nav class="dn"><div>${nav}</div></nav><main>${days}
+${stays?`<section id="stays"><div class="dh"><h2>住宿</h2></div>${stays}</section>`:''}
+${flights?`<section id="flights"><div class="dh"><h2>航班與交通</h2></div><div class="card">${flights}</div></section>`:''}
+${t.notes.trim()?`<section><div class="dh"><h2>出發前提醒</h2></div><div class="card" style="padding:10px 14px">${t.notes.split('\n').filter(x=>x.trim()).map(x=>`<div>・${esc(x)}</div>`).join('')}</div></section>`:''}
+${places?`<section id="places"><div class="dh"><h2>景點</h2></div>${places}</section>`:''}
+${shops?`<section id="shops"><div class="dh"><h2>購物清單</h2></div><div class="card">${shops}</div></section>`:''}
+${pack?`<section id="pack"><div class="dh"><h2>打包清單</h2></div><div class="card">${pack}</div></section>`:''}
+${emg?`<section id="emg"><div class="dh"><h2>緊急資訊</h2></div>${emg}</section>`:''}
+<p class="foot" style="text-align:center">用旅冊製作・沒有網路也能看</p></main>
+<div class="drv" id="drv"><button class="btn" id="drvx">關閉</button><div class="l">ここまでお願いします</div><div class="j" id="drvj"></div><div class="a" id="drva"></div><div class="z" id="drvz"></div></div>
+<script>(function(){var G=${data};
+var now=new Date(Date.now()+G.tz*36e5).toISOString().slice(0,10);
+document.querySelectorAll('nav.dn a[data-day]').forEach(function(a){if(a.getAttribute('data-day')===now){a.classList.add('today');a.scrollIntoView({inline:'center',block:'nearest'})}});
+var sec=document.querySelector('section[data-date="'+now+'"]');if(sec){var h=sec.querySelector('.dh');h.insertAdjacentHTML('beforeend','<span class="badge">今天</span>');if(!location.hash)setTimeout(function(){sec.scrollIntoView()},50)}
+var K='tabisatsu.digi.'+G.id,S={};try{S=JSON.parse(localStorage.getItem(K)||'{}')}catch(e){}
+document.querySelectorAll('[data-ck]').forEach(function(c){c.checked=!!S[c.getAttribute('data-ck')];c.addEventListener('change',function(){S[c.getAttribute('data-ck')]=c.checked;try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}})});
+document.addEventListener('click',function(e){var b=e.target.closest('[data-drv]');if(!b)return;var v=JSON.parse(b.getAttribute('data-drv'));document.getElementById('drvj').textContent=v[0];document.getElementById('drva').textContent=v[1];document.getElementById('drvz').textContent='請帶我到這裡：'+v[2];document.getElementById('drv').classList.add('on')});
+document.getElementById('drvx').addEventListener('click',function(){document.getElementById('drv').classList.remove('on')});
+})();<\/script></body></html>`;
+}
+async function exportDigital(){const h=digitalHTML(T);if(await saveFile(safeName(T.title)+'_手機閱讀版.html',h,'text/html'))toast('已下載手機閱讀版')}
 async function exportHTML(){
   const a=await offscreenPages();const inner=a.innerHTML;a.innerHTML='';
   const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}\n${EXPORT_CSS}</style></head><body><div class="bar"><button onclick="print()">列印／存成 PDF</button><span>列印設定：紙張 A5、邊界「無」、勾選「背景圖形」</span></div>${inner}<script>function z(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-16)/${PW}))}z();addEventListener('resize',z)<\/script></body></html>`;
@@ -1450,7 +1591,7 @@ function giftRuntime(){
   tick();setInterval(tick,1000);
 }
 async function giftHTML(preview){
-  await ensureMatcha(T);
+  await ensureTplAssets(T);
   const a=$('#printArea');try{await document.fonts.ready}catch(e){}
   a.innerHTML=bkOpen(T)+pagesFor(T,{gift:true}).join('')+'</div>';fitAll(a);const masked=a.innerHTML;
   const n=T.days.slice(0,dayCount(T)).reduce((x,d)=>x+d.items.filter(i=>i.secret&&(i.text||i.placeId)).length,0);
@@ -1539,7 +1680,7 @@ async function storageInfo(){const el=$('#stinfo');if(!el)return;let txt=`這份
   el.textContent=txt}
 async function importFile(f){
   try{const o=JSON.parse(await f.text());const raw=o&&o.trip?o.trip:o;if(!raw||!Array.isArray(raw.days))throw 0;
-    const t=normalize(raw);t.id=uid();t.updated=Date.now();trips.push(t);await DB.put(t);switchTrip(t.id);toast('已匯入「'+(t.title||'未命名')+'」')}
+    const newer=(+raw.schema||1)>SCHEMA;const t=normalize(raw);t.id=uid();t.updated=Date.now();trips.push(t);await DB.put(t);switchTrip(t.id);toast('已匯入「'+(t.title||'未命名')+'」'+(newer?'。這份備份來自較新版本，部分內容可能沒有匯入，請先更新旅冊再匯入一次':''))}
   catch(e){modal('匯入失敗','這個檔案不是旅冊的備份檔，或是檔案已損壞。',[['知道了']])}
 }
 
@@ -1570,23 +1711,41 @@ function renderToday(){
   if(!n){$('#tdbody').innerHTML=emptyIll('01-no-trips','還沒有日期','先到「基本」設定出發日和回程日。');return}
   const i=TD.i,d=T.days[i],date=dayDate(T,i),ti=todayIndex(),isToday=ti===i;
   const now=destNow(),nowMin=now.getUTCHours()*60+now.getUTCMinutes(),pb=Object.fromEntries(T.places.map(p=>[p.id,p]));
-  const E=dayEntries(T,i),nx=isToday?E.findIndex(e=>{const v=hm(e.time);return v!=null&&v>=nowMin}):-1;
+  /* the day's list: original entries, or — after switching to plan B — what's already done plus the plan B lines */
+  const orig=dayEntries(T,i),done=new Set(d.done);
+  const pbItems=d.planB.trim()?(()=>{const r=parseText(d.planB);const its=r.days.flatMap(x=>x.items);return (its.length?linkPlaces(T,its.map(x=>({...x}))):[{time:'',text:d.planB.trim()}]).map((x,k)=>({...x,id:'pb-'+k,pb:1}))})():[];
+  const E=d.planBOn&&pbItems.length?[...orig.filter(e=>done.has(e.id)),...pbItems]:orig;
+  const lastDone=E.reduce((a,e,k)=>done.has(e.id)?k:a,-1);
+  let nx=-1;if(isToday){nx=lastDone>=0?E.findIndex((e,k)=>k>lastDone&&!done.has(e.id)):E.findIndex(e=>{const v=hm(e.time);return v!=null&&v>=nowMin&&!done.has(e.id)});}
   let status='';
   if(ti<0){const s=pd(T.start),t0=new Date(localISO()+'T00:00:00');const diff=Math.round((Date.UTC(s.getUTCFullYear(),s.getUTCMonth(),s.getUTCDate())-Date.UTC(t0.getFullYear(),t0.getMonth(),t0.getDate()))/864e5);
     status=diff>0?`距離出發還有 <b>${diff}</b> 天，先看看 DAY.${i+1} 的行程`:'旅程已經結束了，可以到每天的「回憶」補照片和日記'}
-  else if(isToday){if(nx>=0){const e=E[nx],m=hm(e.time)-nowMin;status=`下一站 <b>${esc(e.time)} ${esc(e.text||pb[e.placeId]?.name||'')}</b>，還有 ${dur(m)}`}else status='今天的行程都走完了，辛苦了！'}
+  else if(isToday){if(nx>=0){const e=E[nx],v=hm(e.time);status=`下一站 <b>${esc(e.time)} ${esc(e.text||pb[e.placeId]?.name||'')}</b>${v!=null&&v>nowMin?`，還有 ${dur(v-nowMin)}`:v!=null&&v<nowMin?'，時間已經過了':''}`}else status='今天的行程都走完了，辛苦了！'}
   else status=`正在看 DAY.${i+1}，今天是 DAY.${ti+1}`;
   const name=e=>e.auto?e.text:(e.text||pb[e.placeId]?.name||'');
-  const list=E.map((e,k)=>{const v=hm(e.time),p=pb[e.placeId],s=e.stayId?T.stays.find(x=>x.id===e.stayId):null,tgt=p||s;
-    const past=isToday&&v!=null&&v<nowMin&&k!==nx,link=tgt?(tgt.mapUrl||mapsURL(placeQuery(tgt))):'';
+  const tgtOf=e=>pb[e.placeId]||(e.stayId?T.stays.find(x=>x.id===e.stayId):null);
+  const linkOf=tgt=>tgt?(tgt.mapUrl||mapsURL(placeQuery(tgt))):'';
+  const drvBtn=e=>{const p=pb[e.placeId],s=e.stayId?T.stays.find(x=>x.id===e.stayId):null,tg=p||s;return tg&&(tg.jaName||tg.jaAddress||tg.address)?`<button class="mini" data-tcard="${p?'p:'+p.id:'s:'+s.id}">給司機看</button>`:''};
+  const list=E.map((e,k)=>{const v=hm(e.time),p=pb[e.placeId],tgt=tgtOf(e),isDone=done.has(e.id);
+    const past=isToday&&!isDone&&v!=null&&v<nowMin&&k!==nx,link=linkOf(tgt);
     const rv=e.reserve==='need'?'<span class="tchip warn">需預約</span>':e.reserve==='done'?`<span class="tchip">已預約${e.resNo?' '+esc(e.resNo):''}</span>`:'';
-    return `<li class="${past?'past':''}${k===nx?' next':''}"><span class="tt">${esc(e.time)||'—'}</span><div class="tm"><div class="tn">${esc(name(e))}${rv}</div>${e.transport?`<div class="ts">→ ${esc(e.transport)}</div>`:''}${e.note?`<div class="ts">${nl(e.note)}</div>`:''}${p&&(p.hours||p.tips)?`<div class="ts">${esc([p.hours,p.tips].filter(Boolean).join('｜'))}</div>`:''}
-      ${tgt?`<div class="tacts"><a class="mini" href="${esc(link)}" target="_blank" rel="noopener">開地圖</a>${tgt.jaName||tgt.jaAddress||tgt.address?`<button class="mini" data-tcard="${p?'p:'+p.id:'s:'+s.id}">給司機看</button>`:''}</div>`:''}</div></li>`}).join('');
+    return `<li class="${past?'past':''}${k===nx?' next':''}${isDone?' done':''}${e.pb?' pbi':''}"><button class="tdone${isDone?' on':''}" data-tdone="${esc(e.id)}" aria-pressed="${isDone}" aria-label="${isDone?'取消完成':'標記完成'}">✓</button><span class="tt">${esc(e.time)||'—'}</span><div class="tm"><div class="tn">${esc(name(e))}${e.pb?'<span class="tchip">備案</span>':''}${rv}</div>${e.transport?`<div class="ts">→ ${esc(e.transport)}</div>`:''}${e.note?`<div class="ts">${nl(e.note)}</div>`:''}${p&&(p.hours||p.tips)&&k!==nx&&!isDone?`<div class="ts">${esc([p.hours,p.tips].filter(Boolean).join('｜'))}</div>`:''}
+      ${tgt&&k!==nx&&!isDone?`<div class="tacts"><a class="mini" href="${esc(link)}" target="_blank" rel="noopener">開地圖</a>${drvBtn(e)}</div>`:''}</div></li>`}).join('');
+  /* next-stop card: everything needed to get there and in, in one place */
+  const nextCard=(()=>{if(nx<0)return'';const e=E[nx],p=pb[e.placeId],s=e.stayId?T.stays.find(x=>x.id===e.stayId):null,tgt=p||s,v=hm(e.time),w=pd(date).getUTCDay();
+    const rows=[];const R=(k,val)=>{if(val)rows.push(`<dt>${k}</dt><dd>${val}</dd>`)};
+    R('時間',esc(e.time||'')+(v!=null&&v>nowMin?`（還有 ${dur(v-nowMin)}）`:''));R('怎麼去',esc(e.transport||''));
+    if(p){R('營業時間',esc(p.hours));R('費用',esc(p.price));if(p.closed.includes(w))R('注意',`<b class="warnc">你填的公休日是今天（週${WK[w]}）</b>`);R('地址',esc(p.jaAddress||p.address));R('小提醒',nl(p.tips))}
+    if(s){R(e.auto==='in'?'入住':'退房',esc(e.auto==='in'?s.cinTime:s.coutTime));R('地址',esc(s.jaAddress||s.address));R('電話',s.phone?`<a href="tel:${esc(s.phone.replace(/[^\d+]/g,''))}">${esc(s.phone)}</a>`:'');R('房型',esc(s.room));R('訂房代號',esc(s.booking))}
+    if(e.reserve)R('預約',e.reserve==='done'?'已預約'+(e.resNo?' '+esc(e.resNo):''):'<b class="warnc">還沒預約</b>');R('備註',nl(e.note||''));
+    return `<div class="tdcard tdnext"><div class="tdnh"><small>下一站</small><b>${esc(name(e))}</b></div><dl class="tdinfo">${rows.join('')}</dl>
+      <div class="tacts">${tgt?`<a class="btn pri" href="${esc(linkOf(tgt))}" target="_blank" rel="noopener">開地圖導航</a>`:''}${drvBtn(e)}<button class="btn" data-tdone="${esc(e.id)}" data-tnext="1">到了，下一站</button></div></div>`})();
+  const pbBox=d.planB.trim()?`<div class="tdplanb${d.planBOn?' on':''}"><div><b>備案</b>${d.planBOn?'<span class="tchip">正在走備案</span>':''}</div>${d.planBOn?'':`<div>${nl(d.planB)}</div>`}<button class="mini" data-tplanb="${i}">${d.planBOn?'回到原本行程':'改走備案'}</button></div>`:'';
   const shops=T.shops.map((s,k)=>({s,k})).filter(x=>x.s.dayId===d.id&&x.s.name);
   const ex=T.expenses.map((x,k)=>({x,k})).filter(o=>o.x.date===date);const sum={JPY:0,TWD:0};ex.forEach(o=>sum[o.x.cur]+=parseFloat(String(o.x.amount).replace(/[,，\s]/g,''))||0);
   $('#tdbody').innerHTML=`<div class="tdays">${T.days.slice(0,n).map((x,k)=>`<button class="tday ${k===i?'on':''}${k===ti?' now':''}" data-tday="${k}">DAY.${k+1}<small>${md(dayDate(T,k))}</small></button>`).join('')}</div>
-  <div class="tdstat">${status}</div>
-  <div class="tdcard"><h3>DAY.${i+1}　${md(date)}（${wk(date)}）${esc(d.title)}</h3>${(()=>{const su=daySun(T,i);return su?`<div class="ts" style="margin:-4px 0 6px">日出 ${su[0]}．日落 ${su[1]}</div>`:''})()}<ol class="tdl">${list||'<li>這天還沒有行程</li>'}</ol>${d.planB.trim()?`<div class="tdplanb"><b>備案</b>${nl(d.planB)}</div>`:''}${stayFor(T,date)?`<div class="ts" style="margin-top:8px">今晚住：${esc(stayFor(T,date).name)}</div>`:''}</div>
+  <div class="tdstat">${status}</div>${nextCard}
+  <div class="tdcard"><h3>DAY.${i+1}　${md(date)}（${wk(date)}）${esc(d.title)}</h3>${(()=>{const su=daySun(T,i);return su?`<div class="ts" style="margin:-4px 0 6px">日出 ${su[0]}．日落 ${su[1]}</div>`:''})()}<ol class="tdl">${list||'<li>這天還沒有行程</li>'}</ol>${pbBox}${stayFor(T,date)?`<div class="ts" style="margin-top:8px">今晚住：${esc(stayFor(T,date).name)}</div>`:''}</div>
   ${shops.length?`<div class="tdcard"><h3>今天要買</h3>${shops.map(({s,k})=>`<label class="tdshop"><input type="checkbox" data-tshop="${k}" ${s.bought?'checked':''}><span class="${s.bought?'done':''}">${esc(s.name)}</span><small>${esc(s.store)}</small></label>`).join('')}</div>`:''}
   <div class="tdcard"><h3>記一筆花費</h3><div class="row"><input id="exName" placeholder="項目，例：午餐"><input id="exAmt" placeholder="金額" inputmode="decimal" style="flex:0 0 26%"><select id="exCur" style="flex:0 0 22%"><option value="JPY">日圓</option><option value="TWD">台幣</option></select><button class="btn pri" data-tadd="1">記</button></div>
     ${ex.length?`<ul class="tdex">${ex.map(o=>`<li>${esc(o.x.name)}<span>${o.x.cur==='JPY'?'¥':'NT$'} ${esc(o.x.amount)}</span><button class="mini danger" data-tdel="${o.k}">✕</button></li>`).join('')}</ul><div class="ts">這天合計：¥ ${sum.JPY.toLocaleString()}${sum.TWD?`　NT$ ${sum.TWD.toLocaleString()}`:''}</div>`:''}</div>
@@ -1598,7 +1757,9 @@ function showDriver(ref){const[k,id]=ref.split(':');const x=k==='p'?T.places.fin
 function bindToday(){
   $('#todayBtn').addEventListener('click',openToday);$('#tdclose').addEventListener('click',closeToday);$('#drvclose').addEventListener('click',()=>$('#drv').classList.remove('on'));
   const tb=$('#tdbody');
-  tb.addEventListener('click',e=>{const b=e.target.closest('[data-tday],[data-tcard],[data-tadd],[data-tdel]');if(!b)return;
+  tb.addEventListener('click',e=>{const b=e.target.closest('[data-tday],[data-tcard],[data-tadd],[data-tdel],[data-tdone],[data-tplanb]');if(!b)return;
+    if(b.dataset.tdone!=null){const d=T.days[TD.i],id=b.dataset.tdone,has=d.done.includes(id);d.done=has&&!b.dataset.tnext?d.done.filter(x=>x!==id):[...new Set([...d.done,id])];touch(true);renderToday();if(b.dataset.tnext){const c=$('#tdbody .tdnext');(c||$('#tdbody .tdstat')).scrollIntoView({behavior:'smooth',block:'start'})}return}
+    if(b.dataset.tplanb!=null){const d=T.days[+b.dataset.tplanb];d.planBOn=!d.planBOn;touch(true);renderToday();toast(d.planBOn?'改走備案了，已完成的行程會保留':'回到原本的行程');return}
     if(b.dataset.tday!=null){TD.i=+b.dataset.tday;renderToday();return}
     if(b.dataset.tcard){showDriver(b.dataset.tcard);return}
     if(b.dataset.tadd){const nm=$('#exName').value.trim(),am=$('#exAmt').value.trim();if(!am){toast('請輸入金額');return}T.expenses.push({id:uid(),date:dayDate(T,TD.i),name:nm||'花費',amount:am,cur:$('#exCur').value});touch(true);renderToday();toast('記好了');return}
@@ -1739,7 +1900,7 @@ function onAct(e){
   const[i,j]=String(a).split('.').map(Number);
   switch(act){
     case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;return;
-    case'tpl':T.theme.template=a;if(a==='matcha'){if(T.theme.color==='#2f5d50')T.theme.color='#5f7c6c'}break;
+    case'tpl':T.theme.template=a;{const tp=tplOf(T);tp.onSelect&&tp.onSelect(T)}break;
     case'color':T.theme.color=a;break;
     case'rmPhoto':setPath(T,a,null);break;
     case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);break;
@@ -1814,7 +1975,7 @@ function bind(){
   $('#exportBtn').addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('on')});
   document.addEventListener('click',e=>{if(!menu.contains(e.target))menu.classList.remove('on')});
   menu.addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;menu.classList.remove('on');
-    ({print:doPrint,html:()=>askShare('html','手機閱讀版',inc=>withShare(inc,exportHTML)),a4:exportA4,tpl:exportTemplate,png:openPNG,help:()=>openGuide(0),ui:openUI,ics:exportICS,gift:()=>askShare('gift','送禮版',inc=>withShare(inc,exportGift)),backup,import:()=>$('#importIn').click(),new:()=>newTrip(),
+    ({print:doPrint,html:()=>askShare('html','小冊原樣檔',inc=>withShare(inc,exportHTML)),digi:()=>askShare('html','手機閱讀版',inc=>withShare(inc,exportDigital)),a4:exportA4,tpl:exportTemplate,png:openPNG,help:()=>openGuide(0),ui:openUI,ics:exportICS,gift:()=>askShare('gift','送禮版',inc=>withShare(inc,exportGift)),backup,import:()=>$('#importIn').click(),new:()=>newTrip(),
       dup:()=>{const c=normalize(JSON.parse(JSON.stringify(T)));c.id=uid();c.title=(T.title||'未命名')+'（複本）';c.updated=Date.now();newTrip(c)},
       del:()=>modal('刪除行程','確定要刪除「'+esc(T.title||'未命名的旅行')+'」嗎？刪除後無法復原，建議先下載備份檔。',[['取消'],['刪除',async()=>{await DB.del(T.id);trips=trips.filter(t=>t.id!==T.id);if(!trips.length){await newTrip();return}switchTrip(trips[0].id);toast('已刪除')},'danger']])
     })[b.dataset.m]()});
@@ -1886,7 +2047,8 @@ function setupPWA(){
   if(innerWidth<=900)$$('.show-m').forEach(x=>x.style.display='block');else $$('.show-m').forEach(x=>x.style.display='none');
   await DB.open();saveState('ok');if(!DB.db)setTimeout(()=>toast('這個瀏覽器不能儲存資料（可能是無痕模式），關掉就會消失，請記得下載備份'),1500);
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
-  trips=(await DB.all()).map(normalize);
+  const raws=await DB.all();if(raws.some(r=>(+r.schema||1)>SCHEMA)){SAVE_LOCK=true;setTimeout(()=>modal('請更新旅冊','這台裝置裡的行程是用較新版本的旅冊存的。為了不蓋掉資料，這個舊版本暫停儲存。<br><br>請連上網路後重新整理頁面（加到主畫面的，請關掉再打開）。',[['知道了','','pri']]),800)}
+  trips=raws.map(r=>normalize(JSON.parse(JSON.stringify(r))));
   if(!trips.length){const s=sampleTrip();trips=[s];await DB.put(s)}
   const cur=LS.get('tabisatsu.cur');T=trips.find(t=>t.id===cur)||trips.slice().sort((a,b)=>b.updated-a.updated)[0];
   applyUI();bind();bindToday();setupPWA();renderTripSel();renderEditor();renderPreview();histReset();
