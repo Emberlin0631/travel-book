@@ -1,5 +1,5 @@
 // 旅冊 service worker: app shell offline + font cache. Bump VERSION when icons or the manifest change (pages are network-first).
-const VERSION = 'tabisatsu-v12';
+const VERSION = 'tabisatsu-v13';
 const FONTS = 'tabisatsu-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-64.png',
   './assets/travel-book/style-tokens.css',
@@ -64,7 +64,9 @@ const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192
   './assets/travel-book/empty/04-no-companions.webp'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // core files must all succeed; artwork is cached one by one so a single missing image can't block the update
+  const CORE = SHELL.filter(u => !u.includes('/assets/')), ART = SHELL.filter(u => u.includes('/assets/'));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE).then(() => Promise.allSettled(ART.map(u => c.add(u))))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()

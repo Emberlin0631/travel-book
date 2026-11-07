@@ -752,13 +752,23 @@ const ill=c=>MTON&&MATCHA.img['cat-'+c]?`<img class="mt mt-dcat" src="${MATCHA.i
 const MT_BITS={sakura:5,summer:3,maple:3,snow:4};
 const MT_NAMES=[...CATS.map(c=>'cat-'+c[0]),...['overview','route','info','emergency','reserve','pack','budget','stay','taxi','phrase','shop','notes'].map(x=>'sec-'+x),
   ...Object.keys(MT_BITS).flatMap(k=>['season-'+k+'-corner',...Array.from({length:MT_BITS[k]},(_,i)=>`season-${k}-bit${i+1}`)]),'paper-tile','cover-a','cover-b','cover-c'];
-const MATCHA={state:'',img:{},p:null};let MTON=false,MTSEASON='none';
-function loadMatcha(){if(MATCHA.p)return MATCHA.p;MATCHA.state='loading';
-  MATCHA.p=Promise.all(MT_NAMES.map(n=>fetch('assets/booklet/'+n+'.webp').then(r=>{if(!r.ok)throw 0;return r.blob()})
-    .then(b=>new Promise(res=>{const f=new FileReader();f.onload=()=>res([n,f.result]);f.onerror=()=>res([n,null]);f.readAsDataURL(b)})).catch(()=>[n,null])))
-  .then(list=>{list.forEach(([n,u])=>{if(u)MATCHA.img[n]=u});MATCHA.state=MATCHA.img['cat-city']?'ok':'fail';
-    if(MATCHA.state==='fail')toast('抹茶手帳的插圖載入失敗，先用一般插圖顯示');if(typeof renderPreview==='function'&&T)setTimeout(renderPreview,0);return MATCHA});return MATCHA.p}
-async function ensureMatcha(t){if(t&&t.theme.template==='matcha'&&MATCHA.state!=='ok'&&MATCHA.state!=='fail')await loadMatcha()}
+const MATCHA={state:'',img:{},failed:new Set(),busy:{}};let MTON=false,MTSEASON='none';
+const MT_BASE_NAMES=MT_NAMES.filter(n=>/^(cat|sec)-|^paper-tile$/.test(n));
+/* only what this trip needs: categories, chapter art, paper, the chosen cover and the trip's season */
+function mtNeeded(t){const se=seasonOf(t),c=t.opts.mcover;return [...MT_BASE_NAMES,'cover-'+c,...(MT_BITS[se]?['season-'+se+'-corner',...Array.from({length:MT_BITS[se]},(_,i)=>`season-${se}-bit${i+1}`)]:[])]}
+function mtFetch(n){if(MATCHA.img[n])return Promise.resolve(true);if(MATCHA.busy[n])return MATCHA.busy[n];
+  return MATCHA.busy[n]=fetch('assets/booklet/'+n+'.webp').then(r=>{if(!r.ok)throw 0;return r.blob()})
+    .then(b=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(f.result);f.onerror=rej;f.readAsDataURL(b)}))
+    .then(u=>{MATCHA.img[n]=u;MATCHA.failed.delete(n);return true}).catch(()=>{MATCHA.failed.add(n);return false}).finally(()=>{delete MATCHA.busy[n]})}
+async function loadMatcha(t=T,retry=false){if(!t)return MATCHA;const need=mtNeeded(t).filter(n=>!MATCHA.img[n]&&(retry||!MATCHA.failed.has(n)));if(!need.length)return MATCHA;
+  const first=!MATCHA.state;if(first)MATCHA.state='loading';
+  await Promise.all(need.map(mtFetch));
+  MATCHA.state=MATCHA.img['cat-city']?'ok':'fail';
+  if(MATCHA.state==='fail'&&first)toast('抹茶手帳的插圖載入失敗，先用一般插圖顯示');
+  if(typeof renderPreview==='function'&&T)setTimeout(renderPreview,0);return MATCHA}
+const mtMissing=t=>mtNeeded(t).filter(n=>!MATCHA.img[n]);
+async function ensureMatcha(t){if(!t||t.theme.template!=='matcha')return;await loadMatcha(t);
+  if(mtMissing(t).length)await loadMatcha(t,true);const miss=mtMissing(t).length;if(miss&&MATCHA.state==='ok')setTimeout(()=>toast(`注意：有 ${miss} 張抹茶手帳插圖載入失敗，這次的檔案少了這些圖。連上網路後再匯出一次就會補上。`),2600)}
 const mtI=(n,cls,st='')=>MATCHA.img[n]?`<img class="mt ${cls}" src="${MATCHA.img[n]}" alt=""${st?` style="${st}"`:''}>`:'';
 function mtBits(seed){const n=MT_BITS[MTSEASON];if(!n)return'';let r=seed||5;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};
   const spots=[[6,8],[84,58],[78,6],[10,64]];let out='';for(let k=0;k<2;k++){const[x,y]=spots[(Math.floor(rnd()*4)+k*2)%4];out+=mtI(`season-${MTSEASON}-bit${1+Math.floor(rnd()*n)}`,'mt-dec mt-bit',`left:${x}%;top:${y}%;transform:rotate(${Math.round(rnd()*50-25)}deg)`)}return out}
@@ -950,7 +960,7 @@ function fmtRange(t){const a=pd(t.start),b=pd(t.end);if(!a)return'';const A=t.st
 const pn=no=>`<div class="pn">${no}</div>`;
 
 function renderPages(t,splits,mode={}){
-  if(t.theme.template==='matcha'&&!MATCHA.state)loadMatcha();
+  if(t.theme.template==='matcha'&&mtMissing(t).some(n=>!MATCHA.failed.has(n)&&!MATCHA.busy[n]))loadMatcha(t);
   MTON=t.theme.template==='matcha'&&MATCHA.state==='ok';MTSEASON=seasonOf(t);
   try{const out=renderPages0(t,splits,mode);return MTON?out.map(h=>mtDecorate(h,t)):out}finally{MTON=false}
 }
@@ -1314,7 +1324,8 @@ const SHARE_CATS=[
   ['people','同行者名字',t=>!!t.travelers],
   ['emg','緊急聯絡人、保單號碼等緊急資料',t=>Object.values(t.emg||{}).some(Boolean)],
   ['phone','住宿電話與房型',t=>t.stays.some(s=>s.phone||s.room)]];
-const SHARE_DEF={gift:{money:false},html:{},png:{},tpl:{}};
+/* defaults lean private: emergency/insurance data is never on by default; images (often posted publicly) also drop bookings, names and money */
+const SHARE_DEF={gift:{money:false,emg:false,res:false},html:{emg:false},png:{res:false,money:false,people:false,emg:false,phone:false},tpl:{}};
 function shareGet(kind){let o={};try{o=JSON.parse(LS.get('tabisatsu.share.'+kind)||'{}')}catch(e){}return {...SHARE_DEF[kind],...o}}
 function shareBox(kind,t=T){const cur=shareGet(kind),cats=SHARE_CATS.filter(c=>c[2](t));if(!cats.length)return'';
   return `<div class="sharebox"><b>要放進去的資料</b><span class="hint">這個檔案會給別人看，不想給的就取消勾選。只影響這次的檔案，不會改到你的行程。</span>${cats.map(c=>`<label class="chk"><input type="checkbox" data-share="${c[0]}" ${cur[c[0]]!==false?'checked':''}> ${c[1]}</label>`).join('')}</div>`}
@@ -1670,7 +1681,7 @@ function onAct(e){
   const[i,j]=String(a).split('.').map(Number);
   switch(act){
     case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;return;
-    case'tpl':T.theme.template=a;if(a==='matcha'){loadMatcha();if(T.theme.color==='#2f5d50')T.theme.color='#5f7c6c'}break;
+    case'tpl':T.theme.template=a;if(a==='matcha'){if(T.theme.color==='#2f5d50')T.theme.color='#5f7c6c'}break;
     case'color':T.theme.color=a;break;
     case'rmPhoto':setPath(T,a,null);break;
     case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);break;
