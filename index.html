@@ -123,8 +123,11 @@ html.dark .empty.ill img{opacity:.88}
 .hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .hm-grid h3{font-size:16px;margin:12px 2px 4px}.hm-grid p{font-size:13px;line-height:1.7;color:var(--tb-muted,#66655f);margin:0 2px}
 .hm-grid .tb-feature-card img{aspect-ratio:3/2;object-fit:contain;background:#fbf4e9}
-.hm-banner{display:none}
-@media (max-width:720px){.home .tb-hero{background-image:none;min-height:0;padding:8px 20px 4px}.home .tb-hero-content{background:none;padding:0;max-width:none}.hm-banner{display:block;width:100%;height:auto;margin-top:18px;border-radius:16px}.hm-feat{padding-top:24px}.hm-grid{grid-template-columns:1fr 1fr;gap:10px}.hm-grid .tb-feature-card{padding:10px}.hm-grid h3{font-size:14px;margin-top:8px}.hm-grid p{font-size:12px}}
+.hm-visual{display:none}
+@media (max-width:720px){.home .tb-hero{background-image:none;min-height:0;padding:0 0 4px;border-radius:0}.home .tb-hero-content{background:none;padding:0;max-width:none;display:grid}
+.hm-visual{display:block;grid-area:1/1;aspect-ratio:900/1125;background:url(assets/travel-book/hero/hero-mobile-portrait.webp) center top/cover no-repeat}
+.hm-head{grid-area:1/1;z-index:1;align-self:start;padding:8vw 5vw 0 22vw}.home .hm-head h1{font-size:clamp(26px,8.2vw,36px);line-height:1.35;margin:0}
+.hm-lead,.hm-cta,.hm-note{margin-left:20px!important;margin-right:20px!important}.home .hm-lead{margin-top:16px}.hm-feat{padding-top:24px}.hm-grid{grid-template-columns:1fr 1fr;gap:10px}.hm-grid .tb-feature-card{padding:10px}.hm-grid h3{font-size:14px;margin-top:8px}.hm-grid p{font-size:12px}}
 .hm-foot{text-align:center;color:var(--tb-muted,#66655f);font-size:12px;padding:0 20px 30px}
 .tpls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .tplc{border:2px solid var(--ui-line);border-radius:8px;padding:8px;background:#fff;text-align:left}
@@ -531,11 +534,11 @@ html.dark .thumb{background-color:#333}
 <div class="home" id="home" hidden>
   <div class="hm-top"><img src="assets/travel-book/brand/logo-horizontal-clear.webp" alt="旅冊 Travel Book" width="216" height="34"><button class="tbtn" id="homeClose">回到編輯</button></div>
   <section class="tb-hero" aria-labelledby="hmTitle"><div class="tb-hero-content">
-    <h1 id="hmTitle">把旅行，<br>做成一本小冊。</h1>
-    <p>排好每天的行程，就會自動排成可以列印、對折裝訂、傳給旅伴的旅遊小冊。出發後還能當成隨身的今日行程。</p>
+    <div class="hm-head"><h1 id="hmTitle">把旅行，<br>做成一本小冊。</h1></div>
+    <div class="hm-visual" role="img" aria-label="桌上攤開的旅行手帳、相機、拍立得照片和咖啡"></div>
+    <p class="hm-lead">排好每天的行程，就會自動排成可以列印、對折裝訂、傳給旅伴的旅遊小冊。出發後還能當成隨身的今日行程。</p>
     <div class="hm-cta" id="hmCta"></div>
     <p class="hm-note">免註冊，資料只存在你的裝置，不會上傳。</p>
-    <img class="hm-banner" src="assets/travel-book/hero/hero-mobile.webp" alt="" width="943" height="509">
   </div></section>
   <section class="hm-feat" aria-labelledby="hmFeat"><h2 id="hmFeat">旅行的每一步</h2><p>從排行程到旅行後的回憶，都在同一份資料裡。</p>
   <div class="hm-grid">
