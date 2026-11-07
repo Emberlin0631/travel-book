@@ -11,7 +11,7 @@
 - `index.html`：整個 app（單一檔案）
 - `manifest.webmanifest`、`sw.js`、`icons/`：加到主畫面與離線使用
 
-每次更新 `index.html` 後，記得把 `sw.js` 裡的 `VERSION` 加一號，使用者才會拿到新版。
+`index.html` 走「先連網、失敗才用快取」，所以有網路時使用者打開就會拿到新版，不用改 `sw.js`。只有改了圖示或 `manifest.webmanifest` 時，才需要把 `sw.js` 裡的 `VERSION` 加一號，讓舊的快取被清掉。
 
 ## 授權與致謝
 

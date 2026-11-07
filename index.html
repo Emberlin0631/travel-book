@@ -476,7 +476,9 @@ function addD(s,n){const d=pd(s);if(!d)return'';d.setUTCDate(d.getUTCDate()+n);r
 const WK='日一二三四五六';
 const md=s=>{const d=pd(s);return d?`${d.getUTCMonth()+1}/${d.getUTCDate()}`:''};
 const wk=s=>{const d=pd(s);return d?WK[d.getUTCDay()]:''};
-function dayCount(t){const a=pd(t.start),b=pd(t.end);if(!a||!b||b<a)return 0;return Math.min(30,Math.round((b-a)/864e5)+1)}
+function dayCount(t){const a=pd(t.start),b=pd(t.end);if(!a||!b||b<a)return 0;return Math.min(MAXD,Math.round((b-a)/864e5)+1)}
+const MAXD=60;const spanDays=t=>{const a=pd(t.start),b=pd(t.end);return a&&b&&b>=a?Math.round((b-a)/864e5)+1:0};
+function dateHint(){const n=dayCount(T),all=spanDays(T);return T.start&&T.end&&!n?'<b style="color:#b23a28">回程日要在出發日之後</b>':all>MAXD?`<b style="color:#b23a28">每份行程最多 ${MAXD} 天，現在選了 ${all} 天，第 ${MAXD+1} 天以後不會出現。</b>可以拆成兩份行程。`:n?`共 ${n} 天，每天會自動產生一頁。`:'填好日期後，每天會自動產生一頁。'}
 const dayDate=(t,i)=>addD(t.start,i);
 function nights(a,b){const x=pd(a),y=pd(b);return x&&y&&y>x?Math.round((y-x)/864e5):0}
 const inFrame=()=>{try{return window.self!==window.top}catch(e){return true}};
@@ -946,23 +948,24 @@ function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.bo
 
 /* ---------- app state ---------- */
 let trips=[],T=null,tab='basic';const openSet=new Set();
-let saveTimer=null,prevTimer=null;
+let saveTimer=null,prevTimer=null,saveTarget=null,SHARING=false;
+function flushSave(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null;return save(saveTarget||T)}}
 /* undo/redo: snapshots with images pooled so history stays small */
 const IMGPOOL=new Map(),IMGID=new Map();let HIST=[],HIDX=-1,histTimer=null;
 const imgKey=v=>{let id=IMGID.get(v);if(!id){id=String(IMGID.size+1);IMGID.set(v,id);IMGPOOL.set(id,v)}return '@img:'+id};
 const snap=()=>JSON.stringify(T,(k,v)=>typeof v==='string'&&v.startsWith('data:image')?imgKey(v):v);
 const unsnap=x=>JSON.parse(x,(k,v)=>typeof v==='string'&&v.startsWith('@img:')?IMGPOOL.get(v.slice(5))||null:v);
 function histReset(){HIST=[snap()];HIDX=0;updUndo()}
-function histPush(){clearTimeout(histTimer);histTimer=null;const x=snap();if(x===HIST[HIDX])return;HIST=HIST.slice(0,HIDX+1);HIST.push(x);if(HIST.length>80)HIST.shift();HIDX=HIST.length-1;updUndo()}
+function histPush(){clearTimeout(histTimer);histTimer=null;if(SHARING)return;const x=snap();if(x===HIST[HIDX])return;HIST=HIST.slice(0,HIDX+1);HIST.push(x);if(HIST.length>80)HIST.shift();HIDX=HIST.length-1;updUndo()}
 function histGo(d){if(histTimer)histPush();const n=HIDX+d;if(n<0||n>=HIST.length){toast(d<0?'沒有可以復原的了':'沒有可以重做的了');return}
   HIDX=n;const t=normalize(unsnap(HIST[n]));t.id=T.id;const ix=trips.findIndex(x=>x.id===T.id);trips[ix]=t;T=t;
   clearTimeout(saveTimer);saveTimer=setTimeout(save,200);renderTripSel();renderEditor();renderPreview();updUndo();toast(d<0?'已復原':'已重做')}
 function updUndo(){const u=$('#undoBtn'),r=$('#redoBtn');if(u)u.disabled=HIDX<=0;if(r)r.disabled=HIDX>=HIST.length-1}
-function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?0:700);T.updated=Date.now();clearTimeout(saveTimer);saveTimer=setTimeout(save,400);saveState('ing');clearTimeout(prevTimer);prevTimer=setTimeout(renderPreview,full?0:280)}
+function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?0:700);T.updated=Date.now();clearTimeout(saveTimer);const tt=T;saveTimer=setTimeout(()=>{saveTimer=null;save(tt)},400);saveTarget=tt;saveState('ing');clearTimeout(prevTimer);prevTimer=setTimeout(renderPreview,full?0:280)}
 function saveState(k){const el=$('#savest');if(!el)return;el.classList.toggle('bad',k==='bad'||!DB.db);
   el.textContent=!DB.db?'⚠ 這個瀏覽器不能儲存，關掉就會消失，請下載備份':k==='ing'?'儲存中…':k==='bad'?'⚠ 儲存失敗，請下載備份':'✓ 已儲存在這台裝置';
   el.title=!DB.db?'可能是無痕模式或瀏覽器設定擋住了儲存':'資料只存在這台裝置的瀏覽器，不會自動同步到其他裝置'}
-async function save(){try{await DB.put(T);saveState('ok')}catch(e){saveState('bad');toast('儲存失敗：瀏覽器空間可能不足，建議先下載備份檔')}}
+async function save(t=T){if(SHARING&&t===T)return;try{await DB.put(t);if(t===T||!saveTimer)saveState('ok')}catch(e){saveState('bad');toast('儲存失敗：瀏覽器空間可能不足，建議先下載備份檔')}}
 function commit(){touch(true);renderEditor()}
 
 /* ---------- editor ---------- */
@@ -979,7 +982,7 @@ function edBasic(){
   return `<div class="card"><h4>旅行資訊</h4>
   ${fld('標題','title','例：京都賞楓五日遊')}${fld('副標題','subtitle','例：2026 秋天的小旅行')}
   <div class="row">${fld('出發日','start','','date')}${fld('回程日','end','','date')}</div>
-  <p class="hint" id="dateHint">${T.start&&T.end&&!n?'<b style="color:#b23a28">回程日要在出發日之後</b>':n?`共 ${n} 天，每天會自動產生一頁。`:'填好日期後，每天會自動產生一頁。'}</p>
+  <p class="hint" id="dateHint">${dateHint()}</p>
   ${fld('同行者','travelers','例：小明＆小美')}
   <div class="f"><span>封面照片</span>${photoIn('cover',T.cover,'wide')}${T.cover?posSel('coverPos',T.coverPos):''}</div></div>
   <div class="card"><h4>外觀</h4>
@@ -1181,7 +1184,7 @@ const SHARE_CATS=[
   ['people','同行者名字',t=>!!t.travelers],
   ['emg','緊急聯絡人、保單號碼等緊急資料',t=>Object.values(t.emg||{}).some(Boolean)],
   ['phone','住宿電話與房型',t=>t.stays.some(s=>s.phone||s.room)]];
-const SHARE_DEF={gift:{money:false},html:{},png:{}};
+const SHARE_DEF={gift:{money:false},html:{},png:{},tpl:{}};
 function shareGet(kind){let o={};try{o=JSON.parse(LS.get('tabisatsu.share.'+kind)||'{}')}catch(e){}return {...SHARE_DEF[kind],...o}}
 function shareBox(kind,t=T){const cur=shareGet(kind),cats=SHARE_CATS.filter(c=>c[2](t));if(!cats.length)return'';
   return `<div class="sharebox"><b>要放進去的資料</b><span class="hint">這個檔案會給別人看，不想給的就取消勾選。只影響這次的檔案，不會改到你的行程。</span>${cats.map(c=>`<label class="chk"><input type="checkbox" data-share="${c[0]}" ${cur[c[0]]!==false?'checked':''}> ${c[1]}</label>`).join('')}</div>`}
@@ -1193,7 +1196,8 @@ function scrubTrip(t,inc){const c=JSON.parse(JSON.stringify(t));
   if(inc.emg===false)for(const k in c.emg)c.emg[k]='';
   if(inc.phone===false)c.stays.forEach(s=>{s.phone='';s.room=''});
   return normalize(c)}
-async function withShare(inc,fn){if(!inc||!Object.values(inc).includes(false))return fn();const o=T;T=scrubTrip(o,inc);try{return await fn()}finally{T=o}}
+async function withShare(inc,fn){if(!inc||!Object.values(inc).includes(false))return fn();if(histTimer)histPush();await flushSave();clearTimeout(prevTimer);
+  const o=T;SHARING=true;T=scrubTrip(o,inc);try{return await fn()}finally{T=o;SHARING=false}}
 function askShare(kind,title,go){const box=shareBox(kind);if(!box)return go({});
   modal(title,box,[['取消'],['下載',()=>{},'pri']]);const root=$$('.modal-bg').pop();
   root.querySelector('.btn.pri').addEventListener('click',()=>go(shareRead(root,kind)),{capture:true})}
@@ -1285,6 +1289,7 @@ async function renderPNGs(onlyIdx,progress){
   const pgs=$$('.pg',a),out=[];
   try{for(let i=0;i<pgs.length;i++){if(onlyIdx!=null&&i!==onlyIdx)continue;progress&&progress(i+1,pgs.length);
     const c=await html2canvas(pgs[i],{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:false});
+    if(MONO){const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),q=d.data;for(let k=0;k<q.length;k+=4){const y=Math.round(q[k]*.299+q[k+1]*.587+q[k+2]*.114);q[k]=q[k+1]=q[k+2]=y}x.putImageData(d,0,0)}
     out.push({i,blob:await new Promise(r=>c.toBlob(r,'image/png'))})}}
   finally{a.removeAttribute('style');a.innerHTML=''}
   return out;
@@ -1292,7 +1297,7 @@ async function renderPNGs(onlyIdx,progress){
 function openPNG(){
   const n=pagesFor(T,curMode()).length;
   const bgEl=document.createElement('div');bgEl.className='modal-bg';
-  bgEl.innerHTML=`<div class="modal"><h3>每頁存成圖片（PNG）</h3><p>每頁轉成一張 ${PW*2}×${PH*2} 的圖片。第一次使用需要連上網路，下載轉圖片的工具。目前版本：${MODE_NAME[PMODE]}${MONO?'（黑白版的圖片仍是彩色）':''}。</p>
+  bgEl.innerHTML=`<div class="modal"><h3>每頁存成圖片（PNG）</h3><p>每頁轉成一張 ${PW*2}×${PH*2} 的圖片。第一次使用需要連上網路，下載轉圖片的工具。目前版本：${MODE_NAME[PMODE]}${MONO?'（黑白）':''}。</p>
   <label class="f"><span>要匯出哪些頁</span><select id="pngSel"><option value="all">全部 ${n} 頁（打包成 ZIP）</option>${Array.from({length:n},(_,i)=>`<option value="${i}">只要第 ${i+1} 頁</option>`).join('')}</select></label>
   ${shareBox('png')}<p class="hint" id="pngMsg"></p><div class="row"><button class="btn" data-x="cancel">取消</button>${navigator.canShare&&!inFrame()?'<button class="btn" data-x="share">分享到其他 App</button>':''}<button class="btn pri" data-x="dl">下載</button></div></div>`;
   document.body.appendChild(bgEl);let busy=false;
@@ -1309,15 +1314,28 @@ function openPNG(){
       const blob=await z.generateAsync({type:'blob'});if(await saveFile(base+'_圖片.zip',blob,'application/zip'))toast(`已下載 ${list.length} 張圖片`);bgEl.remove()}
     catch(err){msg.textContent=err&&err.message==='load'?'下載轉圖片工具失敗，請確認有連上網路再試一次。':'轉換失敗：'+(err&&err.name==='AbortError'?'已取消分享':(err&&err.message||err));busy=false}});
 }
-async function exportTemplate(){
-  const c=JSON.parse(JSON.stringify(T));
-  Object.assign(c,{travelers:'',cover:null,gift:{to:'',from:'',letter:''},expenses:[],budget:c.budget.map(b=>({...b,amount:''})),rate:''});
-  c.days.forEach(d=>{d.photo=null;d.memText='';d.memPhotos=[];d.items.forEach(i=>{i.resNo='';i.secret=false;if(i.reserve==='done')i.reserve='need'})});
-  c.places.forEach(p=>p.photo=null);c.shops.forEach(x=>{x.photo=null;x.bought=false});c.custom=c.custom.filter(x=>x.kind==='text');
-  c.stays.forEach(x=>{x.photo=null;x.booking='';x.room='';x.phone=''});c.flights.forEach(f=>f.code='');c.title=(c.title||'行程')+'（範本）';
-  if(await saveFile(safeName(T.title)+'_範本.json',JSON.stringify({app:'tabisatsu',v:1,template:true,trip:c}),'application/json'))
-    toast('已匯出範本：不含照片、同行者、訂位編號和花費');
-}
+/* template = allow-list: only fields listed here leave the device; anything new or personal stays out by default */
+function templateTrip(t,inc={}){
+  const pick=(o,keys)=>Object.fromEntries(keys.filter(k=>o[k]!=null).map(k=>[k,o[k]]));
+  const c={title:(t.title||'行程')+'（範本）',subtitle:t.subtitle,start:t.start,end:t.end,tz:t.tz,theme:t.theme,opts:t.opts,packing:t.packing,
+    notes:inc.notes===false?'':t.notes,
+    budget:t.budget.map(b=>({name:b.name,cur:b.cur})),
+    days:t.days.map(d=>({...pick(d,['id','title','area','planB']),items:d.items.map(i=>({...pick(i,['id','time','text','placeId','transport','note']),reserve:i.reserve?'need':''}))})),
+    places:t.places.map(p=>pick(p,['id','name','area','cat','mapUrl','lat','lng','desc','hours','price','address','tips','jaName','jaAddress','closed'])),
+    shops:t.shops.map(x=>pick(x,['id','name','store','price','dayId','note'])),
+    stays:t.stays.map(x=>pick(x,['id','name','address','station','checkin','cinTime','checkout','coutTime','auto','desc','note','jaName','jaAddress','mapUrl','lat','lng'])),
+    flights:t.flights.map(f=>pick(f,['id','label','date','time','from','to'])),
+    custom:inc.notes===false?[]:t.custom.filter(x=>x.kind==='text').map(x=>pick(x,['id','kind','title','body','after']))};
+  return normalize(JSON.parse(JSON.stringify(c)))}
+function exportTemplate(){
+  const has=!!(T.notes||T.custom.some(x=>x.kind==='text'));
+  const go=async inc=>{if(await saveFile(safeName(T.title)+'_範本.json',JSON.stringify({app:'tabisatsu',v:1,template:true,trip:templateTrip(T,inc)}),'application/json'))
+    toast('已匯出範本：不含照片、同行者、訂位編號、花費、緊急資料')};
+  if(!has)return go({});
+  const cur=shareGet('tpl');
+  modal('分享成範本',`<div class="sharebox"><span class="hint">範本只會帶出行程、景點、住宿名稱與地址、購物清單這些內容。<b>一定不會帶出</b>：照片、同行者、訂位與訂房編號、訂房連結、房型與電話、花費、緊急聯絡與保險資料、送禮信、回憶。</span><label class="chk"><input type="checkbox" data-share="notes" ${cur.notes!==false?'checked':''}> 也放入「旅行筆記」和自訂文字頁</label><span class="hint">筆記裡如果寫了私人資料，請取消勾選。</span></div>`,[['取消'],['下載',()=>{},'pri']]);
+  const root=$$('.modal-bg').pop();root.querySelector('.btn.pri').addEventListener('click',()=>go(shareRead(root,'tpl')),{capture:true})}
+
 async function backup(){if(await saveFile(safeName(T.title)+'_備份.json',JSON.stringify({app:'tabisatsu',v:1,trip:T}),'application/json')){T.backupAt=Date.now();save();toast('已下載備份檔');renderBackupBar()}}
 function tripBytes(t){try{return new Blob([JSON.stringify(t)]).size}catch(e){return 0}}
 const fmtMB=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
@@ -1438,7 +1456,7 @@ function dragEnd(){if(!drag)return;const{el,box,i,moved}=drag;drag=null;el.class
   const order=$$('.item[data-j]',box).map(x=>+x.dataset.j),old=T.days[i].items;T.days[i].items=order.map(j=>old[j]);commit()}
 
 /* ---------- calendar (.ics) ---------- */
-function icsEsc(x){return String(x||'').replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
+function icsEsc(x){return String(x||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
 function icsFold(line){const enc=new TextEncoder();let out='',cur='';for(const ch of line){if(enc.encode(cur+ch).length>73){out+=cur+'\r\n ';cur=ch}else cur+=ch}return out+cur}
 function exportICS(){
   const n=dayCount(T),pb=Object.fromEntries(T.places.map(p=>[p.id,p])),ev=[],stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
@@ -1504,7 +1522,7 @@ function onField(e){
   const v=el.type==='checkbox'?el.checked:el.value;
   if(getPath(T,k)===v)return;
   setPath(T,k,v);
-  if(k==='start'||k==='end'){padDays(T);const n=dayCount(T);$('#dateHint').innerHTML=T.start&&T.end&&!n?'<b style="color:#b23a28">回程日要在出發日之後</b>':n?`共 ${n} 天，每天會自動產生一頁。`:''}
+  if(k==='start'||k==='end'){padDays(T);$('#dateHint').innerHTML=dateHint()}
   if(k==='theme.color'){T.theme.color=okColor(v);$$('.swc').forEach(b=>b.classList.toggle('on',b.dataset.a===v));$$('.sw-prev').forEach(b=>b.style.setProperty('--sw',v))}
   if(k==='title'){const o=$(`#tripSel option[value="${T.id}"]`);if(o)o.textContent=v||'未命名的旅行'}
   const m=k.match(/^days\.(\d+)\.title$/);if(m){const s=$(`[data-sum="${m[1]}"]`);if(s)s.textContent=v}
@@ -1575,7 +1593,7 @@ function onAct(e){
   }
   commit();
 }
-async function switchTrip(id){if(histTimer)histPush();T=trips.find(t=>t.id===id)||trips[0];histReset();LS.set('tabisatsu.cur',T.id);openSet.clear();renderTripSel();renderEditor();renderPreview();$('#preview').scrollTop=0}
+async function switchTrip(id){if(histTimer)histPush();flushSave();T=trips.find(t=>t.id===id)||trips[0];histReset();LS.set('tabisatsu.cur',T.id);openSet.clear();renderTripSel();renderEditor();renderPreview();$('#preview').scrollTop=0}
 async function newTrip(t){t=t||blankTrip();trips.push(t);await DB.put(t);tab='basic';switchTrip(t.id)}
 
 function bind(){
@@ -1607,8 +1625,8 @@ function bind(){
   addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const k=e.key.toLowerCase();if(k!=='z'&&k!=='y')return;
     const a=document.activeElement;if(a&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&!['checkbox','radio','file','color'].includes(a.type))))return;
     e.preventDefault();histGo(k==='y'||e.shiftKey?1:-1)});
-  window.addEventListener('beforeunload',()=>{if(saveTimer){clearTimeout(saveTimer);save()}});
-  const flush=()=>{if(saveTimer){clearTimeout(saveTimer);saveTimer=null;save()}};addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+  window.addEventListener('beforeunload',()=>flushSave());
+  const flush=flushSave;addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
 }
 /* ---------- UI settings (per device) ---------- */
 let UI={size:'1',theme:'auto'};try{UI={...UI,...JSON.parse(LS.get('tabisatsu.ui')||'{}')}}catch(e){}
