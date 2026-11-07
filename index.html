@@ -28,7 +28,11 @@ button{font:inherit;cursor:pointer;color:inherit}
 .tbtn:hover{background:rgba(255,255,255,.08)}
 .tbtn.pri{background:#e9c46a;color:#1f2a27;border-color:#e9c46a;font-weight:700}
 .spacer{flex:1}
-.menu{position:absolute;right:14px;top:50px;background:#fff;color:var(--ui-ink);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;min-width:220px;display:none}
+.menu{position:absolute;right:14px;top:50px;background:#fff;color:var(--ui-ink);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;min-width:220px;max-width:320px;max-height:calc(100vh - 70px);overflow:auto;display:none}
+.sharebox{display:flex;flex-direction:column;gap:2px;text-align:left;margin:4px 0 2px}.sharebox .hint{margin:2px 0 6px}
+.menu .mg{font-size:11px;font-weight:700;color:var(--ui-mute);letter-spacing:.08em;padding:10px 12px 2px;border-top:1px solid var(--ui-line);margin-top:4px}
+.menu .mg:first-of-type{border-top:0;margin-top:0}
+.savest{font-size:12px;opacity:.75;white-space:nowrap}.savest.bad{opacity:1;color:#ffb4a8;font-weight:700}
 .menu.on{display:block}
 .menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:6px}
 .menu button:hover{background:#f3f0ea}
@@ -209,6 +213,7 @@ html.dark .thumb{background-color:#333}
 </style>
 <style id="bkcss">
 .bk{--c:#2f5d50;--paper:#fffdf9;--ink:#23211e;--mute:#8b857c;--line:#e7e1d6;--head:"Noto Sans TC",sans-serif;--body:"Noto Sans TC",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bk .pg{overflow-wrap:anywhere}
 .bk.tpl-wafu{--paper:#f7f4ec;--ink:#1d2742;--mute:#6f7383;--line:#d5cfbf;--head:"Noto Serif TC",serif}
 .bk.tpl-minimal{--paper:#fff;--ink:#141414;--mute:#777;--line:#dcdcdc}
 .bk.f-serif{--body:"Noto Serif TC",serif}
@@ -403,6 +408,7 @@ html.dark .thumb{background-color:#333}
   <select id="tripSel" aria-label="切換行程"></select>
   <button class="tbtn hide-m" id="newTrip">＋ 新行程</button>
   <div class="spacer"></div>
+  <span class="savest hide-m" id="savest" aria-live="polite"></span>
   <button class="tbtn pri" id="installBtn" hidden>安裝 App</button>
   <button class="tbtn icon" id="undoBtn" title="復原（Ctrl+Z）" disabled>↶</button><button class="tbtn icon" id="redoBtn" title="重做（Ctrl+Shift+Z）" disabled>↷</button>
   <button class="tbtn" id="todayBtn">今日</button>
@@ -410,17 +416,22 @@ html.dark .thumb{background-color:#333}
   <button class="tbtn pri" id="exportBtn">匯出 ▾</button>
   <div class="menu" id="menu">
     <div class="mnote" id="mnote"></div>
-    <button data-m="print">列印／存成 PDF<small>A5 小冊，可以直接印或存 PDF</small></button>
-    <button data-m="html">下載小冊（HTML 檔）<small>手機也能翻閱，可傳給旅伴</small></button>
-    <button data-m="a4">A4 對折小冊（HTML 檔）<small>一張 A4 印兩頁，對折裝訂；可存 PDF 拿去 7-11 印</small></button>
-    <button data-m="ics">加入行事曆（.ics 檔）<small>手機、Google 日曆都能匯入</small></button>
-    <button data-m="gift">下載送禮版（HTML 檔）<small>拆信封、讀信、出發倒數、驚喜行程</small></button>
+    <div class="mg">印成紙本</div>
+    <button data-m="a4">印成對折小冊（A4）<small>一張 A4 印兩頁，對折就是一本，適合 7-11 ibon。會下載一個檔案，打開後按「列印」</small></button>
+    <button data-m="print">印成單頁小冊（A5）<small>一頁一張，直接列印或存成 PDF</small></button>
+    <div class="mg">傳給旅伴</div>
+    <button data-m="html">手機閱讀版<small>下載一個檔案傳 LINE，沒網路也能翻，也能從裡面列印</small></button>
+    <button data-m="png">每頁存成圖片<small>傳 LINE、發限動用</small></button>
+    <button data-m="ics">加入手機行事曆<small>iPhone、Google 日曆都能匯入（.ics）</small></button>
+    <div class="mg">送給別人</div>
+    <button data-m="gift">送禮版<small>拆信封、讀信、出發倒數、驚喜行程</small></button>
+    <div class="mg">資料</div>
     <button data-m="backup">下載備份檔<small>換手機或電腦時用來搬資料</small></button>
-    <button data-m="import">匯入備份檔</button>
-    <button data-m="new" class="show-m">新增一份行程</button>
-    <button data-m="png">匯出圖片（PNG）<small>每頁一張圖，傳 LINE、發限動用</small></button>
-    <button data-m="tpl">匯出範本（分享行程給別人）<small>不含照片、同行者、訂位編號、花費；對方用「匯入」就能套用</small></button>
+    <button data-m="import">匯入備份檔或範本</button>
+    <button data-m="tpl">分享成範本<small>不含照片、同行者、訂位編號、花費；對方用「匯入」就能套用</small></button>
     <button data-m="dup">複製這份行程</button>
+    <button data-m="new" class="show-m">新增一份行程</button>
+    <div class="mg">其他</div>
     <button data-m="help">使用說明</button>
     <button data-m="ui">顯示設定<small>字體大小、深色模式</small></button>
     <button data-m="del" style="color:#b23a28">刪除這份行程</button>
@@ -947,8 +958,11 @@ function histGo(d){if(histTimer)histPush();const n=HIDX+d;if(n<0||n>=HIST.length
   HIDX=n;const t=normalize(unsnap(HIST[n]));t.id=T.id;const ix=trips.findIndex(x=>x.id===T.id);trips[ix]=t;T=t;
   clearTimeout(saveTimer);saveTimer=setTimeout(save,200);renderTripSel();renderEditor();renderPreview();updUndo();toast(d<0?'已復原':'已重做')}
 function updUndo(){const u=$('#undoBtn'),r=$('#redoBtn');if(u)u.disabled=HIDX<=0;if(r)r.disabled=HIDX>=HIST.length-1}
-function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?0:700);T.updated=Date.now();clearTimeout(saveTimer);saveTimer=setTimeout(save,400);clearTimeout(prevTimer);prevTimer=setTimeout(renderPreview,full?0:280)}
-async function save(){try{await DB.put(T)}catch(e){toast('儲存失敗：瀏覽器空間可能不足，建議先下載備份檔')}}
+function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?0:700);T.updated=Date.now();clearTimeout(saveTimer);saveTimer=setTimeout(save,400);saveState('ing');clearTimeout(prevTimer);prevTimer=setTimeout(renderPreview,full?0:280)}
+function saveState(k){const el=$('#savest');if(!el)return;el.classList.toggle('bad',k==='bad'||!DB.db);
+  el.textContent=!DB.db?'⚠ 這個瀏覽器不能儲存，關掉就會消失，請下載備份':k==='ing'?'儲存中…':k==='bad'?'⚠ 儲存失敗，請下載備份':'✓ 已儲存在這台裝置';
+  el.title=!DB.db?'可能是無痕模式或瀏覽器設定擋住了儲存':'資料只存在這台裝置的瀏覽器，不會自動同步到其他裝置'}
+async function save(){try{await DB.put(T);saveState('ok')}catch(e){saveState('bad');toast('儲存失敗：瀏覽器空間可能不足，建議先下載備份檔')}}
 function commit(){touch(true);renderEditor()}
 
 /* ---------- editor ---------- */
@@ -1161,6 +1175,28 @@ async function saveFile(name,text,mime){ /* text may be a string or a Blob */
   try{const url=URL.createObjectURL(text instanceof Blob?text:new Blob([text],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},1500);return true}
   catch(e){toast('這個環境不允許下載');return false}
 }
+const SHARE_CATS=[
+  ['res','訂位、訂房編號與訂房連結',t=>t.days.some(d=>d.items.some(i=>i.resNo))||t.stays.some(s=>s.booking||s.bookUrl)],
+  ['money','花費、預算與匯率',t=>t.expenses.length>0||t.budget.some(b=>b.amount)],
+  ['people','同行者名字',t=>!!t.travelers],
+  ['emg','緊急聯絡人、保單號碼等緊急資料',t=>Object.values(t.emg||{}).some(Boolean)],
+  ['phone','住宿電話與房型',t=>t.stays.some(s=>s.phone||s.room)]];
+const SHARE_DEF={gift:{money:false},html:{},png:{}};
+function shareGet(kind){let o={};try{o=JSON.parse(LS.get('tabisatsu.share.'+kind)||'{}')}catch(e){}return {...SHARE_DEF[kind],...o}}
+function shareBox(kind,t=T){const cur=shareGet(kind),cats=SHARE_CATS.filter(c=>c[2](t));if(!cats.length)return'';
+  return `<div class="sharebox"><b>要放進去的資料</b><span class="hint">這個檔案會給別人看，不想給的就取消勾選。只影響這次的檔案，不會改到你的行程。</span>${cats.map(c=>`<label class="chk"><input type="checkbox" data-share="${c[0]}" ${cur[c[0]]!==false?'checked':''}> ${c[1]}</label>`).join('')}</div>`}
+function shareRead(root,kind){const o={};$$('[data-share]',root).forEach(x=>o[x.dataset.share]=x.checked);LS.set('tabisatsu.share.'+kind,JSON.stringify({...shareGet(kind),...o}));return o}
+function scrubTrip(t,inc){const c=JSON.parse(JSON.stringify(t));
+  if(inc.res===false){c.days.forEach(d=>d.items.forEach(i=>i.resNo=''));c.stays.forEach(s=>{s.booking='';s.bookUrl=''})}
+  if(inc.money===false){c.expenses=[];c.budget=[];c.rate='';c.opts.budgetPage=false}
+  if(inc.people===false)c.travelers='';
+  if(inc.emg===false)for(const k in c.emg)c.emg[k]='';
+  if(inc.phone===false)c.stays.forEach(s=>{s.phone='';s.room=''});
+  return normalize(c)}
+async function withShare(inc,fn){if(!inc||!Object.values(inc).includes(false))return fn();const o=T;T=scrubTrip(o,inc);try{return await fn()}finally{T=o}}
+function askShare(kind,title,go){const box=shareBox(kind);if(!box)return go({});
+  modal(title,box,[['取消'],['下載',()=>{},'pri']]);const root=$$('.modal-bg').pop();
+  root.querySelector('.btn.pri').addEventListener('click',()=>go(shareRead(root,kind)),{capture:true})}
 const EXPORT_CSS=`body{margin:0;background:#4a4744;font-family:"Noto Sans TC",sans-serif}
 .bar{position:sticky;top:0;z-index:2;background:#1f2a27;color:#fff;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}
 .bar button{background:#e9c46a;border:0;border-radius:6px;padding:7px 14px;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px}
@@ -1196,11 +1232,19 @@ const GIFT_CSS=`body{margin:0;background:#3b3632;font-family:"Noto Sans TC",sans
 #pages .bk{display:flex;flex-direction:column;align-items:center;gap:18px;padding:20px 0 40px}
 .pg{box-shadow:0 4px 18px rgba(0,0,0,.35);zoom:var(--z,1)}
 @keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.skipenv{background:none;border:0;color:#cfc6b8;font-size:13px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:6px}
+.reletter{position:fixed;right:12px;bottom:12px;z-index:4;background:rgba(255,250,240,.94);color:#2b2622;border:0;border-radius:18px;padding:8px 14px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer;font-family:inherit}
+@media print{.reletter,.cdbar{display:none}}
 @keyframes pulse{50%{opacity:.45}}`;
 function giftRuntime(){
   var env=document.getElementById('env'),E=document.querySelector('.envelope'),cd=document.getElementById('cd');
   E.addEventListener('click',function(){if(E.classList.contains('open'))return;E.classList.add('open');setTimeout(function(){env.classList.add('read')},1300)});
-  document.getElementById('toBook').addEventListener('click',function(){env.style.display='none';document.getElementById('book').style.display='block';window.scrollTo(0,0);z()});
+  var book=document.getElementById('book'),KEY='tabisatsu.gift.'+G.id;
+  function showBook(){env.style.display='none';book.style.display='block';window.scrollTo(0,0);z();if(!G.p)try{localStorage.setItem(KEY,'1')}catch(e){}}
+  document.getElementById('toBook').addEventListener('click',showBook);
+  document.getElementById('skipEnv').addEventListener('click',showBook);
+  document.getElementById('reLetter').addEventListener('click',function(){book.style.display='none';env.style.display='';E.classList.add('open');env.classList.add('read');window.scrollTo(0,0)});
+  try{if(!G.p&&localStorage.getItem(KEY))showBook()}catch(e){}
   function z(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-16)/559))}
   z();addEventListener('resize',z);
   var tg=null;if(G.start){var p=G.start.split('-').map(Number);tg=new Date(p[0],p[1]-1,p[2]).getTime()}
@@ -1212,23 +1256,23 @@ function giftRuntime(){
     cd.innerHTML='距離出發還有<b>'+D+'</b>天<b>'+H+'</b>時<b>'+M+'</b>分<b>'+S+'</b>秒'+(G.n?'<small>還有 '+G.n+' 個驚喜行程，出發當天揭曉</small>':'')}
   tick();setInterval(tick,1000);
 }
-async function giftHTML(){
+async function giftHTML(preview){
   const a=$('#printArea');try{await document.fonts.ready}catch(e){}
   a.innerHTML=bkOpen(T)+pagesFor(T,{gift:true}).join('')+'</div>';fitAll(a);const masked=a.innerHTML;
   const n=T.days.slice(0,dayCount(T)).reduce((x,d)=>x+d.items.filter(i=>i.secret&&(i.text||i.placeId)).length,0);
   let enc='';if(n){a.innerHTML=bkOpen(T)+pagesFor(T).join('')+'</div>';fitAll(a);enc=btoa(unescape(encodeURIComponent(a.innerHTML))).split('').reverse().join('')}
   a.innerHTML='';
-  const g=T.gift,c=okColor(T.theme.color),data=JSON.stringify({start:T.start,n,enc}).replace(/</g,'\\u003c');
+  const g=T.gift,c=okColor(T.theme.color),data=JSON.stringify({start:T.start,n,enc,id:T.id,p:preview?1:0}).replace(/</g,'\\u003c');
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(g.to?'給 '+g.to+' 的旅行':T.title||'旅行禮物')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet"><style>:root{--c:${c}}${$('#bkcss').textContent}\n${GIFT_CSS}</style></head><body>
-<div class="env" id="env"><div class="stage"><div class="envelope"><div class="back"></div><div class="letter"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div>${nl(g.letter)}</div><div class="pocket"></div><div class="flap"></div><div class="seal">旅</div></div><div class="tap">點信封打開</div></div>
+<div class="env" id="env"><div class="stage"><div class="envelope"><div class="back"></div><div class="letter"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div>${nl(g.letter)}</div><div class="pocket"></div><div class="flap"></div><div class="seal">旅</div></div><div class="tap">點信封打開</div><button class="skipenv" id="skipEnv">先不拆，直接看行程</button></div>
 <div class="card"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div><div>${nl(g.letter)||esc(T.title)}</div>${g.from?`<div class="lt-from">— ${esc(g.from)}</div>`:''}<button id="toBook">打開旅行小冊</button></div></div>
-<div id="book" style="display:none"><div class="cdbar" id="cd"></div><div id="pages">${masked}</div></div>
+<div id="book" style="display:none"><div class="cdbar" id="cd"></div><button class="reletter" id="reLetter">再看一次信</button><div id="pages">${masked}</div></div>
 <script>var G=${data};(${giftRuntime.toString()})();<\/script></body></html>`;
 }
 async function exportGift(){const h=await giftHTML();if(await saveFile(safeName((T.gift.to?'給'+T.gift.to+'_':'')+(T.title||'旅行'))+'_送禮版.html',h,'text/html'))toast('已下載送禮版')}
-async function previewGift(){const h=await giftHTML();$('#gframe').srcdoc=h;$('#giftprev').classList.add('on')}
+async function previewGift(){const h=await giftHTML(true);$('#gframe').srcdoc=h;$('#giftprev').classList.add('on')}
 async function doPrint(){
-  if(inFrame()){modal('這裡無法直接列印','目前是預覽環境，瀏覽器不允許從這裡列印。請改用「下載小冊（HTML 檔）」，打開下載的檔案後，按上方的「列印／存成 PDF」。<br><br>放到正式網站上就可以直接列印。',[['下載小冊',()=>exportHTML(),'pri'],['關閉']]);return}
+  if(inFrame()){modal('這裡無法直接列印','目前是預覽環境，瀏覽器不允許從這裡列印。請改用「手機閱讀版」下載檔案，打開後，按上方的「列印／存成 PDF」。<br><br>放到正式網站上就可以直接列印。',[['下載手機閱讀版',()=>askShare('html','手機閱讀版',inc=>withShare(inc,exportHTML)),'pri'],['關閉']]);return}
   await offscreenPages();
   const clear=()=>{$('#printArea').innerHTML='';removeEventListener('afterprint',clear)};addEventListener('afterprint',clear);
   window.print();
@@ -1248,14 +1292,16 @@ async function renderPNGs(onlyIdx,progress){
 function openPNG(){
   const n=pagesFor(T,curMode()).length;
   const bgEl=document.createElement('div');bgEl.className='modal-bg';
-  bgEl.innerHTML=`<div class="modal"><h3>匯出圖片（PNG）</h3><p>每頁轉成一張 ${PW*2}×${PH*2} 的圖片。第一次使用需要連上網路，下載轉圖片的工具。目前版本：${MODE_NAME[PMODE]}${MONO?'（黑白版的圖片仍是彩色）':''}。</p>
+  bgEl.innerHTML=`<div class="modal"><h3>每頁存成圖片（PNG）</h3><p>每頁轉成一張 ${PW*2}×${PH*2} 的圖片。第一次使用需要連上網路，下載轉圖片的工具。目前版本：${MODE_NAME[PMODE]}${MONO?'（黑白版的圖片仍是彩色）':''}。</p>
   <label class="f"><span>要匯出哪些頁</span><select id="pngSel"><option value="all">全部 ${n} 頁（打包成 ZIP）</option>${Array.from({length:n},(_,i)=>`<option value="${i}">只要第 ${i+1} 頁</option>`).join('')}</select></label>
-  <p class="hint" id="pngMsg"></p><div class="row"><button class="btn" data-x="cancel">取消</button>${navigator.canShare&&!inFrame()?'<button class="btn" data-x="share">分享到其他 App</button>':''}<button class="btn pri" data-x="dl">下載</button></div></div>`;
+  ${shareBox('png')}<p class="hint" id="pngMsg"></p><div class="row"><button class="btn" data-x="cancel">取消</button>${navigator.canShare&&!inFrame()?'<button class="btn" data-x="share">分享到其他 App</button>':''}<button class="btn pri" data-x="dl">下載</button></div></div>`;
   document.body.appendChild(bgEl);let busy=false;
+  bgEl.addEventListener('change',e=>{if(!e.target.dataset.share)return;const inc={};$$('[data-share]',bgEl).forEach(x=>inc[x.dataset.share]=x.checked);
+    const m=pagesFor(scrubTrip(T,inc),curMode()).length,sel=$('#pngSel',bgEl),v=sel.value;sel.innerHTML=`<option value="all">全部 ${m} 頁（打包成 ZIP）</option>`+Array.from({length:m},(_,i)=>`<option value="${i}">只要第 ${i+1} 頁</option>`).join('');if(v==='all'||+v<m)sel.value=v});
   bgEl.addEventListener('click',async e=>{const b=e.target.closest('[data-x]');if(!b){if(e.target===bgEl&&!busy)bgEl.remove();return}
     if(b.dataset.x==='cancel'){if(!busy)bgEl.remove();return}if(busy)return;busy=true;
     const v=$('#pngSel',bgEl).value,msg=$('#pngMsg',bgEl),base=safeName(T.title);
-    try{const list=await renderPNGs(v==='all'?null:+v,(k,N)=>msg.textContent=`正在轉第 ${k}／${N} 頁…`);
+    try{const inc=shareRead(bgEl,'png');const list=await withShare(inc,()=>renderPNGs(v==='all'?null:+v,(k,N)=>msg.textContent=`正在轉第 ${k}／${N} 頁…`));
       if(b.dataset.x==='share'){const files=list.map(x=>new File([x.blob],`${base}_${x.i+1}.png`,{type:'image/png'}));
         if(navigator.canShare({files})){await navigator.share({files,title:T.title||'旅冊'});bgEl.remove();return}msg.textContent='這個裝置不支援分享這麼多張，改用下載'}
       if(list.length===1){if(await saveFile(`${base}_第${list[0].i+1}頁.png`,list[0].blob,'image/png'))toast('已下載圖片');bgEl.remove();return}
@@ -1281,6 +1327,7 @@ function renderBackupBar(){const el=$('#bkbar');if(!el||!T)return;
   el.hidden=!show;if(show)$('#bkmsg').textContent=T.backupAt?`已經 ${days} 天沒備份這份行程了`:'這份行程還沒備份過';}
 async function storageInfo(){const el=$('#stinfo');if(!el)return;let txt=`這份行程約 ${fmtMB(tripBytes(T))}（含照片）`;
   try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();if(e.quota){const r=e.usage/e.quota;txt+=`；這個瀏覽器已用 ${fmtMB(e.usage)}，約 ${(r*100).toFixed(r<.01?1:0)}%`;if(r>.8)txt+='，空間快滿了，建議先備份並刪掉不用的照片'}}}catch(e){}
+  try{if(navigator.storage&&navigator.storage.persisted){const ok=await navigator.storage.persisted();txt+=ok?'。瀏覽器已同意長期保存這個網站的資料（仍建議出發前備份一次）':'。瀏覽器目前沒有承諾長期保存，空間不足時可能被清除，請記得定期備份'}}catch(e){}
   el.textContent=txt}
 async function importFile(f){
   try{const o=JSON.parse(await f.text());const raw=o&&o.trip?o.trip:o;if(!raw||!Array.isArray(raw.days))throw 0;
@@ -1396,11 +1443,13 @@ function icsFold(line){const enc=new TextEncoder();let out='',cur='';for(const c
 function exportICS(){
   const n=dayCount(T),pb=Object.fromEntries(T.places.map(p=>[p.id,p])),ev=[],stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
   const dt=(date,min)=>date.replace(/-/g,'')+'T'+fmtHM(min).replace(':','')+'00';
+  /* itinerary times are local to the destination: write them as absolute UTC so calendars show the right moment in any time zone */
+  const dtz=(date,min)=>{const[y,m,d]=date.split('-').map(Number);return new Date(Date.UTC(y,m-1,d,0,min)-(+T.tz||0)*36e5).toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'')};
   for(let i=0;i<n;i++){const date=dayDate(T,i),E=dayEntries(T,i).filter(e=>hm(e.time)!=null);
     E.forEach((e,k)=>{const a=hm(e.time);let b=k+1<E.length?hm(E[k+1].time):a+60;if(b<=a)b=a+60;if(b>=24*60)b=24*60-1;
       const p=pb[e.placeId],s=e.stayId?T.stays.find(x=>x.id===e.stayId):null;
       const title=e.auto?e.text:(e.text||p?.name||'行程');const loc=p?placeQuery(p):s?placeQuery(s):'';
-      ev.push({uid:e.id,s:dt(date,a),e:dt(date,b),title,loc,desc:[e.transport,e.note].filter(Boolean).join('\n')})})}
+      ev.push({uid:e.id,s:dtz(date,a),e:dtz(date,b),title,loc,desc:[e.transport,e.note].filter(Boolean).join('\n')})})}
   T.flights.forEach(f=>{const a=hm(f.time);if(!f.date||a==null)return;ev.push({uid:f.id,s:dt(f.date,a),e:dt(f.date,Math.min(a+60,24*60-1)),title:`${f.label||'航班'} ${f.from}→${f.to} ${f.code}`.trim(),loc:f.from,desc:f.note})});
   if(!ev.length){toast('沒有填時間的行程，無法匯出');return}
   const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//tabisatsu//zh-Hant','CALSCALE:GREGORIAN','X-WR-CALNAME:'+icsEsc(T.title||'旅行')];
@@ -1547,7 +1596,7 @@ function bind(){
   $('#exportBtn').addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('on')});
   document.addEventListener('click',e=>{if(!menu.contains(e.target))menu.classList.remove('on')});
   menu.addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;menu.classList.remove('on');
-    ({print:doPrint,html:exportHTML,a4:exportA4,tpl:exportTemplate,png:openPNG,help:()=>openGuide(0),ui:openUI,ics:exportICS,gift:exportGift,backup,import:()=>$('#importIn').click(),new:()=>newTrip(),
+    ({print:doPrint,html:()=>askShare('html','手機閱讀版',inc=>withShare(inc,exportHTML)),a4:exportA4,tpl:exportTemplate,png:openPNG,help:()=>openGuide(0),ui:openUI,ics:exportICS,gift:()=>askShare('gift','送禮版',inc=>withShare(inc,exportGift)),backup,import:()=>$('#importIn').click(),new:()=>newTrip(),
       dup:()=>{const c=normalize(JSON.parse(JSON.stringify(T)));c.id=uid();c.title=(T.title||'未命名')+'（複本）';c.updated=Date.now();newTrip(c)},
       del:()=>modal('刪除行程','確定要刪除「'+esc(T.title||'未命名的旅行')+'」嗎？刪除後無法復原，建議先下載備份檔。',[['取消'],['刪除',async()=>{await DB.del(T.id);trips=trips.filter(t=>t.id!==T.id);if(!trips.length){await newTrip();return}switchTrip(trips[0].id);toast('已刪除')},'danger']])
     })[b.dataset.m]()});
@@ -1559,6 +1608,7 @@ function bind(){
     const a=document.activeElement;if(a&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&!['checkbox','radio','file','color'].includes(a.type))))return;
     e.preventDefault();histGo(k==='y'||e.shiftKey?1:-1)});
   window.addEventListener('beforeunload',()=>{if(saveTimer){clearTimeout(saveTimer);save()}});
+  const flush=()=>{if(saveTimer){clearTimeout(saveTimer);saveTimer=null;save()}};addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
 }
 /* ---------- UI settings (per device) ---------- */
 let UI={size:'1',theme:'auto'};try{UI={...UI,...JSON.parse(LS.get('tabisatsu.ui')||'{}')}}catch(e){}
@@ -1580,7 +1630,7 @@ const GUIDE=[
  ['1．填日期，每天自動一頁','在「基本」填出發日、回程日，「每日」就會列出每一天。行程可以一項一項加，也可以用「貼上文字匯入行程」把 LINE 記事本整段貼進來。'],
  ['2．景點、住宿、購物會自動串起來','行程連結到「景點」，小冊會自動標上頁碼；「住宿」的入住退房會自動排進當天；指定哪天買的伴手禮，會出現在那天的頁面下方。'],
  ['3．檢查與輸出','「每日」最上面的行程檢查會提醒太早出門、還沒預約、遇到公休。右上「匯出」可以列印、做成 A4 對折小冊拿去超商印、匯出圖片、做送禮版。'],
- ['4．資料存在你的裝置裡','旅冊不需要註冊，資料不會上傳。換手機或清除瀏覽器前，記得「匯出 → 下載備份檔」。出發後按上方「今日」，就會顯示今天的下一站。']];
+ ['4．資料存在你的裝置裡','旅冊不需要註冊，資料不會上傳，也<b>不會自動同步到其他手機或電腦</b>。上方會顯示「已儲存在這台裝置」。換裝置或清除瀏覽器前，記得「匯出 → 下載備份檔」。出發後按上方「今日」，就會顯示今天的下一站。']];
 function openGuide(k){const old=$('.guide');if(old)old.remove();const g=document.createElement('div');g.className='modal-bg guide';
   g.innerHTML=`<div class="modal"><div class="gdots">${GUIDE.map((_,i)=>`<span class="${i===k?'on':''}"></span>`).join('')}</div><h3>${GUIDE[k][0]}</h3><p>${GUIDE[k][1]}</p><div class="row">${k?'<button class="btn" data-g="prev">上一步</button>':'<button class="btn" data-g="skip">略過</button>'}<button class="btn pri" data-g="next">${k<GUIDE.length-1?'下一步':'開始使用'}</button></div></div>`;
   g.addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;g.remove();const a=b.dataset.g;
@@ -1601,8 +1651,8 @@ function setupPWA(){
 }
 (async function init(){
   if(innerWidth<=900)$$('.show-m').forEach(x=>x.style.display='block');else $$('.show-m').forEach(x=>x.style.display='none');
-  await DB.open();
-  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  await DB.open();saveState('ok');if(!DB.db)setTimeout(()=>toast('這個瀏覽器不能儲存資料（可能是無痕模式），關掉就會消失，請記得下載備份'),1500);
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
   trips=(await DB.all()).map(normalize);
   if(!trips.length){const s=sampleTrip();trips=[s];await DB.put(s)}
   const cur=LS.get('tabisatsu.cur');T=trips.find(t=>t.id===cur)||trips.slice().sort((a,b)=>b.updated-a.updated)[0];
