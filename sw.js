@@ -1,15 +1,16 @@
 // 旅冊 service worker: app shell offline + font cache. Bump VERSION when icons or the manifest change (pages are network-first).
-const VERSION = 'tabisatsu-v10';
+const VERSION = 'tabisatsu-v11';
 const FONTS = 'tabisatsu-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-64.png',
   './assets/travel-book/style-tokens.css',
   './assets/travel-book/brand/logo-horizontal-clear.webp',
   './assets/travel-book/hero/hero-background-1600x900.webp',
-  './assets/travel-book/features/01-plan.webp',
-  './assets/travel-book/features/02-booklet.webp',
-  './assets/travel-book/features/03-export.webp',
-  './assets/travel-book/features/04-share.webp',
-  './assets/travel-book/features/05-ontrip.webp',
+  './assets/travel-book/hero/hero-mobile.webp',
+  './assets/travel-book/features/01-plan-crop.webp',
+  './assets/travel-book/features/02-booklet-crop.webp',
+  './assets/travel-book/features/03-export-crop.webp',
+  './assets/travel-book/features/04-share-crop.webp',
+  './assets/travel-book/features/05-ontrip-crop.webp',
   './assets/travel-book/empty/01-no-trips.webp',
   './assets/travel-book/empty/02-no-places.webp',
   './assets/travel-book/empty/03-no-photos.webp',

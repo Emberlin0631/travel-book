@@ -122,6 +122,9 @@ html.dark .empty.ill img{opacity:.88}
 .hm-feat h2{font-family:var(--tb-display-font);font-size:24px;margin:0 0 4px}.hm-feat>p{color:var(--tb-muted,#66655f);margin:0 0 18px}
 .hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .hm-grid h3{font-size:16px;margin:12px 2px 4px}.hm-grid p{font-size:13px;line-height:1.7;color:var(--tb-muted,#66655f);margin:0 2px}
+.hm-grid .tb-feature-card img{aspect-ratio:3/2;object-fit:contain;background:#fbf4e9}
+.hm-banner{display:none}
+@media (max-width:720px){.home .tb-hero{background-image:none;min-height:0;padding:8px 20px 4px}.home .tb-hero-content{background:none;padding:0;max-width:none}.hm-banner{display:block;width:100%;height:auto;margin-top:18px;border-radius:16px}.hm-feat{padding-top:24px}.hm-grid{grid-template-columns:1fr 1fr;gap:10px}.hm-grid .tb-feature-card{padding:10px}.hm-grid h3{font-size:14px;margin-top:8px}.hm-grid p{font-size:12px}}
 .hm-foot{text-align:center;color:var(--tb-muted,#66655f);font-size:12px;padding:0 20px 30px}
 .tpls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .tplc{border:2px solid var(--ui-line);border-radius:8px;padding:8px;background:#fff;text-align:left}
@@ -502,14 +505,15 @@ html.dark .thumb{background-color:#333}
     <p>排好每天的行程，就會自動排成可以列印、對折裝訂、傳給旅伴的旅遊小冊。出發後還能當成隨身的今日行程。</p>
     <div class="hm-cta" id="hmCta"></div>
     <p class="hm-note">免註冊，資料只存在你的裝置，不會上傳。</p>
+    <img class="hm-banner" src="assets/travel-book/hero/hero-mobile.webp" alt="" width="943" height="509">
   </div></section>
   <section class="hm-feat" aria-labelledby="hmFeat"><h2 id="hmFeat">旅行的每一步</h2><p>從排行程到旅行後的回憶，都在同一份資料裡。</p>
   <div class="hm-grid">
-    <article class="tb-feature-card"><img src="assets/travel-book/features/01-plan.webp" alt="" width="640" height="420" loading="lazy"><h3>規劃行程</h3><p>每天一頁，景點、交通、住宿入住退房自動排好；還會提醒公休、太早出門、還沒預約。</p></article>
-    <article class="tb-feature-card"><img src="assets/travel-book/features/02-booklet.webp" alt="" width="640" height="420" loading="lazy"><h3>自動排成小冊</h3><p>封面、總覽、每日行程、景點介紹、住宿頁、清單，自動標頁碼。</p></article>
-    <article class="tb-feature-card"><img src="assets/travel-book/features/03-export.webp" alt="" width="640" height="420" loading="lazy"><h3>印出來</h3><p>A5 單頁，或 A4 對折小冊拿去超商印；也有黑白省墨和長輩大字版。</p></article>
-    <article class="tb-feature-card"><img src="assets/travel-book/features/04-share.webp" alt="" width="640" height="420" loading="lazy"><h3>傳給旅伴</h3><p>手機閱讀版、每頁圖片、行事曆檔；分享前可以選要不要放訂位編號和花費。</p></article>
-    <article class="tb-feature-card"><img src="assets/travel-book/features/05-ontrip.webp" alt="" width="640" height="420" loading="lazy"><h3>旅行途中</h3><p>「今日」模式顯示下一站、地圖連結和備案，沒有網路也能看。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/01-plan-crop.webp" alt="" width="380" height="250" loading="lazy"><h3>規劃行程</h3><p>每天一頁，景點、交通、住宿入住退房自動排好；還會提醒公休、太早出門、還沒預約。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/02-booklet-crop.webp" alt="" width="380" height="250" loading="lazy"><h3>自動排成小冊</h3><p>封面、總覽、每日行程、景點介紹、住宿頁、清單，自動標頁碼。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/03-export-crop.webp" alt="" width="380" height="250" loading="lazy"><h3>印出來</h3><p>A5 單頁，或 A4 對折小冊拿去超商印；也有黑白省墨和長輩大字版。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/04-share-crop.webp" alt="" width="380" height="250" loading="lazy"><h3>傳給旅伴</h3><p>手機閱讀版、每頁圖片、行事曆檔；分享前可以選要不要放訂位編號和花費。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/05-ontrip-crop.webp" alt="" width="380" height="250" loading="lazy"><h3>旅行途中</h3><p>「今日」模式顯示下一站、地圖連結和備案，沒有網路也能看。</p></article>
   </div></section>
   <div class="hm-foot">旅冊 Travel Book</div>
 </div>
@@ -640,7 +644,7 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
