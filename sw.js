@@ -1,5 +1,5 @@
 // 旅冊 service worker: app shell offline + font cache. Bump VERSION when icons or the manifest change (pages are network-first).
-const VERSION = 'tabisatsu-v16';
+const VERSION = 'tabisatsu-v17';
 const FONTS = 'tabisatsu-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-64.png',
   './assets/travel-book/style-tokens.css',
@@ -81,6 +81,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
+    if (url.pathname.startsWith('/api/')) return; // API 一律走網路，不進快取（Cache API 不會看 Cache-Control 到期）
     // pages: network first so new versions arrive, cache as offline fallback
     if (req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
       e.respondWith(fetch(req).then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); return res; })

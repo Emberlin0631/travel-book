@@ -1,6 +1,7 @@
 .git
 .wrangler
 node_modules
+test
 worker.js
 wrangler.toml
 README.md

@@ -77,13 +77,17 @@ async function gmapsList(url) {
     if (!r.ok) { tried.push(h + ':' + r.status); if (r.status !== 429 && r.status !== 403 && r.status !== 503) break; continue; }
     const txt = (await r.text()).replace(/^\)\]\}'\n?/, '');
     let data;
-    try { data = parseList(JSON.parse(txt)); } catch (e) { tried.push(h + ':badjson'); continue; }
-    if (!data) return json({ error: 'notlist' }, 400);
+    let parsed;
+    try { parsed = JSON.parse(txt); } catch (e) { tried.push(h + ':badjson'); continue; }   // 不是 JSON：多半是擋下來的 HTML 頁，換下一個主機
+    data = parseList(parsed);
+    if (!data) return json({ error: 'format', tried }, 502);   // 是 JSON 但結構認不得：Google 改格式了，不要再換主機硬試
     if (url.searchParams.get('debug')) data.via = h, data.tried = tried;
     return json(data, 200, { 'cache-control': 'public, max-age=300' });
   }
   return json({ error: tried.some(t => /:(429|403|503)$/.test(t)) ? 'blocked' : 'upstream', tried }, 502);
 }
+
+export { parseList, listIdFrom, LIST_RE };
 
 export default {
   async fetch(req, env) {
