@@ -279,6 +279,36 @@ html.dark .thumb{background-color:#333}
 .bk.cs-note .cover .cv-date{order:3;margin-top:auto;padding-top:10px;border-top:1px solid var(--line);min-width:220px}
 .bk.cs-note .cover .cv-stat{order:4}.bk.cs-note .cover .cv-who{order:5}
 .bk.cs-note .cover .cv-days{position:absolute;right:-8px;top:-30px;width:70px;height:70px;border-radius:50%;border:1.5px solid var(--c);background:none;color:var(--c);display:flex;align-items:center;justify-content:center;padding:0;font-size:10px;letter-spacing:.14em;transform:rotate(14deg);box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 5px var(--c)}
+.bk.tpl-matcha{--paper:#fbf7ef;--ink:#2e2e2a;--mute:#66655f;--line:#d8d4cb;--head:"Noto Serif TC",serif}
+.bk.tpl-matcha .pg{background:var(--paper) var(--mt-paper,none) repeat;background-size:256px}
+.tpl-matcha .pg:not(.cover):not(.cimg):not(.blank)::before{content:"";position:absolute;inset:14px;border:1px solid var(--line);border-radius:10px;pointer-events:none}
+.tpl-matcha .ph{position:relative;min-height:70px;padding-right:118px}
+.tpl-matcha .ph-en{display:inline-block;background:var(--soft);padding:2px 10px 2px 12px;border-radius:2px;letter-spacing:.3em;transform:rotate(-1.2deg)}
+.tpl-matcha .ph h2,.tpl-matcha .dd .dt,.tpl-matcha .place h2{font-weight:700}
+.tpl-matcha .mt-secbox{position:absolute;right:0;top:-8px;width:112px;height:80px;display:flex;align-items:center;justify-content:center}
+.mt-secbox img,.dill img.mt,.mt-scene .mt-cat{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+.tpl-matcha .dill{display:flex;align-items:center;justify-content:center}
+.mt-scene{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.mt-scene .mt-cat{max-width:64%;max-height:80%;position:relative;z-index:1}
+.mt-bit{position:absolute;width:9%;height:auto;z-index:2;opacity:.9}
+.tpl-matcha .place .pill{background:transparent;left:40px;right:40px;top:30px;height:200px;border-bottom:1px dashed var(--line)}
+.tpl-matcha .place.has-ill .body{top:246px}
+.bk.tpl-matcha .pg.cover::before,.bk.tpl-matcha .pg.cover::after,.bk.tpl-matcha .pg.cover .cv-img::after{display:none}
+.bk.tpl-matcha .pg.cover{background-size:cover;background-position:center}
+.bk.tpl-matcha .pg.cover .cv-img{left:10%;right:10%;top:27%;bottom:27%;height:auto;background-color:transparent;transform:none;border:0;box-shadow:none;border-radius:0}
+.bk.tpl-matcha .pg.cover .cv-img[style*="background-image"]{border:8px solid #fff;box-shadow:0 3px 14px rgba(0,0,0,.13);transform:rotate(-1deg);left:12%;right:12%}
+.bk.tpl-matcha .pg.cover .cv-img.ill-bg{background:transparent}
+.bk.tpl-matcha .pg.cover .cv-img span{color:var(--c)}
+.bk.tpl-matcha .pg.cover .cv-txt{position:absolute;top:6%;bottom:8%;left:10%;right:10%;text-align:center;display:flex;flex-direction:column;align-items:center;color:var(--ink);z-index:2}
+.bk.tpl-matcha .pg.cover .cv-days{order:0;background:none;color:var(--c);border:0;padding:0;font-size:10px;letter-spacing:.4em;position:static;width:auto;height:auto;transform:none;box-shadow:none}
+.bk.tpl-matcha .pg.cover h1{order:1;font-family:var(--head);font-weight:700;font-size:32px;margin-top:6px;max-width:66%;color:var(--ink)}
+.bk.tpl-matcha .pg.cover .cv-sub{order:2;color:var(--mute)}
+.bk.tpl-matcha .pg.cover .cv-date{order:3;margin-top:auto;color:var(--c)}
+.bk.tpl-matcha .pg.cover .cv-stat{order:4;color:var(--ink)}.bk.tpl-matcha .pg.cover .cv-who{order:5;color:var(--mute)}
+.mt-corner{position:absolute;right:0;top:0;width:24%;height:auto;z-index:1;pointer-events:none}
+.bk.mono.tpl-matcha .pg{background:#fff}
+.bk.mono .mt-dec{display:none}
+.bk.mono .pg.mt-cv{background-image:none!important}
 .bk.tpl-journal{--paper:#f5eee1;--ink:#3a2f25;--mute:#8d7c66;--line:#d8c9ae;--head:"Noto Serif TC",serif}
 .cover .cv-img.ill-bg{background:var(--tint)}
 .scene{width:100%;height:100%;display:block}
@@ -556,9 +586,10 @@ const TEMPLATES=[
   {id:'journal',name:'手帳風',desc:'米色紙感、襯線標題',tier:'free',prev:'background:#f5eee1;box-shadow:inset 0 0 0 4px #f5eee1,inset 0 0 0 5px #d8c9ae'},
   {id:'wafu',name:'和風',desc:'雙線框、藍染色調',tier:'free',prev:'background:#f7f4ec;box-shadow:inset 0 0 0 5px #f7f4ec,inset 0 0 0 6px var(--sw),inset 0 0 0 8px #f7f4ec,inset 0 0 0 9px var(--sw)'},
   {id:'minimal',name:'極簡',desc:'黑白細線、留白多',tier:'free',prev:'background:#fff;border-top:2px solid #111'},
+  {id:'matcha',name:'抹茶手帳',desc:'水彩插圖、季節裝飾',tier:'free',prev:'background:#fbf7ef url(assets/booklet/cat-temple.webp) right 6px center/auto 70% no-repeat;box-shadow:inset 0 0 0 4px #fbf7ef,inset 0 0 0 5px #d8d4cb;border-radius:6px'},
 ];
-const PAPER={clean:'#ffffff',journal:'#f5eee1',wafu:'#f7f4ec',minimal:'#ffffff'};
-const COLORS=['#2f5d50','#b5452c','#c0872b','#3d5a80','#7b4b94','#c8607e','#4a4a4a','#5b7f3a'];
+const PAPER={clean:'#ffffff',journal:'#f5eee1',wafu:'#f7f4ec',minimal:'#ffffff',matcha:'#fbf7ef'};
+const COLORS=['#5f7c6c','#2f5d50','#b5452c','#c0872b','#3d5a80','#7b4b94','#c8607e','#4a4a4a','#5b7f3a'];
 
 /* ---------- storage ---------- */
 const DB={db:null,mem:new Map(),
@@ -644,7 +675,7 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
@@ -716,10 +747,30 @@ maple:`<path d="M20 2 L23 12 L32 8 L28 17 L38 18 L29 23 L33 31 L23 27 L21 38 L19
 snow:`<g stroke="#9cc3dd" stroke-width="3" stroke-linecap="round"><path d="M20 3V37M5 11.5L35 28.5M5 28.5L35 11.5"/></g>`,
 summer:`<circle cx="20" cy="20" r="8" fill="#e9a23b"/><g stroke="#e9a23b" stroke-width="3" stroke-linecap="round"><path d="M20 2v6M20 32v6M2 20h6M32 20h6M7 7l4 4M29 29l4 4M7 33l4-4M29 11l4-4"/></g>`};
 function seasonOf(t){if(t.opts.season!=='auto')return t.opts.season;const d=pd(t.start);if(!d)return'none';const m=d.getUTCMonth()+1;return m>=3&&m<=5?'sakura':m<=8&&m>=6?'summer':m>=9&&m<=11?'maple':'snow'}
-const ill=c=>`<svg viewBox="0 0 120 120" aria-hidden="true">${ILL[c]||ILL.city}</svg>`;
+const ill=c=>MTON&&MATCHA.img['cat-'+c]?`<img class="mt mt-dcat" src="${MATCHA.img['cat-'+c]}" alt="">`:`<svg viewBox="0 0 120 120" aria-hidden="true">${ILL[c]||ILL.city}</svg>`;
+/* ---------- 抹茶手帳 template: watercolor assets, loaded on demand and kept as data: URLs so exported files stay self-contained ---------- */
+const MT_BITS={sakura:5,summer:3,maple:3,snow:4};
+const MT_NAMES=[...CATS.map(c=>'cat-'+c[0]),...['overview','route','info','emergency','reserve','pack','budget','stay','taxi','phrase','shop','notes'].map(x=>'sec-'+x),
+  ...Object.keys(MT_BITS).flatMap(k=>['season-'+k+'-corner',...Array.from({length:MT_BITS[k]},(_,i)=>`season-${k}-bit${i+1}`)]),'paper-tile','cover-a','cover-b','cover-c'];
+const MATCHA={state:'',img:{},p:null};let MTON=false,MTSEASON='none';
+function loadMatcha(){if(MATCHA.p)return MATCHA.p;MATCHA.state='loading';
+  MATCHA.p=Promise.all(MT_NAMES.map(n=>fetch('assets/booklet/'+n+'.webp').then(r=>{if(!r.ok)throw 0;return r.blob()})
+    .then(b=>new Promise(res=>{const f=new FileReader();f.onload=()=>res([n,f.result]);f.onerror=()=>res([n,null]);f.readAsDataURL(b)})).catch(()=>[n,null])))
+  .then(list=>{list.forEach(([n,u])=>{if(u)MATCHA.img[n]=u});MATCHA.state=MATCHA.img['cat-city']?'ok':'fail';
+    if(MATCHA.state==='fail')toast('抹茶手帳的插圖載入失敗，先用一般插圖顯示');if(typeof renderPreview==='function'&&T)setTimeout(renderPreview,0);return MATCHA});return MATCHA.p}
+async function ensureMatcha(t){if(t&&t.theme.template==='matcha'&&MATCHA.state!=='ok'&&MATCHA.state!=='fail')await loadMatcha()}
+const mtI=(n,cls,st='')=>MATCHA.img[n]?`<img class="mt ${cls}" src="${MATCHA.img[n]}" alt=""${st?` style="${st}"`:''}>`:'';
+function mtBits(seed){const n=MT_BITS[MTSEASON];if(!n)return'';let r=seed||5;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};
+  const spots=[[6,8],[84,58],[78,6],[10,64]];let out='';for(let k=0;k<2;k++){const[x,y]=spots[(Math.floor(rnd()*4)+k*2)%4];out+=mtI(`season-${MTSEASON}-bit${1+Math.floor(rnd()*n)}`,'mt-dec mt-bit',`left:${x}%;top:${y}%;transform:rotate(${Math.round(rnd()*50-25)}deg)`)}return out}
+const mtScene=(cat,seed)=>`<div class="mt-scene">${mtBits(seed)}${mtI('cat-'+cat,'mt-cat')||mtI('cat-city','mt-cat')}</div>`;
+const MT_SEC={'ROUTE':'route','ITINERARY':'overview','INFORMATION':'info','SHOPPING LIST':'shop','RESERVATIONS':'reserve','PACKING LIST':'pack','BUDGET':'budget','DESTINATION CARD':'taxi','MEMORIES':'notes','MEMO':'notes','EMERGENCY':'emergency','JAPANESE PHRASES':'phrase'};
+function mtDecorate(h,t){
+  h=h.replace(/<div class="ph"><span class="ph-en">([A-Z ]+)/,(m,w)=>{const k=Object.keys(MT_SEC).find(x=>w.trim().startsWith(x));return k&&t.opts.illus?`<div class="ph"><span class="mt-secbox">${mtI('sec-'+MT_SEC[k],'mt-sec')}</span><span class="ph-en">${w}`:m});
+  if(h.startsWith('<section class="pg cover">')){const c=t.opts.mcover;h=h.replace('<section class="pg cover">',`<section class="pg cover mt-cv mt-cv-${c}"${MATCHA.img['cover-'+c]?` style="background-image:url(${MATCHA.img['cover-'+c]})"`:''}>${c!=='a'&&MT_BITS[MTSEASON]?mtI(`season-${MTSEASON}-corner`,'mt-dec mt-corner'):''}`)}
+  return h}
 function motifs(season,W,H,count,seed){if(!SEA[season])return'';let r=seed||7,out='';const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};
   for(let i=0;i<count;i++){const x=rnd()*W,y=rnd()*H,sz=14+rnd()*18,a=rnd()*360,o=.5+rnd()*.45;out+=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(0)}) scale(${(sz/40).toFixed(2)}) translate(-20 -20)" opacity="${o.toFixed(2)}">${SEA[season]}</g>`}return out}
-function scene(cat,season,W,H,seed){const sz=Math.min(H*.76,W*.5);
+function scene(cat,season,W,H,seed){if(MTON)return mtScene(cat,seed);const sz=Math.min(H*.76,W*.5);
   return `<svg class="scene" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="${W/2}" cy="${H*.52}" r="${(sz*.64).toFixed(0)}" fill="#fff" opacity=".55"/>${motifs(season,W,H,11,seed)}<g transform="translate(${((W-sz)/2).toFixed(1)} ${((H-sz)/2+H*.04).toFixed(1)}) scale(${(sz/120).toFixed(3)})">${ILL[cat]||ILL.city}</g></svg>`}
 function dayCat(t,i){const cnt={},order=[];const pb=Object.fromEntries(t.places.map(p=>[p.id,p]));
   for(const it of t.days[i].items){const p=pb[it.placeId];const c=p?placeCat(p):detectCat(it.text);if(!(c in cnt)){cnt[c]=0;order.push(c)}cnt[c]+=p?2:1}
@@ -899,6 +950,11 @@ function fmtRange(t){const a=pd(t.start),b=pd(t.end);if(!a)return'';const A=t.st
 const pn=no=>`<div class="pn">${no}</div>`;
 
 function renderPages(t,splits,mode={}){
+  if(t.theme.template==='matcha'&&!MATCHA.state)loadMatcha();
+  MTON=t.theme.template==='matcha'&&MATCHA.state==='ok';MTSEASON=seasonOf(t);
+  try{const out=renderPages0(t,splits,mode);return MTON?out.map(h=>mtDecorate(h,t)):out}finally{MTON=false}
+}
+function renderPages0(t,splits,mode={}){
   const C=buildPages(t,splits,mode),{ref,days,dIdx,visits,placeById,entries,vis}=C;
   const season=seasonOf(t),useIll=t.opts.illus;
   const nItems=days.reduce((a,d)=>a+d.items.filter(it=>it.text||it.placeId).length,0),nStays=t.stays.filter(s=>s.name).length;
@@ -1007,8 +1063,8 @@ function computeSplits(t,mode={}){
 }
 const pagesFor=(t,mode={})=>renderPages(t,computeSplits(t,mode),mode);
 function mixHex(a,b,p){const A=[1,3,5].map(i=>parseInt(a.substr(i,2),16)),B=[1,3,5].map(i=>parseInt(b.substr(i,2),16));return '#'+A.map((v,i)=>Math.round(v*p+B[i]*(1-p)).toString(16).padStart(2,'0')).join('')}
-function cvars(c,tpl){c=okColor(c);const j=tpl==='journal'||tpl==='wafu';return `--c:${c};--soft:${mixHex(c,PAPER[tpl]||'#ffffff',j?.13:.1)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`}
-const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}">`;
+function cvars(c,tpl){c=okColor(c);const j=tpl==='journal'||tpl==='wafu'||tpl==='matcha';return `--c:${c};--soft:${mixHex(c,PAPER[tpl]||'#ffffff',j?.13:.1)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`}
+const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${t.theme.template==='matcha'&&MATCHA.img['paper-tile']?`;--mt-paper:url(${MATCHA.img['paper-tile']})`:''}">`;
 function fitEl(el){let fs=1;el.style.setProperty('--fs',fs);while(el.scrollHeight>el.clientHeight+1&&fs>0.72){fs=+(fs-0.04).toFixed(2);el.style.setProperty('--fs',fs)}return el.scrollHeight>el.clientHeight+1}
 function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.body.fit',p);if(b&&fitEl(b))bad.push(i)});return bad}
 
@@ -1056,7 +1112,7 @@ function edBasic(){
   <div class="card"><h4>外觀</h4>
   <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${x.prev}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
-  <div class="row"><label class="f"><span>封面樣式</span><select data-k="opts.coverStyle"><option value="top">照片在上</option><option value="full">滿版照片</option><option value="frame">拱門框</option><option value="note">手帳（紙膠帶＋印章）</option></select></label><label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
+  <div class="row">${T.theme.template==='matcha'?`<label class="f"><span>封面底圖</span><select data-k="opts.mcover"><option value="a">A．角落綠葉</option><option value="b">B．遠山小樹</option><option value="c">C．藍天草地</option></select></label>`:`<label class="f"><span>封面樣式</span><select data-k="opts.coverStyle"><option value="top">照片在上</option><option value="full">滿版照片</option><option value="frame">拱門框</option><option value="note">手帳（紙膠帶＋印章）</option></select></label>`}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
   <label class="chk"><input type="checkbox" data-k="opts.dayColors" ${T.opts.dayColors?'checked':''}> 每天用不同顏色</label>
   <label class="chk"><input type="checkbox" data-k="opts.illus" ${T.opts.illus?'checked':''}> 自動插圖（沒放照片的封面、景點頁、住宿頁會畫插圖）</label>
@@ -1239,6 +1295,7 @@ function openReader(){
 
 /* ---------- export ---------- */
 async function offscreenPages(mode=curMode()){
+  await ensureMatcha(T);
   const a=$('#printArea');a.innerHTML=bkOpen(T,mode)+pagesFor(T,mode).join('')+'</div>';
   try{await document.fonts.ready}catch(e){}
   fitAll(a);return a;
@@ -1334,6 +1391,7 @@ function giftRuntime(){
   tick();setInterval(tick,1000);
 }
 async function giftHTML(preview){
+  await ensureMatcha(T);
   const a=$('#printArea');try{await document.fonts.ready}catch(e){}
   a.innerHTML=bkOpen(T)+pagesFor(T,{gift:true}).join('')+'</div>';fitAll(a);const masked=a.innerHTML;
   const n=T.days.slice(0,dayCount(T)).reduce((x,d)=>x+d.items.filter(i=>i.secret&&(i.text||i.placeId)).length,0);
@@ -1612,7 +1670,7 @@ function onAct(e){
   const[i,j]=String(a).split('.').map(Number);
   switch(act){
     case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;return;
-    case'tpl':T.theme.template=a;break;
+    case'tpl':T.theme.template=a;if(a==='matcha'){loadMatcha();if(T.theme.color==='#2f5d50')T.theme.color='#5f7c6c'}break;
     case'color':T.theme.color=a;break;
     case'rmPhoto':setPath(T,a,null);break;
     case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);break;
