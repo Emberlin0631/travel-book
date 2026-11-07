@@ -509,7 +509,7 @@ function normalize(t){
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
       coverStyle:['top','full','frame'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
-    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null?+t.tz:9,
+    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
@@ -530,7 +530,7 @@ const mk={day:()=>normalize({days:[{}]}).days[0],item:(o={})=>normalize({days:[{
 function padDays(t){const n=dayCount(t);while(t.days.length<n)t.days.push(mk.day())}
 function blankTrip(){const s=iso(new Date(Date.now()+30*864e5));const t=normalize({title:'',start:s,end:addD(s,2)});t.created=Date.now();return t}
 function sampleTrip(){
-  const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
+  const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={tz:9,title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
   notes:'這是範例資料，景點的營業時間、票價請出發前到官網查證\n肉製品不能帶回台灣\n記得帶轉接頭和行動電源',
   theme:{template:'clean',color:'#b5452c'},opts:{placeOrder:'end',notesPage:true,dayColors:true,illus:true,season:'auto',dayNotes:false,routeMap:true},
   packing:'# 證件與錢\n護照\n電子機票\n日圓現金\n信用卡\n# 電子用品\n手機、充電線\n行動電源（隨身帶，不能託運）\n轉接頭\n# 衣物\n外套\n好走的鞋\n# 其他\n常備藥\n折疊傘',
@@ -668,6 +668,9 @@ function sunTimes(date,lat,lng,tz){const d=pd(date);if(!d||lat==null||lng==null)
 function dayCoord(t,i){const pb=Object.fromEntries(t.places.map(p=>[p.id,p]));for(const it of t.days[i].items){const p=pb[it.placeId];if(p&&p.lat!=null)return[p.lat,p.lng]}
   const a=(t.days[i].area||'')+' '+t.days[i].title;const c=CITY.find(x=>a.includes(x[0]));return c?[c[1],c[2]]:null}
 function daySun(t,i){if(!t.opts.sun)return null;const c=dayCoord(t,i);return c?sunTimes(dayDate(t,i),c[0],c[1],t.tz):null}
+
+const TZS=[[-12,'國際換日線西側（無人島）'],[-11,'美屬薩摩亞'],[-10,'夏威夷'],[-9,'阿拉斯加（冬季）'],[-8,'洛杉磯、溫哥華（冬季）'],[-7,'鳳凰城、丹佛（冬季）'],[-6,'墨西哥城、芝加哥（冬季）'],[-5,'紐約、多倫多（冬季）'],[-4,'波多黎各、委內瑞拉'],[-3.5,'紐芬蘭（冬季）'],[-3,'聖保羅、布宜諾斯艾利斯'],[-2,'南喬治亞島'],[-1,'亞速群島（冬季）'],[0,'倫敦、里斯本（冬季）'],[1,'巴黎、柏林、羅馬（冬季）'],[2,'雅典、開羅（冬季）'],[3,'伊斯坦堡、莫斯科'],[3.5,'德黑蘭'],[4,'杜拜'],[4.5,'喀布爾'],[5,'喀拉蚩、馬爾地夫'],[5.5,'印度、斯里蘭卡'],[5.75,'尼泊爾'],[6,'達卡'],[6.5,'仰光'],[7,'曼谷、河內、雅加達'],[8,'台灣、香港、新加坡、峇里島'],[9,'日本、韓國'],[9.5,'阿德萊德（冬季）'],[10,'布里斯本、關島'],[11,'雪梨（夏季）、索羅門群島'],[12,'紐西蘭（冬季）、斐濟'],[13,'東加、紐西蘭（夏季）'],[14,'吉里巴斯線群島']];
+const tzLabel=v=>{const a=Math.abs(v),h=Math.floor(a),m=Math.round((a-h)*60);return 'UTC'+(v<0?'−':'+')+h+(m?':'+String(m).padStart(2,'0'):'')};
 
 /* ---------- emergency info & phrases ---------- */
 const EMG_FIELDS=[['contact','台灣緊急聯絡人'],['contactPhone','聯絡人電話'],['insurer','保險公司／旅平險'],['policy','保單號碼'],['insPhone','海外急難救助電話'],['cardPhone','信用卡掛失電話'],['office','駐外館處'],['officePhone','駐外館處電話'],['other','其他（過敏、常用藥、血型等）']];
@@ -923,7 +926,7 @@ function edBasic(){
   <label class="chk"><input type="checkbox" data-k="opts.taxiCards" ${T.opts.taxiCards?'checked':''}> 目的地卡（填了日文名稱或地址的地點，給司機看）</label>
   <label class="chk"><input type="checkbox" data-k="opts.resPage" ${T.opts.resPage?'checked':''}> 預約清單頁</label>
   <label class="chk"><input type="checkbox" data-k="opts.sun" ${T.opts.sun?'checked':''}> 每日頁顯示日出日落（依地區或景點的地圖連結估算，誤差約 1～2 分鐘）</label>
-  <label class="f"><span>目的地時區（算日出日落用）</span><select data-k="tz"><option value="9">UTC+9 日本、韓國</option><option value="8">UTC+8 台灣、香港、中國、新加坡</option><option value="7">UTC+7 泰國、越南</option><option value="10">UTC+10 澳洲東部</option><option value="1">UTC+1 歐洲中部（冬季）</option><option value="0">UTC+0 英國（冬季）</option></select></label></div>
+  <label class="f"><span>目的地時區（算日出日落用）</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p></div>
   <div class="card"><h4>頁面順序</h4><p class="hint">用 ↑↓ 調整整個區塊的順序；取消勾選就不印。封面固定在第一頁。</p><div class="secl">${secOrder(T).map((k,ix,arr)=>`<div class="secr"><label class="chk" style="margin:0"><input type="checkbox" data-sec="${k}" ${T.opts.hide.includes(k)?'':'checked'}> ${SECTIONS.find(x=>x[0]===k)[1]}</label><span><button class="mini" data-act="secUp" data-a="${k}" ${ix?'':'disabled'}>↑</button><button class="mini" data-act="secDown" data-a="${k}" ${ix<arr.length-1?'':'disabled'}>↓</button></span></div>`).join('')}</div><button class="mini" data-act="secReset" style="margin:8px 0 10px">恢復預設順序</button></div>
   <div class="card"><h4>出發前提醒</h4><p class="hint">一行寫一則，會印在「出發資訊」頁。</p><textarea data-k="notes" rows="4" placeholder="例：肉製品不能帶回台灣">${esc(T.notes)}</textarea><div style="height:10px"></div></div>
   <div class="foot-note">資料只存在這台裝置的瀏覽器裡，不會上傳。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
