@@ -1,0 +1,12 @@
+# 旅冊 Cloudflare Worker 設定
+# 部署：npx wrangler deploy  （第一次會要你登入 Cloudflare）
+# 靜態檔案由 [assets] 提供，/api/gmaps-list 由 worker.js 處理。
+name = "travel-book"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+
+[assets]
+directory = "./"
+binding = "ASSETS"
+# 找不到檔案時交給 worker.js（它只處理 /api/*，其他回 404）
+not_found_handling = "none"

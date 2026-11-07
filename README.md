@@ -10,8 +10,21 @@
 
 - `index.html`：整個 app（單一檔案）
 - `manifest.webmanifest`、`sw.js`、`icons/`：加到主畫面與離線使用
+- `worker.js`、`wrangler.toml`、`.assetsignore`：Cloudflare Worker。靜態檔案照常由 Workers Static Assets 提供，另外多一個 `/api/gmaps-list`（見下）
 
 `index.html` 走「先連網、失敗才用快取」，所以有網路時使用者打開就會拿到新版，不用改 `sw.js`。只有改了圖示或 `manifest.webmanifest` 時，才需要把 `sw.js` 裡的 `VERSION` 加一號，讓舊的快取被清掉。
+
+## 從 Google 地圖「儲存清單」匯入景點（需要 Worker）
+
+景點分頁可以貼上 Google 地圖清單的分享連結（`maps.app.goo.gl/…`），一次把清單裡的地點勾選匯入（名稱、地址、座標、清單備註）。
+
+瀏覽器做不到這件事：清單頁是 JS 動態載入，Google 的清單 API（`/maps/preview/entitylist/getlist`）沒有 CORS 標頭，短網址的轉址也看不到。所以由 `worker.js` 代讀：解短網址 → 取清單 id（`!2s…` 或 `/placelists/list/…`）→ 呼叫 getlist → 回傳精簡 JSON（含 `Access-Control-Allow-Origin: *`，資料本來就是公開分享的清單）。Worker 只接受 Google 地圖的網址，不是通用代理。
+
+部署：`npx wrangler deploy`（會同時上傳靜態檔案與 Worker）。app 預設打 `https://travel-book.jim99725.workers.dev/api/gmaps-list`；自架的人可在瀏覽器 console 設 `localStorage.setItem('tabisatsu.gmproxy','https://你的.workers.dev/api/gmaps-list')`。
+
+沒有 Worker（GitHub Pages、離線）時的方法二：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼到同一個框，只會得到名稱與類別。
+
+已知限制：一次最多讀 500 個（`!4i500`）；Google 若對資料中心 IP 擋下請求（回 consent 頁或 429），app 會提示改用方法二。
 
 ## 授權與致謝
 
