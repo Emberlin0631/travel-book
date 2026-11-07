@@ -46,7 +46,8 @@ html.dark .tbtn.pri{background:#2f6d5b;border-color:#2f6d5b;color:#fff}html.dark
 .menu small{display:block;color:var(--ui-mute);font-size:11px}
 .main{display:grid;grid-template-columns:minmax(360px,470px) 1fr;height:calc(100vh - 54px)}
 .editor{overflow:auto;background:var(--ui-panel);border-right:1px solid var(--ui-line)}
-.tabs{display:flex;position:sticky;top:0;background:#fff;border-bottom:1px solid var(--ui-line);z-index:5;overflow-x:auto}
+.tabs{display:flex;position:sticky;top:0;background:#fff;border-bottom:1px solid var(--ui-line);z-index:5;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}
+@media (max-width:900px){.tabs{mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent)}.tabs.atend{mask-image:none;-webkit-mask-image:none}.tab{padding:12px 10px}}
 .tab{flex:1 0 auto;padding:12px 12px;border:0;background:none;border-bottom:2px solid transparent;color:var(--ui-mute)}
 .tab.on{color:var(--ui-ink);border-color:var(--ui-acc);font-weight:700}
 .panel{padding:16px 16px 90px}
@@ -63,7 +64,7 @@ html.dark .preview{background:var(--ui-bg)}
 .pager button:disabled{opacity:.3}
 .pager select{width:auto;max-width:240px;border:0;background:none;font-size:13px;padding:4px 6px;height:36px;color:var(--ui-ink)}
 .pager .pgfit{font-size:12px;padding:0 10px;border-left:1px solid var(--ui-line);border-radius:0 999px 999px 0}
-@media (max-width:900px){.pager{bottom:78px}.pager select{max-width:150px}}
+@media (max-width:900px){.pager{bottom:78px}.toast{bottom:140px}.pager select{max-width:150px}}
 .pw{position:relative;margin:0 auto 20px;box-shadow:0 3px 16px rgba(0,0,0,.16)}
 .pw>.pg{transform-origin:0 0;position:absolute;left:0;top:0}
 .pw.ovf{outline:3px solid #d0533b}
@@ -98,7 +99,9 @@ details.card>.inner{padding:0 12px 6px}
 .ro-t{font-weight:700;color:var(--ui-acc);padding:2px 4px}
 .ro{line-height:1.5}.ro small{display:block;color:var(--ui-mute);font-size:11px}.ro a{color:var(--ui-acc)}
 .ro-chip{font-size:11px;border:1px solid var(--ui-acc);color:var(--ui-acc);border-radius:3px;padding:0 5px;margin-right:6px;font-weight:700}
-.item .acts{display:grid;gap:4px}
+.item .acts{display:grid;grid-template-columns:1fr 1fr;gap:3px}.item .acts .drag{display:inline-flex;align-items:center;justify-content:center}
+.dayempty{font-size:12.5px;color:var(--ui-mute);background:var(--tb-bg-card,#faf8f3);border:1px dashed var(--ui-line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;line-height:1.6}.linkbtn{background:none;border:0;padding:0;color:var(--ui-acc);font-weight:700;text-decoration:underline;font-size:inherit}
+.morebtn{justify-self:start;background:none;border:0;color:var(--ui-acc);font-size:12px;padding:2px 0;text-align:left}.morebtn:hover{text-decoration:underline}
 .item .acts .mini{padding:3px 7px}
 .item input,.item select{padding:6px 8px;font-size:13px}
 .ph-in{display:flex;gap:8px;align-items:center}
@@ -220,7 +223,7 @@ html.dark .empty.ill img{opacity:.88}
 .iosbar{position:fixed;left:10px;right:10px;bottom:76px;z-index:45;background:#1f2a27;color:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;font-size:13px;line-height:1.6;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .iosbar[hidden]{display:none}.iosbar b{display:block;font-size:14px;color:#e9c46a}
 #installBtn[hidden]{display:none}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 .reader{position:fixed;inset:0;background:#33302d;z-index:50;overflow:auto;display:none}
 .reader.on{display:block}
@@ -253,7 +256,12 @@ html.dark .thumb{background-color:#333}
   .top{gap:6px;padding:0 8px}
   .top select{max-width:150px;min-width:72px;flex:1 1 auto}
   .top .tbtn{padding:6px 9px}.top .tbtn.icon{padding:6px 8px;min-width:36px}
+  .item .acts .mini,.item .drag{min-width:38px;min-height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:15px}.item .acts{gap:6px}
+  .mini{min-height:36px}
   .hide-m{display:none}
+  .menu{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:45;max-width:none;max-height:min(78vh,calc(100vh - 60px));border-radius:16px 16px 0 0;padding:8px 10px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+  .menu::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--ui-line);margin:2px auto 8px}
+  .menu button{padding:11px 12px}
   .main{grid-template-columns:1fr}
   .main.show-prev .editor{display:none}
   .main:not(.show-prev) .preview{display:none}
@@ -742,7 +750,7 @@ function normalize(t){
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
       coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
-    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
+    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
@@ -763,7 +771,7 @@ const mk={day:()=>normalize({days:[{}]}).days[0],item:(o={})=>normalize({days:[{
 function padDays(t){const n=dayCount(t);while(t.days.length<n)t.days.push(mk.day())}
 function blankTrip(){const s=iso(new Date(Date.now()+30*864e5));const t=normalize({title:'',start:s,end:addD(s,2)});t.created=Date.now();return t}
 function sampleTrip(){
-  const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={tz:9,title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
+  const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={tz:9,tzSet:true,title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
   notes:'這是範例資料，景點的營業時間、票價請出發前到官網查證\n肉製品不能帶回台灣\n記得帶轉接頭和行動電源',
   theme:{template:'matcha',color:'#5f7c6c'},opts:{placeOrder:'end',notesPage:true,dayColors:false,illus:true,season:'auto',dayNotes:false,routeMap:true,mcover:'b'},
   packing:'# 證件與錢\n護照\n電子機票\n日圓現金\n信用卡\n# 電子用品\n手機、充電線\n行動電源（隨身帶，不能託運）\n轉接頭\n# 衣物\n外套\n好走的鞋\n# 其他\n常備藥\n折疊傘',
@@ -854,7 +862,12 @@ function dayCat(t,i){const cnt={},order=[];const pb=Object.fromEntries(t.places.
   for(const it of t.days[i].items){const p=pb[it.placeId];const c=p?placeCat(p):detectCat(it.text);if(!(c in cnt)){cnt[c]=0;order.push(c)}cnt[c]+=p?2:1}
   const main=order.filter(c=>!['train','plane','hotel','city'].includes(c));const pool=main.length?main:order;
   return pool.sort((a,b)=>cnt[b]-cnt[a]||order.indexOf(a)-order.indexOf(b))[0]||detectCat(t.days[i].title)}
-function tripCat(t){const n=dayCount(t),cnt={};for(let i=0;i<n;i++){const c=dayCat(t,i);cnt[c]=(cnt[c]||0)+1}const k=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);return k.find(c=>c!=='city')||'city'}
+/* cover: sights decide the trip's picture; meals/cafés/shopping/transport only when there is nothing else */
+function tripCat(t){const n=dayCount(t),cnt={},pb=Object.fromEntries(t.places.map(p=>[p.id,p]));
+  for(let i=0;i<n;i++)for(const it of t.days[i].items){const p=pb[it.placeId];const c=p?placeCat(p):detectCat(it.text);cnt[c]=(cnt[c]||0)+(p?2:1)}
+  for(const p of t.places)cnt[placeCat(p)]=(cnt[placeCat(p)]||0)+1;
+  const rank=ks=>Object.keys(cnt).filter(c=>ks.includes(c)).sort((a,b)=>cnt[b]-cnt[a])[0];
+  return rank(['temple','shrine','museum','nature','beach'])||rank(['food','cafe','shop'])||rank(['city','train','plane','hotel'])||detectCat(t.title)||'city'}
 const DAYC=['#c0392b','#d9822b','#2e8b57','#2f6fa3','#7b4b94','#c8607e','#8a6d3b'];
 const dayColor=(t,i)=>t.opts.dayColors?DAYC[i%DAYC.length]:'';
 
@@ -935,6 +948,8 @@ function dayCoord(t,i){const pb=Object.fromEntries(t.places.map(p=>[p.id,p]));fo
   const a=(t.days[i].area||'')+' '+t.days[i].title;const c=CITY.find(x=>a.includes(x[0]));return c?[c[1],c[2]]:null}
 function daySun(t,i){if(!t.opts.sun)return null;const c=dayCoord(t,i);return c?sunTimes(dayDate(t,i),c[0],c[1],t.tz):null}
 
+const TZ_GUESS=[[9,/東京|京都|大阪|奈良|神戶|神戸|名古屋|橫濱|横浜|福岡|札幌|函館|小樽|那霸|沖繩|廣島|金澤|仙台|箱根|鎌倉|日光|高山|宇治|姬路|富士|輕井澤|北海道|九州|四國|日本|首爾|釜山|濟州|韓國/],[8,/台北|臺北|台灣|台中|高雄|香港|澳門|新加坡|上海|北京|吉隆坡|峇里|巴里島|馬尼拉/],[7,/曼谷|清邁|普吉|河內|胡志明|雅加達|金邊/],[0,/倫敦|里斯本|冰島/],[1,/巴黎|柏林|羅馬|巴塞隆納|馬德里|阿姆斯特丹|布拉格|維也納|蘇黎世|米蘭/],[-5,/紐約|波士頓|多倫多|邁阿密/],[-8,/洛杉磯|舊金山|西雅圖|溫哥華/],[10,/雪梨|墨爾本/],[12,/奧克蘭|紐西蘭/],[-10,/夏威夷|檀香山/]];
+function guessTz(t){const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area)].join(' ');for(const[tz,re]of TZ_GUESS)if(re.test(txt))return tz;return null}
 const TZS=[[-12,'國際換日線西側（無人島）'],[-11,'美屬薩摩亞'],[-10,'夏威夷'],[-9,'阿拉斯加（冬季）'],[-8,'洛杉磯、溫哥華（冬季）'],[-7,'鳳凰城、丹佛（冬季）'],[-6,'墨西哥城、芝加哥（冬季）'],[-5,'紐約、多倫多（冬季）'],[-4,'波多黎各、委內瑞拉'],[-3.5,'紐芬蘭（冬季）'],[-3,'聖保羅、布宜諾斯艾利斯'],[-2,'南喬治亞島'],[-1,'亞速群島（冬季）'],[0,'倫敦、里斯本（冬季）'],[1,'巴黎、柏林、羅馬（冬季）'],[2,'雅典、開羅（冬季）'],[3,'伊斯坦堡、莫斯科'],[3.5,'德黑蘭'],[4,'杜拜'],[4.5,'喀布爾'],[5,'喀拉蚩、馬爾地夫'],[5.5,'印度、斯里蘭卡'],[5.75,'尼泊爾'],[6,'達卡'],[6.5,'仰光'],[7,'曼谷、河內、雅加達'],[8,'台灣、香港、新加坡、峇里島'],[9,'日本、韓國'],[9.5,'阿德萊德（冬季）'],[10,'布里斯本、關島'],[11,'雪梨（夏季）、索羅門群島'],[12,'紐西蘭（冬季）、斐濟'],[13,'東加、紐西蘭（夏季）'],[14,'吉里巴斯線群島']];
 const tzLabel=v=>{const a=Math.abs(v),h=Math.floor(a),m=Math.round((a-h)*60);return 'UTC'+(v<0?'−':'+')+h+(m?':'+String(m).padStart(2,'0'):'')};
 
@@ -1171,7 +1186,7 @@ function fitEl(el){let fs=1;el.style.setProperty('--fs',fs);while(el.scrollHeigh
 function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.body.fit',p);if(b&&fitEl(b))bad.push(i)});return bad}
 
 /* ---------- app state ---------- */
-let trips=[],T=null,tab='basic';const openSet=new Set();
+let trips=[],T=null,tab='basic';const openSet=new Set(),openMore=new Set();
 let saveTimer=null,prevTimer=null,saveTarget=null,SHARING=false,SAVE_LOCK=false;
 /* every pending save is bound to the trip object it belongs to, so switching trips or undo/redo can never save the wrong one */
 function scheduleSave(t,ms){clearTimeout(saveTimer);saveTarget=t;saveTimer=setTimeout(()=>{saveTimer=null;save(t)},ms)}
@@ -1227,14 +1242,15 @@ function edBasic(){
   <label class="chk"><input type="checkbox" data-k="opts.taxiCards" ${T.opts.taxiCards?'checked':''}> 目的地卡（填了日文名稱或地址的地點，給司機看）</label>
   <label class="chk"><input type="checkbox" data-k="opts.resPage" ${T.opts.resPage?'checked':''}> 預約清單頁</label>
   <label class="chk"><input type="checkbox" data-k="opts.sun" ${T.opts.sun?'checked':''}> 每日頁顯示日出日落（依地區或景點的地圖連結估算，誤差約 1～2 分鐘）</label>
-  <label class="f"><span>目的地時區（算日出日落、行事曆用）</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p>
+  <label class="f"><span>目的地時區（算日出日落、行事曆用）${(g=>g!=null&&g!==T.tz?`　<button class="mini" data-act="useTz" data-a="${g}">看起來是 ${tzLabel(g)}，改成這個</button>`:'')(guessTz(T))}</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p>
   <label class="f"><span>出發地時區（去程航班用）</span><select data-k="homeTz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label></div>
   <div class="card"><h4>頁面順序</h4><p class="hint">用 ↑↓ 調整整個區塊的順序；取消勾選就不印。封面固定在第一頁。</p><div class="secl">${secOrder(T).map((k,ix,arr)=>`<div class="secr"><label class="chk" style="margin:0"><input type="checkbox" data-sec="${k}" ${T.opts.hide.includes(k)?'':'checked'}> ${SECTIONS.find(x=>x[0]===k)[1]}</label><span><button class="mini" data-act="secUp" data-a="${k}" ${ix?'':'disabled'}>↑</button><button class="mini" data-act="secDown" data-a="${k}" ${ix<arr.length-1?'':'disabled'}>↓</button></span></div>`).join('')}</div><button class="mini" data-act="secReset" style="margin:8px 0 10px">恢復預設順序</button></div>
   <div class="card"><h4>出發前提醒</h4><p class="hint">一行寫一則，會印在「出發資訊」頁。</p><textarea data-k="notes" rows="4" placeholder="例：肉製品不能帶回台灣">${esc(T.notes)}</textarea><div style="height:10px"></div></div>
   <div class="foot-note">資料只存在這台裝置的瀏覽器裡，不會上傳。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
 }
 function itemRow(i,j,it){const b=`days.${i}.items.${j}`;
-  return `<div class="item" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${it.placeId?'（留空就用景點名稱）':'要做什麼／去哪裡'}"><select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</select><div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div></div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
+  return `<div class="item" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${it.placeId?'（留空就用景點名稱）':'要做什麼／去哪裡'}">${(()=>{const more=it.transport||it.note||it.reserve||it.placeId||openMore.has(it.id);const pl=T.places.length?`<select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</select>`:'';
+  return more?`${pl}<div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約${T.places.length?'、連結景點':''}</button>`})()}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
 function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId);
   return `<div class="item autoitem"><div class="ro-t">${esc(it.time)||'—'}</div><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，<a href="#" data-act="tab" data-a="stays">到住宿修改</a></small></div><div></div></div>`}
 const EMPTY_IMG='assets/travel-book/empty/';
@@ -1249,7 +1265,7 @@ function edDays(){
   T.days.slice(0,n).map((d,i)=>{const date=dayDate(T,i);
     return det(d.id,`<b>DAY.${i+1}</b> ${md(date)}（${wk(date)}）<span class="sum-t" data-sum="${i}">${esc(d.title)}</span><span class="cnt">${dayEntries(T,i).length} 項</span>${byDay[i]?`<span class="cnt warnc">⚠ ${byDay[i]}</span>`:''}`,
     `<div class="row">${fld('這天的主題','days.'+i+'.title','例：清水寺．祇園散步')}<div style="flex:0 0 34%">${fld('地區','days.'+i+'.area','例：京都')}</div></div><div class="f"><span>這天的照片（選填）</span>${photoIn('days.'+i+'.photo',d.photo)}${d.photo?posSel('days.'+i+'.photoPos',d.photoPos):''}</div>
-    <div class="items" data-day="${i}">${dayEntries(T,i).map(it=>it.auto?autoRow(it):itemRow(i,it._j,it)).join('')}</div>
+    ${d.items.length||dayEntries(T,i).length?'':`<div class="dayempty">這天還是空的。可以一項一項加，或 <button class="linkbtn" data-act="openImport">貼上整段行程文字</button>（LINE 記事本、備忘錄都行）。</div>`}<div class="items" data-day="${i}">${dayEntries(T,i).map(it=>it.auto?autoRow(it):itemRow(i,it._j,it)).join('')}</div>
     <div class="row" style="margin-top:6px"><button class="add" data-act="addItem" data-a="${i}">＋ 新增一項</button><button class="mini" data-act="sortItems" data-a="${i}" style="margin-bottom:6px">依時間排序</button></div>
     ${area('備案（下雨、太累時改去哪裡；選填）','days.'+i+'.planB','例：下雨改去京都水族館',2)}
     ${n>1?`<div class="row" style="margin-bottom:10px"><select data-dayto="${i}" style="flex:1">${T.days.slice(0,n).map((x,k)=>k===i?'':`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(x.title)}</option>`).join('')}</select><button class="mini" data-act="copyDay" data-a="${i}">複製行程過去</button><button class="mini" data-act="swapDay" data-a="${i}">兩天對調</button></div>`:''}
@@ -1360,6 +1376,7 @@ function renderEditor(){
   ed.innerHTML=`<div class="bkbar" id="bkbar" hidden><span id="bkmsg"></span><button class="mini" data-act="doBackup">立即備份</button></div><nav class="tabs">${TABS.map(([k,l])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-a="${k}">${l}</button>`).join('')}</nav><div class="panel">${body}</div>`;
   $$('select[data-k]',ed).forEach(s=>{const v=getPath(T,s.dataset.k);if(v!=null)s.value=v});
   ed.scrollTop=st;renderBackupBar();if(tab==='basic')storageInfo();
+  {const tb=$('.tabs',ed),on=$('.tab.on',tb);if(on)on.scrollIntoView({inline:'center',block:'nearest'});const upd=()=>tb.classList.toggle('atend',tb.scrollLeft+tb.clientWidth>=tb.scrollWidth-4);tb.addEventListener('scroll',upd,{passive:true});upd()}
 }
 function renderTripSel(){
   const sel=$('#tripSel');
@@ -1391,8 +1408,21 @@ function renderPreview(){
   $('#prevbar').innerHTML=`<select id="pmode" title="預覽和匯出都會用這個版本"><option value="">一般版</option><option value="big">長輩大字版</option><option value="memory">回憶冊</option></select><label class="monochk"><input type="checkbox" id="pmono" ${MONO?'checked':''}> 黑白省墨</label><span>共 ${htmls.length} 頁．A4 對折 ${Math.ceil(htmls.length/4)} 張</span><span title="依網路教學文章的 ibon 價格估算：A4 彩色 10 元、黑白 3 元一面；雙面怎麼計費、現在的價格都以門市為準">ibon 估價：${MONO?'黑白':'彩色'}約 ${Math.ceil(htmls.length/4)*2*(MONO?IBON.mono:IBON.color)} 元 ⓘ</span>`+(wc?`<a href="#" class="warn" data-goto="days">⚠ 行程檢查有 ${wc} 則提醒</a>`:'')+(bad.length?`<span class="warn">第 ${bad.map(i=>i+1).join('、')} 頁內容太多：請縮短文字或把行程拆到別天</span>`:'')+(()=>{const sm=$$('#pages .pw').map((w,i)=>[i,parseFloat(($('.body.fit',w)||{style:{getPropertyValue:()=>1}}).style.getPropertyValue('--fs'))||1]).filter(x=>x[1]<0.86&&!bad.includes(x[0]));
     return sm.length?`<span class="soft" title="內容太多時會自動縮小字；縮到 85% 以下，印在 A5 上可能偏小">第 ${sm.map(x=>x[0]+1).join('、')} 頁的字縮小到 ${Math.round(Math.min(...sm.map(x=>x[1]))*100)}%，印出來可能偏小</span>`:''})();
   $('#pmode').value=PMODE;
-  pv.scrollTop=st;updPager(true);
+  pv.scrollTop=st;updPager(true);if(FOLLOW)followPreview();
 }
+/* preview follows the editor: the tab / open day / open place decides which page to show */
+let FOLLOW=null,followTimer=null;
+function wantFollow(kind,id){FOLLOW={kind,id};clearTimeout(followTimer);followTimer=setTimeout(followPreview,60)}
+function followPreview(){if(!FOLLOW)return;const f=FOLLOW;FOLLOW=null;const ws=$$('#pages .pw');if(!ws.length)return;
+  const find=fn=>ws.findIndex(w=>fn($('.pg',w)));let i=-1;
+  if(f.kind==='day')i=find(p=>p.dataset.day===f.id&&p.dataset.from==='0');
+  else if(f.kind==='place')i=find(p=>p.dataset.tx==='p:'+f.id&&!(+p.dataset.from));
+  else if(f.kind==='stay')i=find(p=>p.dataset.tx==='s:'+f.id&&!(+p.dataset.from));
+  else if(f.kind==='custom')i=find(p=>p.dataset.tx==='c:'+f.id);
+  else if(f.kind==='h2')i=find(p=>[...p.querySelectorAll('h2')].some(h=>f.id.includes(h.textContent.trim())));
+  else if(f.kind==='cover')i=0;
+  if(i>=0&&i!==PGCUR)goPage(i)}
+const TAB_FOLLOW={basic:['cover'],shops:['h2',['購物清單']],trans:['h2',['出發資訊']],lists:['h2',['打包清單','旅費預算','預約清單']],gift:['cover']};
 /* ---------- quick page navigation in the preview ---------- */
 const PAGER_H=48;let FITPAGE=LS.get('tabisatsu.fit')!=='width',PGCUR=0;
 function pageLabel(p,i){if(p.classList.contains('cover'))return'封面';if(p.classList.contains('day')){const n=$('.dn',p),d=$('.dt',p);return ((n?n.textContent:'')+' '+(d?d.textContent:'')).trim()}
@@ -1807,6 +1837,7 @@ function applyImport(r,mode,base){
   padDays(T);let cnt=0;
   r.days.forEach((d,k)=>{const day=T.days[tg[k].i];const again=done.has(tg[k].i);done.add(tg[k].i);const items=linkPlaces(T,d.items).map(x=>({id:uid(),time:x.time,text:x.text,placeId:x.placeId||'',transport:x.transport,note:x.note,secret:false,reserve:'',resNo:''}));cnt+=items.length;
     if(mode==='replace'&&!again)day.items=items;else day.items.push(...items);if(d.title&&(mode==='replace'||!day.title))day.title=d.title;openSet.add(day.id)});
+  if(!T.tzSet){const g=guessTz(T);if(g!=null)T.tz=g}
   tab='days';commit();toast(`已匯入 ${cnt} 項行程${ext}`);
 }
 
@@ -1895,7 +1926,8 @@ function onField(e){
   if(/placeId$|\.reserve$/.test(k)){touch(true);renderEditor();return}
   const su=k.match(/^stays\.(\d+)\.(mapUrl|bookUrl)$/);if(su){const o=T.stays[+su[1]];o[su[2]]=okUrl(v);if(su[2]==='mapUrl'){const r=parseMapsUrl(o.mapUrl);o.lat=r.lat??null;o.lng=r.lng??null}}
   const mu=k.match(/^places\.(\d+)\.mapUrl$/);if(mu){const p=T.places[+mu[1]];p.mapUrl=okUrl(v);const r=parseMapsUrl(p.mapUrl);if(r.lat!=null){p.lat=r.lat;p.lng=r.lng}}
-  if(k==='tz')T.tz=+v;if(k==='homeTz')T.homeTz=+v;const ft=k.match(/^flights\.(\d+)\.tz$/);if(ft)T.flights[+ft[1]].tz=v===''?'':+v;if(k==='start'||k==='homeTz'||k==='tz'||/^flights\.\d+\.date$/.test(k))if(tab==='trans'){touch(true);renderEditor();return}
+  if(k==='tz'){T.tz=+v;T.tzSet=true}if(k==='homeTz')T.homeTz=+v;
+  if(!T.tzSet&&(k==='title'||k==='subtitle'||/\.(area|title|name)$/.test(k))){const g=guessTz(T);if(g!=null&&g!==T.tz){T.tz=g;const sel=$('select[data-k=tz]');if(sel)sel.value=g;toast('目的地時區自動設成 '+tzLabel(g)+'（可在「基本」最下面改）')}}const ft=k.match(/^flights\.(\d+)\.tz$/);if(ft)T.flights[+ft[1]].tz=v===''?'':+v;if(k==='start'||k==='homeTz'||k==='tz'||/^flights\.\d+\.date$/.test(k))if(tab==='trans'){touch(true);renderEditor();return}
   touch(e.type==='change');
 }
 function move(arr,i,d){const j=i+d;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]]}
@@ -1904,11 +1936,13 @@ function onAct(e){
   const b=e.target.closest('[data-act]');if(!b)return;e.preventDefault();const a=b.dataset.a,act=b.dataset.act;
   const[i,j]=String(a).split('.').map(Number);
   switch(act){
-    case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;return;
+    case'moreItem':openMore.add(a);renderEditor();return;
+    case'useTz':T.tz=+a;toast('時區改成 '+tzLabel(T.tz));break;
+    case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;{const tf=TAB_FOLLOW[a];if(tf)wantFollow(tf[0],tf[1]);else followOpen()};return;
     case'tpl':T.theme.template=a;{const tp=tplOf(T);tp.onSelect&&tp.onSelect(T)}break;
     case'color':T.theme.color=a;break;
     case'rmPhoto':setPath(T,a,null);break;
-    case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);break;
+    case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);wantFollow('day',T.days[i].id);break;
     case'delItem':T.days[i].items.splice(j,1);break;
     case'up':move(T.days[i].items,j,-1);break;
     case'down':move(T.days[i].items,j,1);break;
@@ -1962,8 +1996,12 @@ function onAct(e){
 async function switchTrip(id){if(histTimer)histPush();flushSave();T=trips.find(t=>t.id===id)||trips[0];histReset();LS.set('tabisatsu.cur',T.id);openSet.clear();renderTripSel();renderEditor();renderPreview();$('#preview').scrollTop=0}
 async function newTrip(t){t=t||blankTrip();trips.push(t);await DB.put(t);tab='basic';switchTrip(t.id)}
 
+function followOpen(){const d=$$('#editor details[data-id][open]').pop();if(!d)return;const id=d.dataset.id;
+  if(tab==='days'&&T.days.some(x=>x.id===id))wantFollow('day',id);else if(tab==='places'&&T.places.some(x=>x.id===id))wantFollow('place',id);else if(tab==='stays'&&T.stays.some(x=>x.id===id))wantFollow('stay',id);else if(tab==='custom'&&T.custom.some(x=>x.id===id))wantFollow('custom',id)}
 function bind(){
   const ed=$('#editor');
+  ed.addEventListener('toggle',e=>{const d=e.target;if(d.tagName==='DETAILS'&&d.open&&d.dataset.id){const id=d.dataset.id;const kind=tab==='days'?'day':tab==='places'?'place':tab==='stays'?'stay':tab==='custom'?'custom':'';if(kind)wantFollow(kind,id)}},true);
+  ed.addEventListener('focusin',e=>{const d=e.target.closest('details[data-id]');if(d){const id=d.dataset.id;const kind=tab==='days'?'day':tab==='places'?'place':tab==='stays'?'stay':tab==='custom'?'custom':'';if(kind)wantFollow(kind,id)}});
   ed.addEventListener('pointerdown',dragStart);addEventListener('pointermove',dragMove,{passive:false});addEventListener('pointerup',dragEnd);addEventListener('pointercancel',dragEnd);
   ed.addEventListener('input',onField);ed.addEventListener('change',onField);ed.addEventListener('click',onAct);
   ed.addEventListener('toggle',e=>{const d=e.target;if(d.tagName!=='DETAILS')return;const id=d.dataset.id;if(d.open){openSet.add(id);openSet.delete('x'+id)}else{openSet.delete(id);openSet.add('x'+id)}},true);
