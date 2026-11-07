@@ -633,7 +633,8 @@ function findDate(s,base){
     [/(\d{1,2})\s+([A-Za-z]{3})[a-z]*\b/,m=>MON[m[2].toLowerCase()]?guessYear(MON[m[2].toLowerCase()],m[1],base):'']];
   let best=null;for(const[re,f]of rs){const m=s.match(re);if(m){const v=f(m);if(v&&(!best||m.index<best.i))best={i:m.index,v,end:m.index+m[0].length}}}
   return best}
-const findTime=s=>{const m=s.match(/(?<!\d)([01]?\d|2[0-3])[:：]([0-5]\d)(?!\d)/);return m?p2(+m[1])+':'+m[2]:''};
+const findTime=(s,end)=>{const g=s.match(/(?<!\d)([01]?\d|2[0-3])[:：]([0-5]\d)\s*[-–~～至到]\s*([01]?\d|2[0-4])[:：]([0-5]\d)/);if(g&&end)return p2(+g[3]%24)+':'+g[4];
+  const m=s.match(/(?<!\d)([01]?\d|2[0-3])[:：]([0-5]\d)(?!\d)/);return m?p2(+m[1])+':'+m[2]:''};/* a range like 06:00-11:00 means: check-in from the start, check-out by the end */
 const slugName=s=>decodeURIComponent(s||'').replace(/\.[a-z]{2}(-[a-z]{2,4})?$/i,'').replace(/[-_+]+/g,' ').trim().replace(/\b[a-z]/g,c=>c.toUpperCase());
 function parseStayUrl(u){
   const r={};let x;try{x=new URL(u)}catch(e){return r}
@@ -644,7 +645,7 @@ function parseStayUrl(u){
     r.checkin=dd(q.checkin)||(q.checkin_year?mkDate(+q.checkin_year,q.checkin_month,q.checkin_monthday):'');r.checkout=dd(q.checkout)||(q.checkout_year?mkDate(+q.checkout_year,q.checkout_month,q.checkout_monthday):'');}
   else if(/(^|\.)agoda\.com$/.test(h)){r.src='Agoda';r.bookUrl=u;const m=x.pathname.match(/\/([^\/]+)\/hotel\/[^\/]+\.html/i);if(m&&!/^[a-z]{2}(-[a-z]{2,4})?$/i.test(m[1]))r.name=slugName(m[1]);
     r.checkin=dd(q.checkin);r.checkout=dd(q.checkout);if(r.checkin&&!r.checkout&&+q.los>0)r.checkout=iso(new Date(pd(r.checkin).getTime()+(+q.los)*864e5));}
-  else if(/(^|\.)trip\.com$|(^|\.)ctrip\.com$/.test(h)){r.src='Trip.com';r.bookUrl=u;const m=x.pathname.match(/hotel-detail-\d+\/([^\/]+)/i);if(m)r.name=slugName(m[1]);if(!r.name&&q.hotelname)r.name=q.hotelname;
+  else if(/(^|\.)trip\.com$|(^|\.)ctrip\.com$/.test(h)){r.src='Trip.com';if(q.orderid&&/^\d{6,}$/.test(q.orderid))r.booking=q.orderid;if(!/signature|token/i.test(x.search))r.bookUrl=u;const m=x.pathname.match(/hotel-detail-\d+\/([^\/]+)/i);if(m)r.name=slugName(m[1]);if(!r.name&&q.hotelname)r.name=q.hotelname;
     r.checkin=dd(q.checkin||q.checkindate);r.checkout=dd(q.checkout||q.checkoutdate);}
   if(r.name&&/^\d+$/.test(r.name.replace(/\s/g,'')))delete r.name;
   return r}
@@ -656,11 +657,11 @@ function parseStayText(raw,base){
   const txt=s.replace(/https:\/\/[^\s"'<>）)\]]+/g,' ');
   const lines=txt.split('\n').map(l=>l.trim()).filter(Boolean),flat=lines.join('\n');
   const CIN=/(入住日期|入住日|入住時間|入住时间|入住(?![人者數数率])|check[\s-]?in(?:\s*date)?|arrival|チェックイン(?:日)?)/ig,COUT=/(退房日期|退房日|退房時間|退房时间|退房|離店|离店|check[\s-]?out(?:\s*date)?|departure|チェックアウト(?:日)?)/ig;
-  const grab=(re,stop)=>{let o={};re.lastIndex=0;let m;while((m=re.exec(flat))){let ch=flat.slice(m.index+m[0].length,m.index+m[0].length+90);const st=ch.search(stop);if(st>=0)ch=ch.slice(0,st);
-      if(!o.d){const d=findDate(ch,base);if(d){o.d=d.v;const tt=findTime(ch.slice(d.end));if(tt&&!o.t)o.t=tt}}
-      if(!o.t&&(/時間|时间|time/i.test(m[0])||/^[\s:：]*([01]?\d|2[0-3])[:：][0-5]\d/.test(ch))){const tt=findTime(ch.split('\n').slice(0,2).join(' '));if(tt)o.t=tt}
+  const grab=(re,stop,end)=>{let o={};re.lastIndex=0;let m;while((m=re.exec(flat))){let ch=flat.slice(m.index+m[0].length,m.index+m[0].length+90);const st=ch.search(stop);if(st>=0)ch=ch.slice(0,st);
+      if(!o.d){const d=findDate(ch,base);if(d){o.d=d.v;const tt=findTime(ch.slice(d.end),end);if(tt&&!o.t)o.t=tt}}
+      if(!o.t&&(/時間|时间|time/i.test(m[0])||/^[\s:：]*([01]?\d|2[0-3])[:：][0-5]\d/.test(ch))){const tt=findTime(ch.split('\n').slice(0,2).join(' '),end);if(tt)o.t=tt}
       if(o.d&&o.t)break}return o};
-  const ci=grab(CIN,new RegExp(COUT.source,'i')),co=grab(COUT,new RegExp(CIN.source,'i'));
+  const ci=grab(CIN,new RegExp(COUT.source,'i')),co=grab(COUT,new RegExp(CIN.source,'i'),true);
   if(ci.d)r.checkin=ci.d;if(ci.t)r.cinTime=ci.t;if(co.d)r.checkout=co.d;if(co.t)r.coutTime=co.t;
   if(!r.checkin){const all=[];let rest=flat,off=0;for(let i=0;i<8;i++){const d=findDate(rest,base);if(!d)break;all.push(d.v);rest=rest.slice(d.end)}
     const u=[...new Set(all)].sort();if(u.length){r.checkin=u[0];if(u.length>1&&!r.checkout)r.checkout=u[1]}}
@@ -670,8 +671,11 @@ function parseStayText(raw,base){
   const ph=field(/^(?:飯店電話|酒店電話|住宿電話|聯絡電話|電話番号|電話|电话|phone(?:\s*number)?|tel(?![a-z]))\s*[:：]?\s*(.*)$/i);const phm=ph.match(/\+?[\d][\d\s\-()]{5,}\d/);if(phm)r.phone=phm[0].trim();
   const ad=field(/^(?:飯店地址|酒店地址|住宿地址|地址|address|住所)\s*[:：]?\s*(.*)$/i);if(ad&&ad.length<160)r.address=ad;
   const rm=field(/^(?:房型|房間類型|客房類型|房间类型|room\s*type|部屋タイプ|客室タイプ)\s*[:：]?\s*(.*)$/i);if(rm&&rm.length<80)r.room=rm.replace(/^\d+\s*[x×]\s*/i,'');
+  if(!r.room){const rl=lines.find(l=>l.length<=30&&/(單人|雙人|雙床|大床|兩張床|和室|和洋室|家庭|套房|標準|豪華|高級|twin|double|single|suite|deluxe|superior)/i.test(l)&&/(房|間|室|room)/i.test(l)&&!/[:：]|(入住|人數|可入住|床墊|張|取消|政策)/.test(l));if(rl)r.room=rl}
   let name=field(/^(?:住宿名稱|飯店名稱|酒店名稱|酒店名称|飯店|酒店|property\s*name|hotel\s*name|property|hotel|ホテル名|施設名|宿泊施設)\s*([:：])\s*(.*)$/i,true);
-  if(!name){const kw=/(飯店|酒店|旅館|民宿|旅店|ホテル|hotel|inn\b|hostel|resort|ryokan|suites|residence|apartment|lodge)/i,bad=/(入住|退房|訂單|預訂|確認|感謝|謝謝|您的|thank|your |booking|reservation|confirm|check|dear|預約|取消|cancel|政策|policy|http)/i;
+  if(!name){const ai=lines.findIndex(l=>/^(?:地址|address|住所)\s*[:：]/i.test(l));const pv=ai>0?lines[ai-1]:'';
+    if(pv&&pv.length<=60&&!/[:：]|(入住|退房|訂單|預訂|確認|電話|phone|感謝|thank|預約)/i.test(pv))name=pv}
+  if(!name){const kw=/(飯店|酒店|旅館|民宿|旅店|ホテル|hotel|inn\b|hostel|resort|ryokan|suites|residence|apartment|lodge|\bstay\b)/i,bad=/(入住|退房|訂單|預訂|確認|感謝|謝謝|您的|thank|your |booking|reservation|confirm|check|dear|預約|取消|cancel|政策|policy|http)/i;
     name=lines.find(l=>kw.test(l)&&!bad.test(l)&&l.length<=60)||''}
   if(name)r.name=name.replace(/[，。,]$/,'');
   return r}
@@ -1208,7 +1212,7 @@ function edShops(){
   `<button class="add" data-act="addShop">＋ 新增購物項目</button>`;
 }
 function edStays(){
-  return `<div class="card" style="padding-bottom:10px"><b>從訂房網站匯入</b><p class="hint" style="margin:6px 0">把 <b>Booking.com、Agoda、Trip.com</b> 的訂房確認信、App 訂單畫面的文字或飯店連結，或 <b>Google 地圖</b>的飯店連結貼進來，會自動抓出飯店名稱、日期、時間、訂單編號、地址和電話。只在你的瀏覽器裡辨識，不會上傳。辨識是盡量猜，加入後請核對一次。</p><textarea id="stayPaste" rows="4" placeholder="貼上確認信內容或連結" style="width:100%;box-sizing:border-box"></textarea><div style="display:flex;gap:8px;margin-top:6px"><button class="mini" data-act="importStay">辨識並加入</button><button class="mini" data-act="clearStayPaste">清空</button></div></div><p class="hint">每筆住宿會排成一整頁介紹。入住和退房會<b>自動加進當天的行程</b>（依時間排好），住宿期間每天的頁面下方也會顯示「今晚住宿」和頁碼。之後改日期或時間，所有頁面會一起更新。</p>`+
+  return `<div class="card" style="padding-bottom:10px"><b>從訂房網站匯入</b><p class="hint" style="margin:6px 0">把 <b>Booking.com、Agoda、Trip.com</b> 的訂房確認信、App 訂單畫面的文字或飯店連結，或 <b>Google 地圖</b>的飯店連結貼進來，會自動抓出飯店名稱、日期、時間、訂單編號、地址和電話。在電腦上可以打開訂單頁，按 Ctrl+A 全選、Ctrl+C 複製，整頁貼進來。只在你的瀏覽器裡辨識，不會上傳。辨識是盡量猜，加入後請核對一次。</p><textarea id="stayPaste" rows="4" placeholder="貼上確認信內容或連結" style="width:100%;box-sizing:border-box"></textarea><div style="display:flex;gap:8px;margin-top:6px"><button class="mini" data-act="importStay">辨識並加入</button><button class="mini" data-act="clearStayPaste">清空</button></div></div><p class="hint">每筆住宿會排成一整頁介紹。入住和退房會<b>自動加進當天的行程</b>（依時間排好），住宿期間每天的頁面下方也會顯示「今晚住宿」和頁碼。之後改日期或時間，所有頁面會一起更新。</p>`+
   T.stays.map((s,i)=>{const n=nights(s.checkin,s.checkout);
     return det(s.id,`<b>${esc(s.name||'未命名住宿')}</b><span class="sum-t">${s.checkin?md(s.checkin):''}${s.checkout?' – '+md(s.checkout):''}</span>${n?`<span class="cnt">${n} 晚</span>`:''}`,
     `${fld('飯店名稱','stays.'+i+'.name','例：THE GATE HOTEL 大阪')}
