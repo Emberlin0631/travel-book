@@ -654,7 +654,8 @@ function parseStayText(raw,base){
   const urls=s.match(/https:\/\/[^\s"'<>）)\]]+/g)||[];
   urls.forEach(u=>{const v=parseStayUrl(u);for(const k in v)if(v[k]!==''&&v[k]!=null&&r[k]==null)r[k]=v[k]});
   if(r.src)r.srcUrl=true;
-  const txt=s.replace(/https:\/\/[^\s"'<>）)\]]+/g,' ');
+  /* PIN codes and passwords are dropped before anything is read, so they can never end up in a field */
+  const txt=s.replace(/https:\/\/[^\s"'<>）)\]]+/g,' ').split('\n').filter(l=>!/(\bPIN\b|PIN\s*碼|密碼|驗證碼|安全碼|password|passcode|暗証番号)/i.test(l)).join('\n');
   const lines=txt.split('\n').map(l=>l.trim()).filter(Boolean),flat=lines.join('\n');
   const CIN=/(入住日期|入住日|入住時間|入住时间|入住(?![人者數数率])|check[\s-]?in(?:\s*date)?|arrival|チェックイン(?:日)?)/ig,COUT=/(退房日期|退房日|退房時間|退房时间|退房|離店|离店|check[\s-]?out(?:\s*date)?|departure|チェックアウト(?:日)?)/ig;
   const grab=(re,stop,end)=>{let o={};re.lastIndex=0;let m;while((m=re.exec(flat))){let ch=flat.slice(m.index+m[0].length,m.index+m[0].length+90);const st=ch.search(stop);if(st>=0)ch=ch.slice(0,st);
