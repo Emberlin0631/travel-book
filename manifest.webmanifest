@@ -1,0 +1,17 @@
+{
+  "name": "旅冊｜旅遊小冊製作器",
+  "short_name": "旅冊",
+  "description": "把旅行行程排成可以列印、可以傳給旅伴的旅遊小冊。",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ece8e1",
+  "theme_color": "#1f2a27",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
