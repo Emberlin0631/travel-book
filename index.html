@@ -525,7 +525,9 @@ function normalize(t){
   };
   padDays(o);return o;
 }
-function padDays(t){const n=dayCount(t);while(t.days.length<n)t.days.push({id:uid(),title:'',photo:null,items:[]})}
+/* factories: every new object goes through normalize so it always has all current fields */
+const mk={day:()=>normalize({days:[{}]}).days[0],item:(o={})=>normalize({days:[{items:[o]}]}).days[0].items[0],place:(o={})=>normalize({places:[o]}).places[0],shop:(o={})=>normalize({shops:[o]}).shops[0]};
+function padDays(t){const n=dayCount(t);while(t.days.length<n)t.days.push(mk.day())}
 function blankTrip(){const s=iso(new Date(Date.now()+30*864e5));const t=normalize({title:'',start:s,end:addD(s,2)});t.created=Date.now();return t}
 function sampleTrip(){
   const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
@@ -1411,7 +1413,7 @@ function onAct(e){
     case'tpl':T.theme.template=a;break;
     case'color':T.theme.color=a;break;
     case'rmPhoto':setPath(T,a,null);break;
-    case'addItem':T.days[i].items.push({id:uid(),time:'',text:'',placeId:'',transport:'',note:''});openSet.add(T.days[i].id);break;
+    case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);break;
     case'delItem':T.days[i].items.splice(j,1);break;
     case'up':move(T.days[i].items,j,-1);break;
     case'down':move(T.days[i].items,j,1);break;
@@ -1436,11 +1438,11 @@ function onAct(e){
     case'addBudget':T.budget.push({id:uid(),name:'',amount:'',cur:'JPY'});break;
     case'delBudget':T.budget.splice(i,1);break;
     case'giftDl':exportGift();return;
-    case'addPlace':{const p={id:uid(),name:'',area:'',photo:null,desc:'',hours:'',price:'',address:'',tips:''};T.places.push(p);openSet.add(p.id);break}
+    case'addPlace':{const p=mk.place();T.places.push(p);openSet.add(p.id);break}
     case'delPlace':{const p=T.places[i],used=T.days.some(d=>d.items.some(x=>x.placeId===p.id));
       const go=()=>{T.days.forEach(d=>d.items.forEach(x=>{if(x.placeId===p.id){if(!x.text)x.text=p.name;x.placeId=''}}));T.places.splice(i,1);commit()};
       if(used)modal('刪除景點','「'+esc(p.name||'未命名景點')+'」已經排在行程裡。刪掉後，行程會保留文字，但不再連結到介紹頁。',[['取消'],['刪除',go,'danger']]);else go();return}
-    case'addShop':T.shops.push({id:uid(),name:'',store:'',price:'',dayId:'',photo:null,note:''});break;
+    case'addShop':T.shops.push(mk.shop());break;
     case'delShop':T.shops.splice(i,1);break;
     case'addStay':{const l=T.stays[T.stays.length-1];const ns=normalize({stays:[{checkin:l?.checkout||T.start,checkout:T.end}]}).stays[0];T.stays.push(ns);openSet.add(ns.id);break}
     case'delStay':T.stays.splice(i,1);break;
