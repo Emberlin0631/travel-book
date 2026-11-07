@@ -579,7 +579,7 @@ function normalize(t){
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
       coverStyle:['top','full','frame'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
-    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,
+    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
@@ -591,7 +591,7 @@ function normalize(t){
     shops:(Array.isArray(t.shops)?t.shops:[]).map(s=>({id:str(s?.id)||uid(),name:str(s?.name),store:str(s?.store),price:str(s?.price),dayId:str(s?.dayId),photo:okImg(s?.photo),note:str(s?.note),bought:!!s?.bought})),
     stays:(Array.isArray(t.stays)?t.stays:[]).map(s=>({id:str(s?.id)||uid(),name:str(s?.name),photo:okImg(s?.photo),photoPos:okPos(s?.photoPos),address:str(s?.address),station:str(s?.station),phone:str(s?.phone),room:str(s?.room),booking:str(s?.booking),
       checkin:str(s?.checkin),cinTime:s?.cinTime==null?'15:00':str(s.cinTime),checkout:str(s?.checkout),coutTime:s?.coutTime==null?'11:00':str(s.coutTime),auto:s?.auto!==false,desc:str(s?.desc),note:str(s?.note),jaName:str(s?.jaName),jaAddress:str(s?.jaAddress),mapUrl:okUrl(s?.mapUrl),bookUrl:okUrl(s?.bookUrl),lat:isFinite(+s?.lat)&&s?.lat!==''&&s?.lat!=null?+s.lat:null,lng:isFinite(+s?.lng)&&s?.lng!==''&&s?.lng!=null?+s.lng:null})),
-    flights:(Array.isArray(t.flights)?t.flights:[]).map(f=>({id:str(f?.id)||uid(),label:str(f?.label),date:str(f?.date),time:str(f?.time),code:str(f?.code),from:str(f?.from),to:str(f?.to),note:str(f?.note)})),
+    flights:(Array.isArray(t.flights)?t.flights:[]).map(f=>({id:str(f?.id)||uid(),label:str(f?.label),date:str(f?.date),time:str(f?.time),code:str(f?.code),from:str(f?.from),to:str(f?.to),note:str(f?.note),tz:f?.tz!==''&&f?.tz!=null&&isFinite(+f.tz)&&+f.tz>=-12&&+f.tz<=14?+f.tz:''})),
   };
   padDays(o);return o;
 }
@@ -949,6 +949,8 @@ function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.bo
 /* ---------- app state ---------- */
 let trips=[],T=null,tab='basic';const openSet=new Set();
 let saveTimer=null,prevTimer=null,saveTarget=null,SHARING=false;
+/* every pending save is bound to the trip object it belongs to, so switching trips or undo/redo can never save the wrong one */
+function scheduleSave(t,ms){clearTimeout(saveTimer);saveTarget=t;saveTimer=setTimeout(()=>{saveTimer=null;save(t)},ms)}
 function flushSave(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null;return save(saveTarget||T)}}
 /* undo/redo: snapshots with images pooled so history stays small */
 const IMGPOOL=new Map(),IMGID=new Map();let HIST=[],HIDX=-1,histTimer=null;
@@ -959,9 +961,9 @@ function histReset(){HIST=[snap()];HIDX=0;updUndo()}
 function histPush(){clearTimeout(histTimer);histTimer=null;if(SHARING)return;const x=snap();if(x===HIST[HIDX])return;HIST=HIST.slice(0,HIDX+1);HIST.push(x);if(HIST.length>80)HIST.shift();HIDX=HIST.length-1;updUndo()}
 function histGo(d){if(histTimer)histPush();const n=HIDX+d;if(n<0||n>=HIST.length){toast(d<0?'沒有可以復原的了':'沒有可以重做的了');return}
   HIDX=n;const t=normalize(unsnap(HIST[n]));t.id=T.id;const ix=trips.findIndex(x=>x.id===T.id);trips[ix]=t;T=t;
-  clearTimeout(saveTimer);saveTimer=setTimeout(save,200);renderTripSel();renderEditor();renderPreview();updUndo();toast(d<0?'已復原':'已重做')}
+  scheduleSave(t,200);renderTripSel();renderEditor();renderPreview();updUndo();toast(d<0?'已復原':'已重做')}
 function updUndo(){const u=$('#undoBtn'),r=$('#redoBtn');if(u)u.disabled=HIDX<=0;if(r)r.disabled=HIDX>=HIST.length-1}
-function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?0:700);T.updated=Date.now();clearTimeout(saveTimer);const tt=T;saveTimer=setTimeout(()=>{saveTimer=null;save(tt)},400);saveTarget=tt;saveState('ing');clearTimeout(prevTimer);prevTimer=setTimeout(renderPreview,full?0:280)}
+function touch(full){clearTimeout(histTimer);histTimer=setTimeout(histPush,full?0:700);T.updated=Date.now();scheduleSave(T,400);saveState('ing');clearTimeout(prevTimer);prevTimer=setTimeout(renderPreview,full?0:280)}
 function saveState(k){const el=$('#savest');if(!el)return;el.classList.toggle('bad',k==='bad'||!DB.db);
   el.textContent=!DB.db?'⚠ 這個瀏覽器不能儲存，關掉就會消失，請下載備份':k==='ing'?'儲存中…':k==='bad'?'⚠ 儲存失敗，請下載備份':'✓ 已儲存在這台裝置';
   el.title=!DB.db?'可能是無痕模式或瀏覽器設定擋住了儲存':'資料只存在這台裝置的瀏覽器，不會自動同步到其他裝置'}
@@ -1000,7 +1002,8 @@ function edBasic(){
   <label class="chk"><input type="checkbox" data-k="opts.taxiCards" ${T.opts.taxiCards?'checked':''}> 目的地卡（填了日文名稱或地址的地點，給司機看）</label>
   <label class="chk"><input type="checkbox" data-k="opts.resPage" ${T.opts.resPage?'checked':''}> 預約清單頁</label>
   <label class="chk"><input type="checkbox" data-k="opts.sun" ${T.opts.sun?'checked':''}> 每日頁顯示日出日落（依地區或景點的地圖連結估算，誤差約 1～2 分鐘）</label>
-  <label class="f"><span>目的地時區（算日出日落用）</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p></div>
+  <label class="f"><span>目的地時區（算日出日落、行事曆用）</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p>
+  <label class="f"><span>出發地時區（去程航班用）</span><select data-k="homeTz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label></div>
   <div class="card"><h4>頁面順序</h4><p class="hint">用 ↑↓ 調整整個區塊的順序；取消勾選就不印。封面固定在第一頁。</p><div class="secl">${secOrder(T).map((k,ix,arr)=>`<div class="secr"><label class="chk" style="margin:0"><input type="checkbox" data-sec="${k}" ${T.opts.hide.includes(k)?'':'checked'}> ${SECTIONS.find(x=>x[0]===k)[1]}</label><span><button class="mini" data-act="secUp" data-a="${k}" ${ix?'':'disabled'}>↑</button><button class="mini" data-act="secDown" data-a="${k}" ${ix<arr.length-1?'':'disabled'}>↓</button></span></div>`).join('')}</div><button class="mini" data-act="secReset" style="margin:8px 0 10px">恢復預設順序</button></div>
   <div class="card"><h4>出發前提醒</h4><p class="hint">一行寫一則，會印在「出發資訊」頁。</p><textarea data-k="notes" rows="4" placeholder="例：肉製品不能帶回台灣">${esc(T.notes)}</textarea><div style="height:10px"></div></div>
   <div class="foot-note">資料只存在這台裝置的瀏覽器裡，不會上傳。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
@@ -1118,6 +1121,7 @@ function edTrans(){
   <div class="row">${fld('名稱','flights.'+i+'.label','例：去程')}${fld('班次','flights.'+i+'.code','例：IT 210')}</div>
   <div class="row">${fld('日期','flights.'+i+'.date','','date')}${fld('時間','flights.'+i+'.time','例：06:50')}</div>
   <div class="row">${fld('出發','flights.'+i+'.from','例：桃園 TPE')}${fld('抵達','flights.'+i+'.to','例：關西 KIX')}</div>
+  <label class="f"><span>起飛時間是哪個時區（匯出行事曆用）</span><select data-k="flights.${i}.tz"><option value="">自動：${!f.date||f.date<=T.start?'出發地 '+tzLabel(T.homeTz):'目的地 '+tzLabel(T.tz)}</option>${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label>
   ${fld('備註','flights.'+i+'.note','例：第一航廈')}
   <button class="mini danger" data-act="delFlight" data-a="${i}" style="margin-bottom:10px">刪除</button></div>`).join('')}
   <button class="add" data-act="addFlight">＋ 新增交通</button><p class="hint">會印在「出發資訊」頁。</p></div>`;
@@ -1462,13 +1466,13 @@ function exportICS(){
   const n=dayCount(T),pb=Object.fromEntries(T.places.map(p=>[p.id,p])),ev=[],stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
   const dt=(date,min)=>date.replace(/-/g,'')+'T'+fmtHM(min).replace(':','')+'00';
   /* itinerary times are local to the destination: write them as absolute UTC so calendars show the right moment in any time zone */
-  const dtz=(date,min)=>{const[y,m,d]=date.split('-').map(Number);return new Date(Date.UTC(y,m-1,d,0,min)-(+T.tz||0)*36e5).toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'')};
+  const dtz=(date,min,tz=T.tz)=>{const[y,m,d]=date.split('-').map(Number);return new Date(Date.UTC(y,m-1,d,0,min)-(+tz||0)*36e5).toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'')};
   for(let i=0;i<n;i++){const date=dayDate(T,i),E=dayEntries(T,i).filter(e=>hm(e.time)!=null);
     E.forEach((e,k)=>{const a=hm(e.time);let b=k+1<E.length?hm(E[k+1].time):a+60;if(b<=a)b=a+60;if(b>=24*60)b=24*60-1;
       const p=pb[e.placeId],s=e.stayId?T.stays.find(x=>x.id===e.stayId):null;
       const title=e.auto?e.text:(e.text||p?.name||'行程');const loc=p?placeQuery(p):s?placeQuery(s):'';
       ev.push({uid:e.id,s:dtz(date,a),e:dtz(date,b),title,loc,desc:[e.transport,e.note].filter(Boolean).join('\n')})})}
-  T.flights.forEach(f=>{const a=hm(f.time);if(!f.date||a==null)return;ev.push({uid:f.id,s:dt(f.date,a),e:dt(f.date,Math.min(a+60,24*60-1)),title:`${f.label||'航班'} ${f.from}→${f.to} ${f.code}`.trim(),loc:f.from,desc:f.note})});
+  T.flights.forEach(f=>{const a=hm(f.time);if(!f.date||a==null)return;const ftz=f.tz!==''?f.tz:(f.date<=T.start?T.homeTz:T.tz);ev.push({uid:f.id,s:dtz(f.date,a,ftz),e:dtz(f.date,a+60,ftz),title:`${f.label||'航班'} ${f.from}→${f.to} ${f.code}`.trim(),loc:f.from,desc:f.note})});
   if(!ev.length){toast('沒有填時間的行程，無法匯出');return}
   const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//tabisatsu//zh-Hant','CALSCALE:GREGORIAN','X-WR-CALNAME:'+icsEsc(T.title||'旅行')];
   ev.forEach(x=>{L.push('BEGIN:VEVENT','UID:'+x.uid+'@tabisatsu','DTSTAMP:'+stamp,'DTSTART:'+x.s,'DTEND:'+x.e,'SUMMARY:'+icsEsc(x.title));if(x.loc)L.push('LOCATION:'+icsEsc(x.loc));if(x.desc)L.push('DESCRIPTION:'+icsEsc(x.desc));L.push('END:VEVENT')});
@@ -1529,7 +1533,7 @@ function onField(e){
   if(/placeId$|\.reserve$/.test(k)){touch(true);renderEditor();return}
   const su=k.match(/^stays\.(\d+)\.(mapUrl|bookUrl)$/);if(su){const o=T.stays[+su[1]];o[su[2]]=okUrl(v);if(su[2]==='mapUrl'){const r=parseMapsUrl(o.mapUrl);o.lat=r.lat??null;o.lng=r.lng??null}}
   const mu=k.match(/^places\.(\d+)\.mapUrl$/);if(mu){const p=T.places[+mu[1]];p.mapUrl=okUrl(v);const r=parseMapsUrl(p.mapUrl);if(r.lat!=null){p.lat=r.lat;p.lng=r.lng}}
-  if(k==='tz')T.tz=+v;
+  if(k==='tz')T.tz=+v;if(k==='homeTz')T.homeTz=+v;const ft=k.match(/^flights\.(\d+)\.tz$/);if(ft)T.flights[+ft[1]].tz=v===''?'':+v;if(k==='start'||k==='homeTz'||k==='tz'||/^flights\.\d+\.date$/.test(k))if(tab==='trans'){touch(true);renderEditor();return}
   touch(e.type==='change');
 }
 function move(arr,i,d){const j=i+d;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]]}
