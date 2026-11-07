@@ -734,9 +734,10 @@ const str=v=>typeof v==='string'?v:(v==null?'':String(v));
 /* ---------- data schema ----------
    Every stored trip carries `schema`. When the data model changes, bump SCHEMA and add a step to MIGRATE
    (keyed by the version it upgrades FROM). Steps run in order on load/import, before normalize fills defaults. */
-const SCHEMA=2;
+const SCHEMA=3;
 const MIGRATE={
   1:t=>{/* v1→v2: adds days[].done, days[].planBOn, opts.detail — all have safe defaults in normalize */},
+  2:t=>{/* v2→v3: country-aware emergency page. Old trips were all Japan. */if(t.opts&&'emgJapan'in t.opts){t.opts.emgLocal=t.opts.emgJapan;delete t.opts.emgJapan;if(!t.country)t.country='jp'}},
 };
 function migrate(t){let v=+t.schema||1;while(v<SCHEMA){(MIGRATE[v]||(()=>{}))(t);v++}return t}
 function normalize(t){
@@ -747,10 +748,10 @@ function normalize(t){
     opts:{placeOrder:t.opts?.placeOrder==='after-day'?'after-day':'end',notesPage:t.opts?.notesPage!==false,
       dayColors:!!t.opts?.dayColors,illus:t.opts?.illus!==false,season:['auto','sakura','summer','maple','snow','none'].includes(t.opts?.season)?t.opts.season:'auto',dayNotes:!!t.opts?.dayNotes,routeMap:t.opts?.routeMap!==false,
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
-      sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
+      sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
       coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
-    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
+    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
@@ -771,7 +772,7 @@ const mk={day:()=>normalize({days:[{}]}).days[0],item:(o={})=>normalize({days:[{
 function padDays(t){const n=dayCount(t);while(t.days.length<n)t.days.push(mk.day())}
 function blankTrip(){const s=iso(new Date(Date.now()+30*864e5));const t=normalize({title:'',start:s,end:addD(s,2)});t.created=Date.now();return t}
 function sampleTrip(){
-  const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={tz:9,tzSet:true,title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
+  const s='2026-12-05',P1=uid(),P2=uid(),P3=uid(),P4=uid(),t={tz:9,tzSet:true,country:'jp',countrySet:true,title:'京阪三日散策',subtitle:'範例行程｜改成你自己的旅行吧',start:s,end:addD(s,2),travelers:'小明＆小美',
   notes:'這是範例資料，景點的營業時間、票價請出發前到官網查證\n肉製品不能帶回台灣\n記得帶轉接頭和行動電源',
   theme:{template:'matcha',color:'#5f7c6c'},opts:{placeOrder:'end',notesPage:true,dayColors:false,illus:true,season:'auto',dayNotes:false,routeMap:true,mcover:'b'},
   packing:'# 證件與錢\n護照\n電子機票\n日圓現金\n信用卡\n# 電子用品\n手機、充電線\n行動電源（隨身帶，不能託運）\n轉接頭\n# 衣物\n外套\n好走的鞋\n# 其他\n常備藥\n折疊傘',
@@ -948,8 +949,40 @@ function dayCoord(t,i){const pb=Object.fromEntries(t.places.map(p=>[p.id,p]));fo
   const a=(t.days[i].area||'')+' '+t.days[i].title;const c=CITY.find(x=>a.includes(x[0]));return c?[c[1],c[2]]:null}
 function daySun(t,i){if(!t.opts.sun)return null;const c=dayCoord(t,i);return c?sunTimes(dayDate(t,i),c[0],c[1],t.tz):null}
 
+
+/* ---------- destination countries: emergency numbers (checked against gov.uk / travel.gc.ca / 外交部領事事務局, 2026-11) ----------
+   police/fire/amb: local numbers · hot: tourist / interpreter hotline · mofa: how to dial 外交部 800-0885-0885 from there
+   taxi: "please take me here" in the local language · sos: "please call an ambulance" */
+const COUNTRIES=[
+ {id:'jp',name:'日本',re:/日本|東京|京都|大阪|奈良|神戶|神戸|名古屋|橫濱|横浜|福岡|札幌|函館|小樽|那霸|沖繩|廣島|金澤|仙台|箱根|鎌倉|日光|高山|宇治|姬路|富士|輕井澤|北海道|九州|四國/,tz:9,
+  police:'110',fire:'119',amb:'119',hot:['訪日旅客熱線','050-3816-2787','日本觀光局 JNTO，24 小時，中英韓文'],mofa:'001-010-800-0885-0885',taxi:['ここまでお願いします','請帶我到這裡'],sos:['救急車をお願いします。','請叫救護車'],phrases:true},
+ {id:'kr',name:'韓國',re:/韓國|首爾|釜山|濟州|大邱|仁川/,tz:9,police:'112',fire:'119',amb:'119',hot:['旅遊諮詢熱線','1330','韓國觀光公社，24 小時，有中文，可三方翻譯轉接 112／119'],mofa:'001-800-0885-0885',taxi:['여기로 가 주세요','請帶我到這裡'],sos:['구급차를 불러 주세요.','請叫救護車']},
+ {id:'tw',name:'台灣',re:/台灣|臺灣|台北|臺北|台中|臺中|台南|臺南|高雄|花蓮|宜蘭|墾丁|澎湖|金門/,tz:8,police:'110',fire:'119',amb:'119',hot:['旅遊諮詢熱線','0800-011-765','交通部觀光署，24 小時'],taxi:['請帶我到這裡',''],sos:['請叫救護車','']},
+ {id:'hk',name:'香港',re:/香港/,tz:8,police:'999',fire:'999',amb:'999',mofa:'001-800-0885-0885',taxi:['唔該去呢度','請帶我到這裡'],sos:['唔該叫白車','請叫救護車']},
+ {id:'mo',name:'澳門',re:/澳門/,tz:8,police:'999',fire:'999',amb:'999',mofa:'00-800-0885-0885',taxi:['唔該去呢度','請帶我到這裡'],sos:['唔該叫白車','請叫救護車']},
+ {id:'sg',name:'新加坡',re:/新加坡|Singapore/i,tz:8,police:'999',fire:'995',amb:'995',mofa:'001-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'my',name:'馬來西亞',re:/馬來西亞|吉隆坡|檳城|沙巴|亞庇/,tz:8,police:'999',fire:'994',amb:'999',mofa:'00-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'th',name:'泰國',re:/泰國|曼谷|清邁|普吉|芭達雅|華欣|蘇美/,tz:7,police:'191',fire:'199',amb:'1669',hot:['觀光警察','1155','24 小時，英語'],mofa:'001-800-0885-0885',taxi:['ไปที่นี่ครับ/ค่ะ','請帶我到這裡'],sos:['ช่วยเรียกรถพยาบาลด้วย','請叫救護車']},
+ {id:'vn',name:'越南',re:/越南|河內|胡志明|峴港|會安|下龍|芽莊/,tz:7,police:'113',fire:'114',amb:'115',note:'緊急電話只有越南語',taxi:['Làm ơn đưa tôi đến đây.','請帶我到這裡'],sos:['Làm ơn gọi xe cấp cứu.','請叫救護車']},
+ {id:'id',name:'印尼',re:/印尼|峇里|巴里島|雅加達|日惹/,tz:8,police:'110',fire:'113',amb:'118',hot:['整合緊急電話','112','警消醫療統一號碼'],taxi:['Tolong antar saya ke sini.','請帶我到這裡'],sos:['Tolong panggil ambulans.','請叫救護車']},
+ {id:'ph',name:'菲律賓',re:/菲律賓|馬尼拉|宿霧|長灘/,tz:8,police:'911',fire:'911',amb:'911',mofa:'00-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'cn',name:'中國',re:/中國|上海|北京|廣州|深圳|成都|杭州|西安|重慶|廈門/,tz:8,police:'110',fire:'119',amb:'120',taxi:['请带我到这里',''],sos:['请叫救护车','']},
+ {id:'us',name:'美國',re:/美國|紐約|洛杉磯|舊金山|西雅圖|拉斯維加斯|波士頓|芝加哥|夏威夷|檀香山|關島/,tz:-8,police:'911',fire:'911',amb:'911',mofa:'011-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'ca',name:'加拿大',re:/加拿大|溫哥華|多倫多|蒙特婁|班夫/,tz:-5,police:'911',fire:'911',amb:'911',mofa:'011-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'gb',name:'英國',re:/英國|倫敦|愛丁堡|曼徹斯特/,tz:0,police:'999',fire:'999',amb:'999',hot:['歐盟通用緊急號碼','112','英國也可撥'],mofa:'00-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'fr',name:'法國',re:/法國|巴黎|尼斯|里昂|普羅旺斯/,tz:1,police:'17',fire:'18',amb:'15',hot:['歐盟通用緊急號碼','112','任何緊急狀況都可撥，有英語'],mofa:'00-800-0885-0885',taxi:['Ici, s’il vous plaît.','請帶我到這裡'],sos:['Appelez une ambulance, s’il vous plaît.','請叫救護車']},
+ {id:'it',name:'義大利',re:/義大利|羅馬|米蘭|佛羅倫斯|威尼斯|拿坡里/,tz:1,police:'112',fire:'115',amb:'118',hot:['歐盟通用緊急號碼','112','任何緊急狀況都可撥'],mofa:'00-800-0885-0885',taxi:['Qui, per favore.','請帶我到這裡'],sos:['Chiami un’ambulanza, per favore.','請叫救護車']},
+ {id:'es',name:'西班牙',re:/西班牙|巴塞隆納|馬德里|塞維亞/,tz:1,police:'091',fire:'080',amb:'061',hot:['歐盟通用緊急號碼','112','任何緊急狀況都可撥'],taxi:['Aquí, por favor.','請帶我到這裡'],sos:['Llame a una ambulancia, por favor.','請叫救護車']},
+ {id:'de',name:'德國',re:/德國|柏林|慕尼黑|法蘭克福|漢堡/,tz:1,police:'110',fire:'112',amb:'112',hot:['歐盟通用緊急號碼','112','任何緊急狀況都可撥'],mofa:'00-800-0885-0885',taxi:['Hierhin, bitte.','請帶我到這裡'],sos:['Bitte rufen Sie einen Krankenwagen.','請叫救護車']},
+ {id:'eu',name:'其他歐洲（112）',re:/荷蘭|阿姆斯特丹|瑞士|蘇黎世|奧地利|維也納|捷克|布拉格|葡萄牙|里斯本|比利時|布魯塞爾|希臘|雅典|冰島|瑞典|丹麥|挪威|芬蘭|匈牙利|波蘭|克羅埃西亞/,tz:1,police:'112',fire:'112',amb:'112',hot:['歐盟通用緊急號碼','112','警消醫療統一號碼'],taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'au',name:'澳洲',re:/澳洲|雪梨|墨爾本|布里斯本|伯斯|黃金海岸|凱恩斯/,tz:10,police:'000',fire:'000',amb:'000',mofa:'0011-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'nz',name:'紐西蘭',re:/紐西蘭|奧克蘭|皇后鎮|基督城|威靈頓/,tz:12,police:'111',fire:'111',amb:'111',mofa:'00-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
+ {id:'xx',name:'其他／不確定',re:/$^/,police:'',fire:'',amb:'',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']}];
+const CTY=Object.fromEntries(COUNTRIES.map(c=>[c.id,c]));
+function guessCountry(t){const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area),...t.stays.map(s=>s.name+' '+s.address)].join(' ');for(const c of COUNTRIES)if(c.re.test(txt))return c.id;return null}
+const ctyOf=t=>CTY[t.country]||CTY.xx;
 const TZ_GUESS=[[9,/東京|京都|大阪|奈良|神戶|神戸|名古屋|橫濱|横浜|福岡|札幌|函館|小樽|那霸|沖繩|廣島|金澤|仙台|箱根|鎌倉|日光|高山|宇治|姬路|富士|輕井澤|北海道|九州|四國|日本|首爾|釜山|濟州|韓國/],[8,/台北|臺北|台灣|台中|高雄|香港|澳門|新加坡|上海|北京|吉隆坡|峇里|巴里島|馬尼拉/],[7,/曼谷|清邁|普吉|河內|胡志明|雅加達|金邊/],[0,/倫敦|里斯本|冰島/],[1,/巴黎|柏林|羅馬|巴塞隆納|馬德里|阿姆斯特丹|布拉格|維也納|蘇黎世|米蘭/],[-5,/紐約|波士頓|多倫多|邁阿密/],[-8,/洛杉磯|舊金山|西雅圖|溫哥華/],[10,/雪梨|墨爾本/],[12,/奧克蘭|紐西蘭/],[-10,/夏威夷|檀香山/]];
-function guessTz(t){const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area)].join(' ');for(const[tz,re]of TZ_GUESS)if(re.test(txt))return tz;return null}
+function guessTz(t){const c=guessCountry(t);if(c&&CTY[c].tz!=null)return CTY[c].tz;const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area)].join(' ');for(const[tz,re]of TZ_GUESS)if(re.test(txt))return tz;return null}
 const TZS=[[-12,'國際換日線西側（無人島）'],[-11,'美屬薩摩亞'],[-10,'夏威夷'],[-9,'阿拉斯加（冬季）'],[-8,'洛杉磯、溫哥華（冬季）'],[-7,'鳳凰城、丹佛（冬季）'],[-6,'墨西哥城、芝加哥（冬季）'],[-5,'紐約、多倫多（冬季）'],[-4,'波多黎各、委內瑞拉'],[-3.5,'紐芬蘭（冬季）'],[-3,'聖保羅、布宜諾斯艾利斯'],[-2,'南喬治亞島'],[-1,'亞速群島（冬季）'],[0,'倫敦、里斯本（冬季）'],[1,'巴黎、柏林、羅馬（冬季）'],[2,'雅典、開羅（冬季）'],[3,'伊斯坦堡、莫斯科'],[3.5,'德黑蘭'],[4,'杜拜'],[4.5,'喀布爾'],[5,'喀拉蚩、馬爾地夫'],[5.5,'印度、斯里蘭卡'],[5.75,'尼泊爾'],[6,'達卡'],[6.5,'仰光'],[7,'曼谷、河內、雅加達'],[8,'台灣、香港、新加坡、峇里島'],[9,'日本、韓國'],[9.5,'阿德萊德（冬季）'],[10,'布里斯本、關島'],[11,'雪梨（夏季）、索羅門群島'],[12,'紐西蘭（冬季）、斐濟'],[13,'東加、紐西蘭（夏季）'],[14,'吉里巴斯線群島']];
 const tzLabel=v=>{const a=Math.abs(v),h=Math.floor(a),m=Math.round((a-h)*60);return 'UTC'+(v<0?'−':'+')+h+(m?':'+String(m).padStart(2,'0'):'')};
 
@@ -1004,7 +1037,7 @@ function buildPages(t,splits={},mode={}){
     overview(){if(n){pages.push({k:'overview'});pushC('overview')}},
     route(){const st=t.opts.routeMap?routeStops(t):[];if(st.length)pages.push({k:'route',stops:st})},
     info(){if(!mem&&(t.stays.length||t.flights.length||t.notes.trim()))pages.push({k:'info'});pushC('info')},
-    emg(){if(!mem&&t.opts.emgPage&&(t.opts.emgJapan||Object.values(t.emg).some(v=>v.trim())))pages.push({k:'emg'})},
+    emg(){const c=ctyOf(t);if(!mem&&t.opts.emgPage&&((t.opts.emgLocal&&c.police)||Object.values(t.emg).some(v=>v.trim())))pages.push({k:'emg'})},
     res(){const L=[];days.forEach((d,i)=>d.items.forEach(it=>{if(it.reserve&&vis(it))L.push({it,i})}));if(!mem&&t.opts.resPage&&(L.length||t.stays.some(s=>s.booking)))pages.push({k:'res',list:L})},
     pack(){if(!mem&&t.opts.packPage&&t.packing.trim())pages.push({k:'pack'})},
     budget(){if(t.opts.budgetPage&&(t.budget.some(b=>b.name||b.amount)||t.expenses.length))pages.push({k:'budget'})},
@@ -1128,7 +1161,7 @@ function renderPages0(t,splits,mode={}){
     const actH=t.expenses.length?`<div class="sec" style="margin-top:1.2em"><h3>實際花費（旅途中記的）</h3><div class="btot">日圓 <b>¥ ${act.JPY.toLocaleString()}</b>　台幣 <b>NT$ ${act.TWD.toLocaleString()}</b>${rate>0?`<small>合計約 NT$ ${Math.round(act.TWD+act.JPY*rate).toLocaleString()}${tot.JPY||tot.TWD?`，預算約 NT$ ${Math.round(tot.TWD+tot.JPY*rate).toLocaleString()}`:''}</small>`:''}</div></div>`:'';
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">BUDGET</span><h2>旅費預算</h2></div><table class="ov bud"><thead><tr><th>項目</th><th>金額</th><th></th></tr></thead><tbody>${rows}</tbody></table>${rows?`<div class="btot">日圓小計 <b>¥ ${tot.JPY.toLocaleString()}</b>　台幣小計 <b>NT$ ${tot.TWD.toLocaleString()}</b></div>${conv}`:''}${actH}</div>${pn(no)}</section>`}
   case'taxi':{const cards=pg.list.map(x=>{const q=t.opts.qr?qrSVG(x.mapUrl?x.mapUrl:mapsURL(placeQuery(x))):'';
-      return `<div class="tcard${q?'':' noqr'}"><div class="tlab">ここまでお願いします<small>請帶我到這裡</small></div><div class="tja">${esc(x.jaName||x.name)}</div>${x.jaAddress||x.address?`<div class="tad">${esc(x.jaAddress||x.address)}</div>`:''}<div class="tzh">${esc(x.name)}</div>${q?`<div class="tqr">${q}</div>`:''}</div>`}).join('');
+      const tx=ctyOf(t).taxi;return `<div class="tcard${q?'':' noqr'}"><div class="tlab">${esc(tx[0])}${tx[1]?`<small>${esc(tx[1])}</small>`:''}</div><div class="tja">${esc(x.jaName||x.name)}</div>${x.jaAddress||x.address?`<div class="tad">${esc(x.jaAddress||x.address)}</div>`:''}<div class="tzh">${esc(x.name)}</div>${q?`<div class="tqr">${q}</div>`:''}</div>`}).join('');
     return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">DESTINATION CARD</span><h2>目的地卡</h2></div><div class="tcards">${cards}</div></div>${pn(no)}</section>`}
   case'memory':{const d=pg.d,i=pg.i,date=dayDate(t,i),ph=pg.photos,dc=dayColor(t,i);
     const grid=ph.length?`<div class="mgrid n${ph.length}">${ph.map(x=>`<div class="mph"${bg(x)}></div>`).join('')}</div>`:'';
@@ -1141,7 +1174,8 @@ function renderPages0(t,splits,mode={}){
   case'emg':{const e=t.emg,row=(k,v)=>v.trim()?`<div class="irow"><div class="k">${k}</div><div>${nl(v)}</div></div>`:'';
     const lab=Object.fromEntries(EMG_FIELDS);
     const mine=[['contact','contactPhone'],['insurer','policy','insPhone'],['cardPhone'],['office','officePhone'],['other']].map(g=>g.map(k=>row(lab[k],e[k])).join('')).join('');
-    const jp=t.opts.emgJapan?`<div class="sec"><h3>日本當地</h3><div class="emgbig"><div><b>110</b>警察</div><div><b>119</b>救護車・消防</div></div><div class="irow"><div class="k">訪日旅客熱線</div><div><b>050-3816-2787</b><div class="s">日本觀光局 JNTO，24 小時，中英韓文</div></div></div><div class="irow"><div class="k">叫救護車</div><div>救急車をお願いします。<div class="s">請叫救護車</div></div></div></div>`:'';
+    const c=ctyOf(t),big=c.police?(c.police===c.fire&&c.fire===c.amb?`<div><b>${c.police}</b>警察・救護車・消防</div>`:c.fire===c.amb?`<div><b>${c.police}</b>警察</div><div><b>${c.amb}</b>救護車・消防</div>`:`<div><b>${c.police}</b>警察</div><div><b>${c.amb}</b>救護車</div><div><b>${c.fire}</b>消防</div>`):'';
+    const jp=t.opts.emgLocal&&c.police?`<div class="sec"><h3>${esc(c.name)}當地</h3><div class="emgbig">${big}</div>${c.hot?`<div class="irow"><div class="k">${esc(c.hot[0])}</div><div><b>${esc(c.hot[1])}</b><div class="s">${esc(c.hot[2])}</div></div></div>`:''}${c.note?`<div class="irow"><div class="k">注意</div><div>${esc(c.note)}</div></div>`:''}${c.sos&&c.sos[0]&&c.sos[1]?`<div class="irow"><div class="k">叫救護車</div><div>${esc(c.sos[0])}<div class="s">${esc(c.sos[1])}</div></div></div>`:''}${c.id!=='tw'?`<div class="irow"><div class="k">台灣外交部急難救助</div><div>${c.mofa?`<b>${esc(c.mofa)}</b><div class="s">旅外國人急難救助全球免付費專線，當地電話撥打免費</div>`:''}<b>+886-800-085-095</b><div class="s">外交部緊急聯絡中心，24 小時（海外撥打需付費）</div></div></div>`:''}</div>`:'';
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">EMERGENCY</span><h2>緊急資訊</h2></div>${jp}${mine?`<div class="sec"><h3>我的資料</h3>${mine}</div>`:''}<p class="rnote">出發前請再確認電話號碼；這頁印出來會帶著個人資料，請小心保管。</p></div>${pn(no)}</section>`}
   case'phrases':{const rows=pg.list.map(x=>x.h?`<div class="phh">${esc(x.h)}</div>`:`<div class="phr"><div class="phj">${esc(x.p[0])}</div><div class="phz">${esc(x.p[1])}</div></div>`).join('');
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">JAPANESE PHRASES${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>常用日文</h2></div><div class="phl">${rows}</div><p class="rnote">〇〇的地方換成地名或店名，直接指給對方看也可以。</p></div>${pn(no)}</section>`}
@@ -1242,6 +1276,7 @@ function edBasic(){
   <label class="chk"><input type="checkbox" data-k="opts.taxiCards" ${T.opts.taxiCards?'checked':''}> 目的地卡（填了日文名稱或地址的地點，給司機看）</label>
   <label class="chk"><input type="checkbox" data-k="opts.resPage" ${T.opts.resPage?'checked':''}> 預約清單頁</label>
   <label class="chk"><input type="checkbox" data-k="opts.sun" ${T.opts.sun?'checked':''}> 每日頁顯示日出日落（依地區或景點的地圖連結估算，誤差約 1～2 分鐘）</label>
+  <label class="f"><span>目的地國家／地區（緊急電話、目的地卡用語）${(g=>g&&g!==T.country?`　<button class="mini" data-act="useCty" data-a="${g}">看起來是${CTY[g].name}，改成這個</button>`:'')(guessCountry(T))}</span><select data-k="country"><option value="">尚未選擇</option>${COUNTRIES.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></label>
   <label class="f"><span>目的地時區（算日出日落、行事曆用）${(g=>g!=null&&g!==T.tz?`　<button class="mini" data-act="useTz" data-a="${g}">看起來是 ${tzLabel(g)}，改成這個</button>`:'')(guessTz(T))}</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p>
   <label class="f"><span>出發地時區（去程航班用）</span><select data-k="homeTz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label></div>
   <div class="card"><h4>頁面順序</h4><p class="hint">用 ↑↓ 調整整個區塊的順序；取消勾選就不印。封面固定在第一頁。</p><div class="secl">${secOrder(T).map((k,ix,arr)=>`<div class="secr"><label class="chk" style="margin:0"><input type="checkbox" data-sec="${k}" ${T.opts.hide.includes(k)?'':'checked'}> ${SECTIONS.find(x=>x[0]===k)[1]}</label><span><button class="mini" data-act="secUp" data-a="${k}" ${ix?'':'disabled'}>↑</button><button class="mini" data-act="secDown" data-a="${k}" ${ix<arr.length-1?'':'disabled'}>↓</button></span></div>`).join('')}</div><button class="mini" data-act="secReset" style="margin:8px 0 10px">恢復預設順序</button></div>
@@ -1354,9 +1389,9 @@ function edLists(){
   <label class="chk"><input type="checkbox" data-k="opts.budgetPage" ${T.opts.budgetPage?'checked':''}> 印進小冊</label></div>
   <div class="card"><h4>緊急資訊</h4><p class="hint">只會存在你的裝置和印出來的小冊裡。駐外館處電話請到外交部網站查最新的號碼。</p>
   ${EMG_FIELDS.map(([k,l])=>k==='other'?area(l,'emg.'+k,'',2):fld(l,'emg.'+k)).join('')}
-  <label class="chk"><input type="checkbox" data-k="opts.emgJapan" ${T.opts.emgJapan?'checked':''}> 附上日本當地緊急電話（110、119、訪日旅客熱線）</label>
+  <label class="chk"><input type="checkbox" data-k="opts.emgLocal" ${T.opts.emgLocal?'checked':''}> 附上當地緊急電話與台灣外交部急難救助專線${ctyOf(T).police?`（${esc(ctyOf(T).name)}：${[...new Set([ctyOf(T).police,ctyOf(T).amb,ctyOf(T).fire])].join('、')}${ctyOf(T).hot?'、'+ctyOf(T).hot[0]+' '+ctyOf(T).hot[1]:''}）`:'（先在「基本」選目的地國家）'}</label>
   <label class="chk"><input type="checkbox" data-k="opts.emgPage" ${T.opts.emgPage?'checked':''}> 印進小冊</label></div>
-  <div class="card"><h4>常用日文</h4><p class="hint">印成一頁可以直接指給店員、司機看的句子。</p><div class="wkrow" style="margin-bottom:10px">${PHRASES.map(g=>`<label><input type="checkbox" data-pcat="${g[0]}" ${T.opts.phraseCats.includes(g[0])?'checked':''}>${g[1]}</label>`).join('')}</div>
+  <div class="card"><h4>常用日文</h4><p class="hint">印成一頁可以直接指給店員、司機看的句子。${T.country&&T.country!=='jp'?'<b>目前目的地不是日本，這頁通常用不到。</b>':''}</p><div class="wkrow" style="margin-bottom:10px">${PHRASES.map(g=>`<label><input type="checkbox" data-pcat="${g[0]}" ${T.opts.phraseCats.includes(g[0])?'checked':''}>${g[1]}</label>`).join('')}</div>
   <label class="chk"><input type="checkbox" data-k="opts.phrasePage" ${T.opts.phrasePage?'checked':''}> 印進小冊</label></div>
   <div class="card"><h4>實際花費</h4><p class="hint">旅途中可以在「今日模式」快速記一筆，也可以在這裡補。</p>${T.expenses.map((x,i)=>`<div class="row" style="margin-bottom:6px"><input type="date" data-k="expenses.${i}.date" value="${esc(x.date)}" style="flex:0 0 34%"><input data-k="expenses.${i}.name" value="${esc(x.name)}" placeholder="項目"><input data-k="expenses.${i}.amount" value="${esc(x.amount)}" placeholder="金額" inputmode="decimal" style="flex:0 0 22%"><select data-k="expenses.${i}.cur" style="flex:0 0 18%"><option value="JPY">日圓</option><option value="TWD">台幣</option></select><button class="mini danger" data-act="delExp" data-a="${i}">✕</button></div>`).join('')}<button class="add" data-act="addExp">＋ 新增一筆</button></div>`;
 }
@@ -1374,7 +1409,7 @@ function renderEditor(){
   const ed=$('#editor'),st=ed.scrollTop;
   const body={basic:edBasic,days:edDays,places:edPlaces,stays:edStays,shops:edShops,trans:edTrans,lists:edLists,custom:edCustom,gift:edGift}[tab]();
   ed.innerHTML=`<div class="bkbar" id="bkbar" hidden><span id="bkmsg"></span><button class="mini" data-act="doBackup">立即備份</button></div><nav class="tabs">${TABS.map(([k,l])=>`<button class="tab ${tab===k?'on':''}" data-act="tab" data-a="${k}">${l}</button>`).join('')}</nav><div class="panel">${body}</div>`;
-  $$('select[data-k]',ed).forEach(s=>{const v=getPath(T,s.dataset.k);if(v!=null)s.value=v});
+  ed.dataset.tid=T.id;  $$('select[data-k]',ed).forEach(s=>{const v=getPath(T,s.dataset.k);if(v!=null)s.value=v});
   ed.scrollTop=st;renderBackupBar();if(tab==='basic')storageInfo();
   {const tb=$('.tabs',ed),on=$('.tab.on',tb);if(on)on.scrollIntoView({inline:'center',block:'nearest'});const upd=()=>tb.classList.toggle('atend',tb.scrollLeft+tb.clientWidth>=tb.scrollWidth-4);tb.addEventListener('scroll',upd,{passive:true});upd()}
 }
@@ -1545,7 +1580,8 @@ function digitalHTML(t){
   const shops=t.shops.filter(x=>x.name).map(x=>ck('s'+x.id,x.name,[x.store,x.price].filter(Boolean).join('・'))).join('');
   const pack=t.packing.split('\n').map(x=>x.trim()).filter(Boolean).map((x,k)=>x.startsWith('#')?`</div><h3 class="sh">${esc(x.replace(/^#+\s*/,''))}</h3><div class="card">`:ck('k'+k+x,x)).join('');
   const e=t.emg,lab=Object.fromEntries(EMG_FIELDS),mine=EMG_FIELDS.filter(([k])=>e[k]&&e[k].trim()).map(([k])=>[lab[k],e[k]]);
-  const emg=(t.opts.emgJapan?`<div class="em"><a href="tel:110"><b>110</b>警察</a><a href="tel:119"><b>119</b>救護車・消防</a></div><div class="card" style="margin-top:10px;padding:10px 14px">${dl([['訪日旅客熱線','<a href="tel:05038162787">050-3816-2787</a>（JNTO，24 小時，中英韓文）',1]])}</div>`:'')+(mine.length?`<div class="card" style="padding:10px 14px">${dl(mine)}</div>`:'');
+  const cy=ctyOf(t),tel=n=>`<a href="tel:${esc(String(n).replace(/[^\d+]/g,''))}">${esc(n)}</a>`;
+  const emg=(t.opts.emgLocal&&cy.police?`<div class="em">${[...new Map([[cy.police,'警察'],[cy.amb,'救護車'],[cy.fire,'消防']].reduce((m,[n,l])=>(m.set(n,(m.get(n)?m.get(n)+'・':'')+l),m),new Map()))].map(([n,l])=>`<a href="tel:${esc(n)}"><b>${esc(n)}</b>${l}</a>`).join('')}</div><div class="card" style="margin-top:10px;padding:10px 14px">${dl([cy.hot?[cy.hot[0],tel(cy.hot[1])+'（'+esc(cy.hot[2])+'）',1]:['',''],cy.note?['注意',cy.note]:['',''],cy.id!=='tw'&&cy.mofa?['外交部急難救助（當地免費）',tel(cy.mofa),1]:['',''],cy.id!=='tw'?['外交部緊急聯絡中心',tel('+886-800-085-095')+'（24 小時，付費）',1]:['','']])}</div>`:'')+(mine.length?`<div class="card" style="padding:10px 14px">${dl(mine)}</div>`:'');
   const nav=[...Array.from({length:n},(_,i)=>`<a href="#d${i+1}" data-day="${dayDate(t,i)}">DAY.${i+1} ${md(dayDate(t,i))}</a>`),stays&&'<a href="#stays">住宿</a>',flights&&'<a href="#flights">交通</a>',places&&'<a href="#places">景點</a>',shops&&'<a href="#shops">購物</a>',pack&&'<a href="#pack">打包</a>',emg&&'<a href="#emg">緊急</a>'].filter(Boolean).join('');
   const data=JSON.stringify({id:t.id,tz:+t.tz||0}).replace(/</g,'\\u003c');
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="${c}"><title>${esc(t.title||'旅冊')}</title><style>${DIGI_CSS.replace('--c:#5f7c6c','--c:'+c)}</style></head><body>
@@ -1559,7 +1595,7 @@ ${shops?`<section id="shops"><div class="dh"><h2>購物清單</h2></div><div cla
 ${pack?`<section id="pack"><div class="dh"><h2>打包清單</h2></div><div class="card">${pack}</div><p class="foot cknote"></p></section>`:''}
 ${emg?`<section id="emg"><div class="dh"><h2>緊急資訊</h2></div>${emg}</section>`:''}
 <p class="foot" style="text-align:center">用旅冊製作・沒有網路也能看</p></main>
-<div class="drv" id="drv"><button class="btn" id="drvx">關閉</button><div class="l">ここまでお願いします</div><div class="j" id="drvj"></div><div class="a" id="drva"></div><div class="z" id="drvz"></div></div>
+<div class="drv" id="drv"><button class="btn" id="drvx">關閉</button><div class="l">${esc(ctyOf(t).taxi[0])}</div><div class="j" id="drvj"></div><div class="a" id="drva"></div><div class="z" id="drvz"></div></div>
 <script>(function(){var G=${data};
 var now=new Date(Date.now()+G.tz*36e5).toISOString().slice(0,10);
 document.querySelectorAll('nav.dn a[data-day]').forEach(function(a){if(a.getAttribute('data-day')===now){a.classList.add('today');a.scrollIntoView({inline:'center',block:'nearest'})}});
@@ -1788,7 +1824,7 @@ function renderToday(){
     <div class="memthumbs" style="margin-top:8px">${d.memPhotos.map(x=>`<div class="thumb"${bg(x)}></div>`).join('')}<label class="mini upl">＋ 加照片<input type="file" accept="image/*" multiple data-tphotos="${i}" hidden></label></div></div>`;
 }
 function showDriver(ref){const[k,id]=ref.split(':');const x=k==='p'?T.places.find(p=>p.id===id):T.stays.find(s=>s.id===id);if(!x)return;
-  $('#drvin').innerHTML=`<div class="dlab">ここまでお願いします</div><div class="dja">${esc(x.jaName||x.name)}</div>${x.jaAddress||x.address?`<div class="dad">${esc(x.jaAddress||x.address)}</div>`:''}<div class="dzh">請帶我到這裡：${esc(x.name)}</div>`;$('#drv').classList.add('on')}
+  $('#drvin').innerHTML=`<div class="dlab">${esc(ctyOf(T).taxi[0])}</div><div class="dja">${esc(x.jaName||x.name)}</div>${x.jaAddress||x.address?`<div class="dad">${esc(x.jaAddress||x.address)}</div>`:''}<div class="dzh">請帶我到這裡：${esc(x.name)}</div>`;$('#drv').classList.add('on')}
 function bindToday(){
   $('#todayBtn').addEventListener('click',openToday);$('#tdclose').addEventListener('click',closeToday);$('#drvclose').addEventListener('click',()=>$('#drv').classList.remove('on'));
   const tb=$('#tdbody');
@@ -1837,7 +1873,7 @@ function applyImport(r,mode,base){
   padDays(T);let cnt=0;
   r.days.forEach((d,k)=>{const day=T.days[tg[k].i];const again=done.has(tg[k].i);done.add(tg[k].i);const items=linkPlaces(T,d.items).map(x=>({id:uid(),time:x.time,text:x.text,placeId:x.placeId||'',transport:x.transport,note:x.note,secret:false,reserve:'',resNo:''}));cnt+=items.length;
     if(mode==='replace'&&!again)day.items=items;else day.items.push(...items);if(d.title&&(mode==='replace'||!day.title))day.title=d.title;openSet.add(day.id)});
-  if(!T.tzSet){const g=guessTz(T);if(g!=null)T.tz=g}
+  if(!T.countrySet){const g=guessCountry(T);if(g)T.country=g}if(!T.tzSet){const g=guessTz(T);if(g!=null)T.tz=g}
   tab='days';commit();toast(`已匯入 ${cnt} 項行程${ext}`);
 }
 
@@ -1909,7 +1945,7 @@ ${open}<div class="a4wrap">${im.html}</div></div>
 
 /* ---------- events ---------- */
 function onField(e){
-  const el=e.target;
+  const el=e.target,edEl=el.closest&&el.closest('#editor');if(!edEl||edEl.dataset.tid!==T.id)return;/* a change event fired while the editor is being re-rendered for another trip must not write into it */
   if(el.dataset.photos){if(e.type==='change'&&el.files.length){const arr=getPath(T,el.dataset.photos);Promise.all([...el.files].slice(0,12).map(f=>compress(f).catch(()=>null))).then(vs=>{vs.filter(Boolean).forEach(v=>arr.push(v));commit()})}return}
   if(el.dataset.photo){if(e.type==='change'&&el.files[0]){compress(el.files[0],/^custom\./.test(el.dataset.photo)?2000:1400).then(v=>{setPath(T,el.dataset.photo,v);commit()}).catch(()=>toast('無法讀取這張圖片，請換成 JPG 或 PNG'))}return}
   if(el.dataset.sec){const k=el.dataset.sec;T.opts.hide=el.checked?T.opts.hide.filter(x=>x!==k):[...new Set([...T.opts.hide,k])];touch(true);return}
@@ -1926,7 +1962,8 @@ function onField(e){
   if(/placeId$|\.reserve$/.test(k)){touch(true);renderEditor();return}
   const su=k.match(/^stays\.(\d+)\.(mapUrl|bookUrl)$/);if(su){const o=T.stays[+su[1]];o[su[2]]=okUrl(v);if(su[2]==='mapUrl'){const r=parseMapsUrl(o.mapUrl);o.lat=r.lat??null;o.lng=r.lng??null}}
   const mu=k.match(/^places\.(\d+)\.mapUrl$/);if(mu){const p=T.places[+mu[1]];p.mapUrl=okUrl(v);const r=parseMapsUrl(p.mapUrl);if(r.lat!=null){p.lat=r.lat;p.lng=r.lng}}
-  if(k==='tz'){T.tz=+v;T.tzSet=true}if(k==='homeTz')T.homeTz=+v;
+  if(k==='country'){T.countrySet=true;if(!T.tzSet&&CTY[v]&&CTY[v].tz!=null)T.tz=CTY[v].tz}if(k==='tz'){T.tz=+v;T.tzSet=true}if(k==='homeTz')T.homeTz=+v;
+  if(!T.countrySet&&(k==='title'||k==='subtitle'||/\.(area|title|name|address)$/.test(k))){const g=guessCountry(T);if(g&&g!==T.country){T.country=g;const sel=$('select[data-k=country]');if(sel)sel.value=g}}
   if(!T.tzSet&&(k==='title'||k==='subtitle'||/\.(area|title|name)$/.test(k))){const g=guessTz(T);if(g!=null&&g!==T.tz){T.tz=g;const sel=$('select[data-k=tz]');if(sel)sel.value=g;toast('目的地時區自動設成 '+tzLabel(g)+'（可在「基本」最下面改）')}}const ft=k.match(/^flights\.(\d+)\.tz$/);if(ft)T.flights[+ft[1]].tz=v===''?'':+v;if(k==='start'||k==='homeTz'||k==='tz'||/^flights\.\d+\.date$/.test(k))if(tab==='trans'){touch(true);renderEditor();return}
   touch(e.type==='change');
 }
@@ -1937,6 +1974,7 @@ function onAct(e){
   const[i,j]=String(a).split('.').map(Number);
   switch(act){
     case'moreItem':openMore.add(a);renderEditor();return;
+    case'useCty':T.country=a;T.countrySet=true;toast('目的地改成 '+CTY[a].name);break;
     case'useTz':T.tz=+a;toast('時區改成 '+tzLabel(T.tz));break;
     case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;{const tf=TAB_FOLLOW[a];if(tf)wantFollow(tf[0],tf[1]);else followOpen()};return;
     case'tpl':T.theme.template=a;{const tp=tplOf(T);tp.onSelect&&tp.onSelect(T)}break;
@@ -1993,7 +2031,7 @@ function onAct(e){
   }
   commit();
 }
-async function switchTrip(id){if(histTimer)histPush();flushSave();T=trips.find(t=>t.id===id)||trips[0];histReset();LS.set('tabisatsu.cur',T.id);openSet.clear();renderTripSel();renderEditor();renderPreview();$('#preview').scrollTop=0}
+async function switchTrip(id){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#editor'))ae.blur();/* commit a focused field to the trip it belongs to before T changes */if(histTimer)histPush();flushSave();T=trips.find(t=>t.id===id)||trips[0];histReset();LS.set('tabisatsu.cur',T.id);openSet.clear();renderTripSel();renderEditor();renderPreview();$('#preview').scrollTop=0}
 async function newTrip(t){t=t||blankTrip();trips.push(t);await DB.put(t);tab='basic';switchTrip(t.id)}
 
 function followOpen(){const d=$$('#editor details[data-id][open]').pop();if(!d)return;const id=d.dataset.id;
