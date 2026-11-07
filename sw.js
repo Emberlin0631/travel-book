@@ -1,11 +1,14 @@
 // 旅冊 service worker: app shell offline + font cache. Bump VERSION when icons or the manifest change (pages are network-first).
-const VERSION = 'tabisatsu-v14';
+const VERSION = 'tabisatsu-v15';
 const FONTS = 'tabisatsu-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-64.png',
   './assets/travel-book/style-tokens.css',
   './assets/travel-book/brand/logo-horizontal-clear.webp',
   './assets/travel-book/hero/hero-background-1600x900.webp',
   './assets/travel-book/hero/hero-mobile-portrait.webp',
+  './assets/travel-book/showcase/cover.webp',
+  './assets/travel-book/showcase/day.webp',
+  './assets/travel-book/showcase/place.webp',
   './assets/booklet/cat-beach.webp',
   './assets/booklet/cat-cafe.webp',
   './assets/booklet/cat-city.webp',
