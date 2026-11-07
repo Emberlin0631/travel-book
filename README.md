@@ -19,3 +19,12 @@
 - 匯出圖片時才會從 cdnjs 載入：[html2canvas](https://github.com/niklasvh/html2canvas)（MIT License）、[JSZip](https://github.com/Stuk/jszip)（MIT 或 GPLv3 雙授權，這裡採 MIT）。
 - 字型：Google Fonts 的 Noto Sans TC / Noto Serif TC（SIL Open Font License）。
 - 插圖與介面：旅冊自製。
+
+## 美術素材（design-v1）
+
+介面素材放在 `assets/travel-book/`（來源說明見該資料夾的 `README.md`）。
+
+- 介面顏色由 `assets/travel-book/style-tokens.css` 的 `--tb-*` 變數提供，`index.html` 的 `--ui-*` 對應到這些變數；小冊列印頁（`#bkcss`）不使用這些變數。
+- `brand/logo-horizontal-clear.*` 是從 `logo-horizontal` 裁掉底部色塊、去背後的版本。
+- `icons/` 由 `app-icon-1024` 裁成滿版正方形後產生；maskable 版本把圖縮到 82% 並以模糊底圖補邊。
+- 素材原始插畫為 AI 產生後拆分，放大不等於提高印刷解析度。

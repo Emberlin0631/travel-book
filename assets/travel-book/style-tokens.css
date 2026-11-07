@@ -1,0 +1,40 @@
+/* Travel Book / 旅冊 — Japanese calm scrapbook design tokens */
+:root {
+  --tb-primary: #7e9f8c;
+  --tb-primary-deep: #5f7c6c;
+  --tb-primary-light: #dce8e0;
+  --tb-bg: #f7f4ee;
+  --tb-bg-paper: #fffdfa;
+  --tb-bg-card: #faf8f3;
+  --tb-cream: #efe7da;
+  --tb-blue: #d8e5ea;
+  --tb-pink: #e7d6d6;
+  --tb-apricot: #eedfcf;
+  --tb-text: #2e2e2a;
+  --tb-muted: #66655f;
+  --tb-line: #d8d4cb;
+  --tb-success: #7fa37c;
+  --tb-warning: #d2a85a;
+  --tb-error: #c97c72;
+  --tb-radius-sm: 8px;
+  --tb-radius-md: 14px;
+  --tb-radius-lg: 20px;
+  --tb-shadow: 0 3px 18px rgba(70,66,53,0.06);
+  --tb-body-font: 'Noto Sans TC', system-ui, sans-serif;
+  --tb-display-font: 'Noto Serif TC', 'Noto Sans TC', serif;
+}
+.tb-paper {background: var(--tb-bg-paper); border:1px solid var(--tb-line); border-radius:var(--tb-radius-lg); box-shadow:var(--tb-shadow);}
+.tb-btn-primary {background:var(--tb-primary-deep);color:#fff;border:0;border-radius:999px;padding:11px 19px;font-family:var(--tb-body-font);font-weight:600;cursor:pointer;}
+.tb-btn-primary:hover {background:#486555;}
+.tb-btn-primary:focus-visible {outline:3px solid var(--tb-warning);outline-offset:3px;}
+.tb-hero {background:var(--tb-bg) url('./hero/hero-background-1600x900.webp') center/cover no-repeat; min-height:460px; display:flex;align-items:center;padding:clamp(24px,7vw,100px);}
+.tb-hero-content {max-width:480px;}
+.tb-hero h1 {font-family:var(--tb-display-font);font-size:clamp(32px,4vw,54px);line-height:1.4;color:var(--tb-text);}
+.tb-hero p {color:var(--tb-muted);line-height:1.85;}
+.tb-feature-card {background:var(--tb-bg-card);border:1px solid var(--tb-line);border-radius:16px;padding:16px;}
+.tb-feature-card img {display:block;width:100%;height:auto;border-radius:12px;}
+@media (max-width:720px) {
+  .tb-hero {background-position:60% center; min-height:360px;padding:24px;}
+  .tb-hero-content {background:rgba(247,244,238,.93);border-radius:18px;padding:20px;}
+}
+@media print { .tb-hero,.tb-feature-card {box-shadow:none!important;} }

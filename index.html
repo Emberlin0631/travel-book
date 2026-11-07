@@ -6,7 +6,7 @@
 <title>旅冊｜旅遊小冊製作器</title>
 <meta name="description" content="把旅行行程排成可以列印、可以傳給旅伴的旅遊小冊。免安裝、免註冊，資料只存在你的裝置。">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1f2a27">
+<meta name="theme-color" content="#fffdfa">
 <link rel="icon" href="icons/favicon-64.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,25 +14,32 @@
 <meta name="apple-mobile-web-app-title" content="旅冊">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/travel-book/style-tokens.css">
 <style>
-:root{--ui-bg:#ece8e1;--ui-panel:#fff;--ui-ink:#24221f;--ui-mute:#7d776e;--ui-line:#e2ddd4;--ui-acc:#2f5d50;--ui-dark:#1f2a27}
+/* UI colours come from the Travel Book design tokens (style-tokens.css). --ui-acc / --ui-dark are darker steps of --tb-primary-deep so text on white keeps ≥4.5:1 contrast. Booklet print CSS (#bkcss) does not use these. */
+:root{--ui-bg:var(--tb-bg,#f7f4ee);--ui-panel:var(--tb-bg-paper,#fffdfa);--ui-ink:var(--tb-text,#2e2e2a);--ui-mute:var(--tb-muted,#66655f);--ui-line:var(--tb-line,#d8d4cb);--ui-acc:#4f6a5b;--ui-dark:#486555}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;background:var(--ui-bg);color:var(--ui-ink);font-size:14px}
 button{font:inherit;cursor:pointer;color:inherit}
-.top{height:54px;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--ui-dark);color:#fff;position:relative;z-index:30}
-.brand{font-weight:900;letter-spacing:.12em;font-size:17px;white-space:nowrap}
-.brand small{font-weight:400;opacity:.55;margin-left:8px;letter-spacing:0;font-size:12px}
-.top select{background:#2c3a36;color:#fff;border:1px solid #435650;border-radius:6px;padding:5px 8px;max-width:220px;font:inherit}
-.tbtn{background:transparent;border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:6px;padding:5px 11px;white-space:nowrap}
-.tbtn:hover{background:rgba(255,255,255,.08)}
-.tbtn.pri{background:#e9c46a;color:#1f2a27;border-color:#e9c46a;font-weight:700}
+.top{height:54px;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--ui-panel);color:var(--ui-ink);border-bottom:1px solid var(--ui-line);position:relative;z-index:30}
+.brand{display:flex;align-items:center;background:none;border:0;padding:4px 6px 4px 0;border-radius:8px;flex:0 0 auto;min-height:40px}
+.brand .logo{height:26px;width:auto;display:block}.brand .logo-m{display:none;width:32px;height:32px;border-radius:8px}
+html.dark .brand .logo{filter:brightness(0) invert(.88)}
+html.dark .tbtn.pri{background:#2f6d5b;border-color:#2f6d5b;color:#fff}html.dark .tbtn:hover{background:#262d2b}
+.top select{background:var(--ui-panel);color:var(--ui-ink);border:1px solid var(--ui-line);border-radius:8px;padding:6px 8px;max-width:220px;font:inherit}
+.tbtn{background:transparent;border:1px solid var(--ui-line);color:var(--ui-ink);border-radius:8px;padding:6px 12px;white-space:nowrap;min-height:34px}
+.tbtn:hover{background:var(--tb-bg-card,#faf8f3)}
+.tbtn:disabled{opacity:.45}
+.tbtn.pri{background:var(--ui-acc);color:#fff;border-color:var(--ui-acc);font-weight:700}.tbtn.pri:hover{background:#3f584b}
+:where(button,a,summary,[tabindex]):focus-visible{outline:2px solid var(--ui-acc);outline-offset:2px}
+@media (pointer:coarse){.tbtn,.top select{min-height:40px}}
 .spacer{flex:1}
 .menu{position:absolute;right:14px;top:50px;background:#fff;color:var(--ui-ink);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;min-width:220px;max-width:320px;max-height:calc(100vh - 70px);overflow:auto;display:none}
 .sharebox{display:flex;flex-direction:column;gap:2px;text-align:left;margin:4px 0 2px}.sharebox .hint{margin:2px 0 6px}
 .menu .mg{font-size:11px;font-weight:700;color:var(--ui-mute);letter-spacing:.08em;padding:10px 12px 2px;border-top:1px solid var(--ui-line);margin-top:4px}
 .menu .mg:first-of-type{border-top:0;margin-top:0}
-.savest{font-size:12px;opacity:.75;white-space:nowrap}.savest.bad{opacity:1;color:#ffb4a8;font-weight:700}
+.savest{font-size:12px;color:var(--ui-mute);white-space:nowrap}.savest.bad{color:#b23a28;font-weight:700}html.dark .savest.bad{color:#f2b4a8}
 .menu.on{display:block}
 .menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:6px}
 .menu button:hover{background:#f3f0ea}
@@ -43,7 +50,8 @@ button{font:inherit;cursor:pointer;color:inherit}
 .tab{flex:1 0 auto;padding:12px 12px;border:0;background:none;border-bottom:2px solid transparent;color:var(--ui-mute)}
 .tab.on{color:var(--ui-ink);border-color:var(--ui-acc);font-weight:700}
 .panel{padding:16px 16px 90px}
-.preview{overflow:auto;position:relative}
+.preview{overflow:auto;position:relative;background:var(--tb-cream,#efe7da)}
+html.dark .preview{background:var(--ui-bg)}
 .prevbar{position:sticky;top:0;z-index:4;background:rgba(236,232,225,.94);backdrop-filter:blur(4px);padding:9px 16px;font-size:12px;color:var(--ui-mute);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .prevbar .warn{color:#b23a28;font-weight:700}
 #pages{padding:10px 16px 90px}
@@ -90,6 +98,31 @@ details.card>.inner{padding:0 12px 6px}
 .upl{cursor:pointer}
 .hint{font-size:12px;color:var(--ui-mute);line-height:1.65;margin:0 0 10px}
 .empty{padding:30px 10px;text-align:center;color:var(--ui-mute);line-height:1.8}
+.empty.ill{padding:14px 6px 22px}.empty.ill img{display:block;width:100%;max-width:360px;height:auto;margin:0 auto 10px;border-radius:14px}.empty.ill b{display:block;color:var(--ui-ink);font-size:15px}.empty.ill p{margin:2px 0 12px}.empty.ill.sm img{max-width:200px}.empty.ill.sm{padding:4px 0 10px;text-align:left}.empty.ill.sm img{margin:0 0 6px}
+html.dark .empty.ill img{opacity:.88}
+/* home */
+.home{position:fixed;inset:0;z-index:60;overflow:auto;background:var(--tb-bg,#f7f4ee);color:var(--tb-text,#2e2e2a)}
+.home[hidden]{display:none}
+.hm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:1200px;margin:0 auto;padding:12px 20px}
+.hm-top img{height:34px;width:auto}
+.hm-top .tbtn{color:var(--tb-text,#2e2e2a);border-color:var(--tb-line,#d8d4cb)}
+.home .tb-hero{max-width:1200px;margin:0 auto;border-radius:var(--tb-radius-lg,20px)}
+.home .tb-hero-content{max-width:400px}
+@media (max-width:1100px){.home .tb-hero-content{background:rgba(247,244,238,.94);border-radius:18px;padding:22px;max-width:440px}}
+.home .tb-hero h1{margin:0 0 10px}
+.home .tb-hero p{margin:0 0 18px}
+.hm-cta{display:flex;flex-wrap:wrap;gap:10px}
+.hm-cta button{min-height:44px}
+.home .tb-btn-primary{background:var(--ui-acc)}.home .tb-btn-primary:hover{background:#3f584b}
+.home .tb-btn-primary:focus-visible,.hm-btn:focus-visible{outline:3px solid var(--ui-acc);outline-offset:3px}
+.hm-btn{background:var(--tb-bg-paper,#fffdfa);color:var(--tb-text,#2e2e2a);border:1px solid var(--tb-line,#d8d4cb);border-radius:999px;padding:10px 18px;font-weight:600}
+.hm-btn:hover{background:#fff}
+.hm-note{font-size:13px;margin-top:14px!important}
+.hm-feat{max-width:1200px;margin:0 auto;padding:36px 20px 56px}
+.hm-feat h2{font-family:var(--tb-display-font);font-size:24px;margin:0 0 4px}.hm-feat>p{color:var(--tb-muted,#66655f);margin:0 0 18px}
+.hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.hm-grid h3{font-size:16px;margin:12px 2px 4px}.hm-grid p{font-size:13px;line-height:1.7;color:var(--tb-muted,#66655f);margin:0 2px}
+.hm-foot{text-align:center;color:var(--tb-muted,#66655f);font-size:12px;padding:0 20px 30px}
 .tpls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .tplc{border:2px solid var(--ui-line);border-radius:8px;padding:8px;background:#fff;text-align:left}
 .tplc.on{border-color:var(--ui-acc)}
@@ -192,16 +225,18 @@ html.dark .item.dragging{background:#24332e}html.dark .warnc{background:#4a2a24;
 html.dark .tag-free{background:#24332e;color:#9fd3bf}html.dark #pages .pw{box-shadow:0 3px 16px rgba(0,0,0,.6)}
 html.dark .thumb{background-color:#333}
 @media (max-width:900px){
-  .brand small{display:none}
+  .brand .logo{display:none}.brand .logo-m{display:block}
   .top{gap:6px;padding:0 8px}
-  .top select{max-width:120px}
+  .top select{max-width:150px;min-width:72px;flex:1 1 auto}
+  .top .tbtn{padding:6px 9px}.top .tbtn.icon{padding:6px 8px;min-width:36px}
   .hide-m{display:none}
   .main{grid-template-columns:1fr}
   .main.show-prev .editor{display:none}
   .main:not(.show-prev) .preview{display:none}
   .mswitch{display:flex;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ui-dark);border-radius:24px;padding:4px;z-index:40;box-shadow:0 6px 20px rgba(0,0,0,.3)}
   .mswitch button{border:0;background:none;color:#fff;padding:8px 20px;border-radius:20px}
-  .mswitch button.on{background:#e9c46a;color:var(--ui-dark);font-weight:700}
+  .mswitch button.on{background:var(--tb-bg-paper,#fffdfa);color:var(--ui-dark);font-weight:700}
+  .mswitch button{min-height:40px}
 }
 @media print{
   @page{size:148mm 210mm;margin:0}
@@ -232,6 +267,15 @@ html.dark .thumb{background-color:#333}
 .cs-full.tpl-journal .cover .cv-img,.cs-full.tpl-wafu .cover .cv-img{left:0;right:0;top:0;border:0;transform:none;box-shadow:none}
 .cs-frame .cover .cv-img{left:70px;right:70px;top:56px;height:52%;border-radius:220px 220px 10px 10px;overflow:hidden;transform:none;border:0;box-shadow:none}
 .cs-frame .cover .cv-txt{top:65%;text-align:center}
+.bk.cs-note .pg.cover::after{content:"";position:absolute;inset:16px;border:1.5px dashed var(--line);border-radius:6px;pointer-events:none;z-index:1}
+.bk.cs-note .pg.cover::before{content:"";position:absolute;inset:auto;left:34px;top:20px;width:104px;height:28px;background:rgba(214,196,150,.55);border:0;box-shadow:none;transform:rotate(-7deg);z-index:4;display:block}
+.bk.cs-note .cover .cv-img{left:56px;right:56px;top:178px;height:auto;bottom:150px;border:7px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.12);transform:rotate(1.2deg);border-radius:2px}
+.bk.cs-note .cover .cv-txt{top:58px;bottom:44px;left:40px;right:40px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.bk.cs-note .cover h1{font-family:var(--head),"Noto Serif TC",serif;font-weight:700;margin-top:0;order:1;max-width:390px}
+.bk.cs-note .cover .cv-sub{order:2}
+.bk.cs-note .cover .cv-date{order:3;margin-top:auto;padding-top:10px;border-top:1px solid var(--line);min-width:220px}
+.bk.cs-note .cover .cv-stat{order:4}.bk.cs-note .cover .cv-who{order:5}
+.bk.cs-note .cover .cv-days{position:absolute;right:-8px;top:-30px;width:70px;height:70px;border-radius:50%;border:1.5px solid var(--c);background:none;color:var(--c);display:flex;align-items:center;justify-content:center;padding:0;font-size:10px;letter-spacing:.14em;transform:rotate(14deg);box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 5px var(--c)}
 .bk.tpl-journal{--paper:#f5eee1;--ink:#3a2f25;--mute:#8d7c66;--line:#d8c9ae;--head:"Noto Serif TC",serif}
 .cover .cv-img.ill-bg{background:var(--tint)}
 .scene{width:100%;height:100%;display:block}
@@ -404,7 +448,7 @@ html.dark .thumb{background-color:#333}
 </head>
 <body>
 <header class="top">
-  <div class="brand">旅冊<small>旅遊小冊製作器</small></div>
+  <button class="brand" id="homeBtn" title="回到首頁" aria-label="旅冊首頁"><img class="logo" src="assets/travel-book/brand/logo-horizontal-clear.webp" alt="旅冊 Travel Book" width="165" height="26"><img class="logo-m" src="icons/favicon-64.png" alt="旅冊" width="32" height="32"></button>
   <select id="tripSel" aria-label="切換行程"></select>
   <button class="tbtn hide-m" id="newTrip">＋ 新行程</button>
   <div class="spacer"></div>
@@ -451,6 +495,24 @@ html.dark .thumb{background-color:#333}
 <div class="drv" id="drv"><div class="drvin" id="drvin"></div><button class="btn" id="drvclose">關閉</button></div>
 <div id="printArea"></div><div id="measure"></div>
 <input type="file" id="importIn" accept=".json,application/json" hidden>
+<div class="home" id="home" hidden>
+  <div class="hm-top"><img src="assets/travel-book/brand/logo-horizontal-clear.webp" alt="旅冊 Travel Book" width="216" height="34"><button class="tbtn" id="homeClose">回到編輯</button></div>
+  <section class="tb-hero" aria-labelledby="hmTitle"><div class="tb-hero-content">
+    <h1 id="hmTitle">把旅行，<br>做成一本小冊。</h1>
+    <p>排好每天的行程，就會自動排成可以列印、對折裝訂、傳給旅伴的旅遊小冊。出發後還能當成隨身的今日行程。</p>
+    <div class="hm-cta" id="hmCta"></div>
+    <p class="hm-note">免註冊，資料只存在你的裝置，不會上傳。</p>
+  </div></section>
+  <section class="hm-feat" aria-labelledby="hmFeat"><h2 id="hmFeat">旅行的每一步</h2><p>從排行程到旅行後的回憶，都在同一份資料裡。</p>
+  <div class="hm-grid">
+    <article class="tb-feature-card"><img src="assets/travel-book/features/01-plan.webp" alt="" width="640" height="420" loading="lazy"><h3>規劃行程</h3><p>每天一頁，景點、交通、住宿入住退房自動排好；還會提醒公休、太早出門、還沒預約。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/02-booklet.webp" alt="" width="640" height="420" loading="lazy"><h3>自動排成小冊</h3><p>封面、總覽、每日行程、景點介紹、住宿頁、清單，自動標頁碼。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/03-export.webp" alt="" width="640" height="420" loading="lazy"><h3>印出來</h3><p>A5 單頁，或 A4 對折小冊拿去超商印；也有黑白省墨和長輩大字版。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/04-share.webp" alt="" width="640" height="420" loading="lazy"><h3>傳給旅伴</h3><p>手機閱讀版、每頁圖片、行事曆檔；分享前可以選要不要放訂位編號和花費。</p></article>
+    <article class="tb-feature-card"><img src="assets/travel-book/features/05-ontrip.webp" alt="" width="640" height="420" loading="lazy"><h3>旅行途中</h3><p>「今日」模式顯示下一站、地圖連結和備案，沒有網路也能看。</p></article>
+  </div></section>
+  <div class="hm-foot">旅冊 Travel Book</div>
+</div>
 <div class="toast" id="toast"></div>
 <div class="iosbar" id="iosbar" hidden><div><b>加到主畫面，用起來就像 App</b>點下方的「分享」按鈕 → 選「加入主畫面」。加到主畫面後可以離線使用，資料也比較不會被瀏覽器自動清除。</div><button class="tbtn" id="iosclose">知道了</button></div>
 
@@ -578,7 +640,7 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgJapan:t.opts?.emgJapan!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
@@ -988,7 +1050,7 @@ function edBasic(){
   <div class="card"><h4>外觀</h4>
   <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${x.prev}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
-  <div class="row"><label class="f"><span>封面樣式</span><select data-k="opts.coverStyle"><option value="top">照片在上</option><option value="full">滿版照片</option><option value="frame">拱門框</option></select></label><label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
+  <div class="row"><label class="f"><span>封面樣式</span><select data-k="opts.coverStyle"><option value="top">照片在上</option><option value="full">滿版照片</option><option value="frame">拱門框</option><option value="note">手帳（紙膠帶＋印章）</option></select></label><label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
   <label class="chk"><input type="checkbox" data-k="opts.dayColors" ${T.opts.dayColors?'checked':''}> 每天用不同顏色</label>
   <label class="chk"><input type="checkbox" data-k="opts.illus" ${T.opts.illus?'checked':''}> 自動插圖（沒放照片的封面、景點頁、住宿頁會畫插圖）</label>
@@ -1009,9 +1071,11 @@ function itemRow(i,j,it){const b=`days.${i}.items.${j}`;
   return `<div class="item" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${it.placeId?'（留空就用景點名稱）':'要做什麼／去哪裡'}"><select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</select><div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div></div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
 function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId);
   return `<div class="item autoitem"><div class="ro-t">${esc(it.time)||'—'}</div><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，<a href="#" data-act="tab" data-a="stays">到住宿修改</a></small></div><div></div></div>`}
+const EMPTY_IMG='assets/travel-book/empty/';
+function emptyIll(img,title,text,extra='',cls=''){return `<div class="empty ill ${cls}"><img src="${EMPTY_IMG}${img}.webp" alt="" width="800" height="440" loading="lazy"><b>${title}</b><p>${text}</p>${extra}</div>`}
 function edDays(){
   const n=dayCount(T);
-  if(!n)return `<div class="empty">先到「基本」填出發日和回程日，<br>這裡就會自動列出每一天。</div>`;
+  if(!n)return emptyIll('01-no-trips','還沒有日期','先到「基本」填出發日和回程日，<br>這裡就會自動列出每一天。','<button class="btn pri" data-act="tab" data-a="basic">去填日期</button>');
   const ck=tripChecks(T),byDay={};ck.forEach(c=>{byDay[c.i]=(byDay[c.i]||0)+(c.lv==='warn'?1:0)});
   const ckHTML=`<div class="card checks"><h4>行程檢查 <span class="cnt">${ck.length?ck.length+' 則提醒':'沒有問題'}</span></h4>${ck.length?`<ul>${ck.map(c=>`<li class="${c.lv}">${esc(c.msg)}</li>`).join('')}</ul>`:'<p class="hint">早起、太晚結束、太滿、還沒預約、遇到公休、哪天晚上還沒住宿，都會列在這裡。</p>'}</div>
   <div class="row" style="margin-bottom:12px"><button class="btn" data-act="openImport">貼上文字匯入行程</button><button class="btn" data-act="ics">加入行事曆（.ics）</button></div>`;
@@ -1025,13 +1089,14 @@ function edDays(){
     ${n>1?`<div class="row" style="margin-bottom:10px"><select data-dayto="${i}" style="flex:1">${T.days.slice(0,n).map((x,k)=>k===i?'':`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(x.title)}</option>`).join('')}</select><button class="mini" data-act="copyDay" data-a="${i}">複製行程過去</button><button class="mini" data-act="swapDay" data-a="${i}">兩天對調</button></div>`:''}
     <details class="memsec"${d.memText||d.memPhotos.length?' open':''}><summary>旅行後：這天的回憶（照片、日記）</summary>
     ${area('日記','days.'+i+'.memText','今天發生了什麼？',3)}
-    <div class="memthumbs">${d.memPhotos.map((x,k)=>`<div class="thumb"${bg(x)}><button class="mini danger" data-act="rmMem" data-a="${i}.${k}">✕</button></div>`).join('')}<label class="mini upl">＋ 加照片<input type="file" accept="image/*" multiple data-photos="days.${i}.memPhotos" hidden></label></div></details>`,i===0)}).join('');
+    ${d.memPhotos.length?'':emptyIll('03-no-photos','還沒有照片','旅行後把這天的照片加進來，就能做成回憶冊。','','sm')}<div class="memthumbs">${d.memPhotos.map((x,k)=>`<div class="thumb"${bg(x)}><button class="mini danger" data-act="rmMem" data-a="${i}.${k}">✕</button></div>`).join('')}<label class="mini upl">＋ 加照片<input type="file" accept="image/*" multiple data-photos="days.${i}.memPhotos" hidden></label></div></details>`,i===0)}).join('');
 }
 function edPlaces(){
   const C=buildPages(T);
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
   return `<div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址可以自動帶出名稱；短網址（maps.app.goo.gl）抓不到名稱，請自己填，但 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
   <p class="hint">每個景點會排成一整頁介紹。也可以先當成「收藏」，之後再用「排進哪一天」加進行程。${unplanned?`目前有 <b>${unplanned}</b> 個景點還沒排進行程。`:''}</p>`+
+  (T.places.length?'':emptyIll('02-no-places','還沒有景點','貼上 Google 地圖連結，或按下面的「新增景點」。<br>想去但還沒決定哪天的地方，也可以先收在這裡。'))+
   T.places.map((p,i)=>{const v=(C.visits[p.id]||[]).map(x=>'DAY.'+(x+1)).join('、');
     return det(p.id,`<b>${esc(p.name||'未命名景點')}</b><span class="sum-t">${esc(p.area)}</span>`,
     `<div class="used ${v?'':'no'}">${v?'已排進：'+v:'還沒有排進任何一天'}</div>
@@ -1081,7 +1146,7 @@ function edGift(){
   const list=T.days.slice(0,n).map((d,i)=>{const its=d.items.map((it,j)=>({it,j})).filter(x=>x.it.text||x.it.placeId);if(!its.length)return'';
     return `<div class="gday"><b>DAY.${i+1}</b> ${md(dayDate(T,i))} ${esc(d.title)}${its.map(({it,j})=>`<label class="chk"><input type="checkbox" data-k="days.${i}.items.${j}.secret" ${it.secret?'checked':''}> ${esc(it.time)} ${esc(it.text||pn2(it.placeId))}</label>`).join('')}</div>`}).join('');
   return `<p class="hint">送禮版是一個 HTML 檔，傳給對方用手機或電腦打開：先拆信封、讀你的信，再翻旅行小冊，頁首會有出發倒數。</p>
-  <div class="card"><h4>信</h4><div class="row">${fld('給','gift.to','例：小美')}${fld('署名','gift.from','例：小明')}</div>${area('想說的話','gift.letter','例：生日快樂！這趟旅行是送你的禮物……',6)}</div>
+  ${T.gift.to?'':emptyIll('04-no-companions','還沒填要送給誰','填上收禮人和想說的話，對方打開時會先拆信封、讀你的信。')}<div class="card"><h4>信</h4><div class="row">${fld('給','gift.to','例：小美')}${fld('署名','gift.from','例：小明')}</div>${area('想說的話','gift.letter','例：生日快樂！這趟旅行是送你的禮物……',6)}</div>
   <div class="card"><h4>保密行程</h4><p class="hint">勾選的行程會顯示成「？？？ 驚喜」，連結的景點頁也會先藏起來。對方在出發當天打開，就會自動揭曉。</p>${list||'<p class="hint">還沒有行程。</p>'}
   <p class="hint">注意：保密只是先不顯示，不是加密。懂技術的人打開檔案原始碼，還是有機會看到。</p></div>
   <div class="row" style="margin-bottom:12px"><button class="btn" data-act="giftPrev">預覽送禮版</button><button class="btn pri" data-act="giftDl">下載送禮版</button></div>`;
@@ -1374,7 +1439,7 @@ function closeToday(){$('#today').classList.remove('on');clearInterval(TD.timer)
 function dur(m){const h=Math.floor(m/60),mm=m%60;return (h?h+' 小時 ':'')+mm+' 分'}
 function renderToday(){
   const n=dayCount(T);$('#tdtitle').textContent=T.title||'今日模式';
-  if(!n){$('#tdbody').innerHTML='<div class="empty">先到「基本」設定出發日和回程日。</div>';return}
+  if(!n){$('#tdbody').innerHTML=emptyIll('01-no-trips','還沒有日期','先到「基本」設定出發日和回程日。');return}
   const i=TD.i,d=T.days[i],date=dayDate(T,i),ti=todayIndex(),isToday=ti===i;
   const now=new Date(),nowMin=now.getHours()*60+now.getMinutes(),pb=Object.fromEntries(T.places.map(p=>[p.id,p]));
   const E=dayEntries(T,i),nx=isToday?E.findIndex(e=>{const v=hm(e.time);return v!=null&&v>=nowMin}):-1;
@@ -1644,11 +1709,26 @@ try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyUI
 
 /* ---------- first-run guide ---------- */
 const GUIDE=[
- ['歡迎使用旅冊','把旅行行程排成可以列印、可以傳給旅伴的小冊。左邊填資料，右邊（手機按下方「預覽」）會即時排好每一頁。現在打開的是範例行程，可以直接改成你自己的。'],
+ ['歡迎使用旅冊','把旅行行程排成可以列印、可以傳給旅伴的小冊。左邊填資料，右邊（手機按下方「預覽」）會即時排好每一頁。想看完整的例子，點左上角的旅冊標誌回首頁，打開範例行程。'],
  ['1．填日期，每天自動一頁','在「基本」填出發日、回程日，「每日」就會列出每一天。行程可以一項一項加，也可以用「貼上文字匯入行程」把 LINE 記事本整段貼進來。'],
  ['2．景點、住宿、購物會自動串起來','行程連結到「景點」，小冊會自動標上頁碼；「住宿」的入住退房會自動排進當天；指定哪天買的伴手禮，會出現在那天的頁面下方。'],
  ['3．檢查與輸出','「每日」最上面的行程檢查會提醒太早出門、還沒預約、遇到公休。右上「匯出」可以列印、做成 A4 對折小冊拿去超商印、匯出圖片、做送禮版。'],
  ['4．資料存在你的裝置裡','旅冊不需要註冊，資料不會上傳，也<b>不會自動同步到其他手機或電腦</b>。上方會顯示「已儲存在這台裝置」。換裝置或清除瀏覽器前，記得「匯出 → 下載備份檔」。出發後按上方「今日」，就會顯示今天的下一站。']];
+function sampleOf(){return trips.find(t=>/^範例行程/.test(t.subtitle||''))}
+function renderHomeCta(){const own=trips.filter(t=>!/^範例行程/.test(t.subtitle||'')).sort((a,b)=>b.updated-a.updated)[0];
+  $('#hmCta').innerHTML=(own?`<button class="tb-btn-primary" data-h="cont">繼續編輯「${esc((own.title||'未命名的旅行').slice(0,14))}」</button><button class="hm-btn" data-h="sample">看範例行程</button>`:`<button class="tb-btn-primary" data-h="sample">先看範例行程</button>`)+
+  `<button class="hm-btn" data-h="new">開始一份新行程</button><button class="hm-btn" data-h="import">匯入備份檔或範本</button>`;$('#hmCta').dataset.own=own?own.id:''}
+function openHome(){renderHomeCta();const h=$('#home');h.hidden=false;h.scrollTop=0}
+function closeHome(){if($('#home').hidden)return;$('#home').hidden=true;LS.set('tabisatsu.home','1');if(!LS.get('tabisatsu.guided'))setTimeout(()=>openGuide(0),300)}
+async function homeAct(a){
+  if(a==='cont'){const id=$('#hmCta').dataset.own;if(id&&id!==T.id)switchTrip(id)}
+  else if(a==='sample'){let sm=sampleOf();if(!sm){sm=sampleTrip();trips.push(sm);await DB.put(sm)}if(sm.id!==T.id)switchTrip(sm.id)}
+  else if(a==='new'){tab='basic';await newTrip()}
+  else if(a==='import'){closeHome();$('#importIn').click();return}
+  closeHome()}
+function bindHome(){$('#homeBtn').addEventListener('click',openHome);$('#homeClose').addEventListener('click',closeHome);
+  $('#hmCta').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(b)homeAct(b.dataset.h)});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#home').hidden)closeHome()})}
 function openGuide(k){const old=$('.guide');if(old)old.remove();const g=document.createElement('div');g.className='modal-bg guide';
   g.innerHTML=`<div class="modal"><div class="gdots">${GUIDE.map((_,i)=>`<span class="${i===k?'on':''}"></span>`).join('')}</div><h3>${GUIDE[k][0]}</h3><p>${GUIDE[k][1]}</p><div class="row">${k?'<button class="btn" data-g="prev">上一步</button>':'<button class="btn" data-g="skip">略過</button>'}<button class="btn pri" data-g="next">${k<GUIDE.length-1?'下一步':'開始使用'}</button></div></div>`;
   g.addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;g.remove();const a=b.dataset.g;
@@ -1675,7 +1755,7 @@ function setupPWA(){
   if(!trips.length){const s=sampleTrip();trips=[s];await DB.put(s)}
   const cur=LS.get('tabisatsu.cur');T=trips.find(t=>t.id===cur)||trips.slice().sort((a,b)=>b.updated-a.updated)[0];
   applyUI();bind();bindToday();setupPWA();renderTripSel();renderEditor();renderPreview();histReset();
-  if(!LS.get('tabisatsu.guided'))setTimeout(()=>openGuide(0),600);
+  bindHome();if(!LS.get('tabisatsu.home'))openHome();else if(!LS.get('tabisatsu.guided'))setTimeout(()=>openGuide(0),600);
   try{await document.fonts.ready;renderPreview()}catch(e){}
 })();
 </script>
