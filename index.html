@@ -1010,7 +1010,8 @@ function buildPages(t,splits={},mode={}){
   pages.push({k:'cover'});pushC('cover');
   for(const k of secOrder(t)){if(off.has(k)){if(k==='overview')pushC('overview');else if(k==='info')pushC('info');else if(k==='places')pushC('places');else if(k==='days')days.forEach(d=>pushC('day:'+d.id));continue}S[k]()}
   pushC('end');
-  for(let ix=pages.length-1;ix>=0;ix--){const pg=pages[ix],key=txKey(pg),sp=key&&splits[key];if(!sp)continue;let from=0;
+  for(let ix=pages.length-1;ix>=0;ix--){const pg=pages[ix],key=txKey(pg);let sp=key&&splits[key];if(!sp)continue;
+    {const N=textChunks(txText(t,key)).length,sum=sp.reduce((a,b)=>a+b,0);if(sum!==N){sp=sp.slice();sp[sp.length-1]+=N-sum;if(sp[sp.length-1]<1)sp=[N]}}let from=0;
     pages.splice(ix,1,...sp.map((c,pi)=>{const o={...pg,tx:{from,to:from+c,first:pi===0,last:pi===sp.length-1,part:pi+1,parts:sp.length}};from+=c;return o}))}
   const ref={day:{},place:{},shop:{},stay:{}};
   pages.forEach((pg,ix)=>{const no=ix+1,first=!pg.tx||pg.tx.first;if(pg.k==='day'&&!pg.cont)ref.day[pg.d.id]=no;if(pg.k==='place'&&first)ref.place[pg.p.id]=no;if(pg.k==='stay'&&first)ref.stay[pg.s.id]=no;if(pg.k==='plist')pg.list.forEach(p=>ref.place[p.id]=no);if(pg.k==='shop')pg.list.forEach(s=>ref.shop[s.id]=no)});
@@ -1153,11 +1154,12 @@ function computeSplits(t,mode={}){
   m.innerHTML=bkOpen(t,mode)+renderPages(t,splits,mode).join('')+'</div>';
   const keys=[...new Set($$('section[data-tx]',m).filter(sec=>{const b=$('.body.fit',sec);return b&&over(b)}).map(sec=>sec.dataset.tx))];
   for(const key of keys){const N=textChunks(txText(t,key)).length;if(N<2)continue;const parts=[];let start=0;
-    while(start<N&&parts.length<8){const trial={...splits,[key]:[...parts,N-start]};if(!parts.length&&start===0)trial[key]=[N];
+    while(start<N&&parts.length<40){const trial={...splits,[key]:[...parts,N-start]};if(!parts.length&&start===0)trial[key]=[N];
       m.innerHTML=bkOpen(t,mode)+renderPages(t,trial,mode).filter(h=>h.includes('data-tx="'+key+'"')&&h.includes('data-from="'+start+'"')).join('')+'</div>';
       const b=$('.body.fit',m);if(!b)break;if(!over(b)){parts.push(N-start);break}
       const H=b.clientHeight;let k=0;for(const p of $$('.pdesc p',b)){if(p.offsetTop+p.offsetHeight<=H-4)k++;else break}
       if(k>=N-start)k=N-start-1;k=Math.max(1,k);parts.push(k);start+=k}
+    if(start<N&&parts.length)parts[parts.length-1]+=N-start;/* safety: every chunk is always placed somewhere */
     if(parts.length>1)splits[key]=parts}
   m.innerHTML='';return splits;
 }
@@ -1523,8 +1525,8 @@ ${stays?`<section id="stays"><div class="dh"><h2>住宿</h2></div>${stays}</sect
 ${flights?`<section id="flights"><div class="dh"><h2>航班與交通</h2></div><div class="card">${flights}</div></section>`:''}
 ${t.notes.trim()?`<section><div class="dh"><h2>出發前提醒</h2></div><div class="card" style="padding:10px 14px">${t.notes.split('\n').filter(x=>x.trim()).map(x=>`<div>・${esc(x)}</div>`).join('')}</div></section>`:''}
 ${places?`<section id="places"><div class="dh"><h2>景點</h2></div>${places}</section>`:''}
-${shops?`<section id="shops"><div class="dh"><h2>購物清單</h2></div><div class="card">${shops}</div></section>`:''}
-${pack?`<section id="pack"><div class="dh"><h2>打包清單</h2></div><div class="card">${pack}</div></section>`:''}
+${shops?`<section id="shops"><div class="dh"><h2>購物清單</h2></div><div class="card">${shops}</div><p class="foot cknote"></p></section>`:''}
+${pack?`<section id="pack"><div class="dh"><h2>打包清單</h2></div><div class="card">${pack}</div><p class="foot cknote"></p></section>`:''}
 ${emg?`<section id="emg"><div class="dh"><h2>緊急資訊</h2></div>${emg}</section>`:''}
 <p class="foot" style="text-align:center">用旅冊製作・沒有網路也能看</p></main>
 <div class="drv" id="drv"><button class="btn" id="drvx">關閉</button><div class="l">ここまでお願いします</div><div class="j" id="drvj"></div><div class="a" id="drva"></div><div class="z" id="drvz"></div></div>
@@ -1532,7 +1534,8 @@ ${emg?`<section id="emg"><div class="dh"><h2>緊急資訊</h2></div>${emg}</sect
 var now=new Date(Date.now()+G.tz*36e5).toISOString().slice(0,10);
 document.querySelectorAll('nav.dn a[data-day]').forEach(function(a){if(a.getAttribute('data-day')===now){a.classList.add('today');a.scrollIntoView({inline:'center',block:'nearest'})}});
 var sec=document.querySelector('section[data-date="'+now+'"]');if(sec){var h=sec.querySelector('.dh');h.insertAdjacentHTML('beforeend','<span class="badge">今天</span>');if(!location.hash)setTimeout(function(){sec.scrollIntoView()},50)}
-var K='tabisatsu.digi.'+G.id,S={};try{S=JSON.parse(localStorage.getItem(K)||'{}')}catch(e){}
+var K='tabisatsu.digi.'+G.id,S={},ok=false;try{S=JSON.parse(localStorage.getItem(K)||'{}');localStorage.setItem(K+'.t','1');ok=localStorage.getItem(K+'.t')==='1'}catch(e){}
+document.querySelectorAll('.cknote').forEach(function(n){n.textContent=ok?'勾選只記在這支手機的這個瀏覽器裡，不會同步到旅冊網站或別人的手機。用 LINE 等 App 內建瀏覽器打開時，關掉後可能不會記住；建議用 Safari 或 Chrome 打開。':'這裡無法記住勾選，關掉頁面後會清空。建議用 Safari 或 Chrome 打開這個檔案。'});
 document.querySelectorAll('[data-ck]').forEach(function(c){c.checked=!!S[c.getAttribute('data-ck')];c.addEventListener('change',function(){S[c.getAttribute('data-ck')]=c.checked;try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}})});
 document.addEventListener('click',function(e){var b=e.target.closest('[data-drv]');if(!b)return;var v=JSON.parse(b.getAttribute('data-drv'));document.getElementById('drvj').textContent=v[0];document.getElementById('drva').textContent=v[1];document.getElementById('drvz').textContent='請帶我到這裡：'+v[2];document.getElementById('drv').classList.add('on')});
 document.getElementById('drvx').addEventListener('click',function(){document.getElementById('drv').classList.remove('on')});
@@ -1680,7 +1683,8 @@ async function storageInfo(){const el=$('#stinfo');if(!el)return;let txt=`這份
   el.textContent=txt}
 async function importFile(f){
   try{const o=JSON.parse(await f.text());const raw=o&&o.trip?o.trip:o;if(!raw||!Array.isArray(raw.days))throw 0;
-    const newer=(+raw.schema||1)>SCHEMA;const t=normalize(raw);t.id=uid();t.updated=Date.now();trips.push(t);await DB.put(t);switchTrip(t.id);toast('已匯入「'+(t.title||'未命名')+'」'+(newer?'。這份備份來自較新版本，部分內容可能沒有匯入，請先更新旅冊再匯入一次':''))}
+    if((+raw.schema||1)>SCHEMA){modal('需要更新旅冊','這份備份是用較新版本的旅冊存的。直接匯入會漏掉這個版本還不認得的資料，所以先不匯入。<br><br>請連上網路後重新整理頁面（加到主畫面的，請關掉再打開），更新後再匯入一次。',[['知道了','','pri']]);return}
+    const newer=false;const t=normalize(raw);t.id=uid();t.updated=Date.now();trips.push(t);await DB.put(t);switchTrip(t.id);toast('已匯入「'+(t.title||'未命名')+'」'+(newer?'。這份備份來自較新版本，部分內容可能沒有匯入，請先更新旅冊再匯入一次':''))}
   catch(e){modal('匯入失敗','這個檔案不是旅冊的備份檔，或是檔案已損壞。',[['知道了']])}
 }
 
@@ -1697,6 +1701,7 @@ function compress(file,max=1400,q=.82){return new Promise((res,rej)=>{const img=
   img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
 
 /* ---------- today mode (on the road) ---------- */
+const hashStr=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h.toString(36)};
 const TD={i:0,timer:null};
 /* today mode runs on the destination's clock (trip time zone), not the phone's */
 const destNow=()=>new Date(Date.now()+(+T.tz||0)*36e5);
@@ -1713,7 +1718,7 @@ function renderToday(){
   const now=destNow(),nowMin=now.getUTCHours()*60+now.getUTCMinutes(),pb=Object.fromEntries(T.places.map(p=>[p.id,p]));
   /* the day's list: original entries, or — after switching to plan B — what's already done plus the plan B lines */
   const orig=dayEntries(T,i),done=new Set(d.done);
-  const pbItems=d.planB.trim()?(()=>{const r=parseText(d.planB);const its=r.days.flatMap(x=>x.items);return (its.length?linkPlaces(T,its.map(x=>({...x}))):[{time:'',text:d.planB.trim()}]).map((x,k)=>({...x,id:'pb-'+k,pb:1}))})():[];
+  const pbItems=d.planB.trim()?(()=>{const r=parseText(d.planB);const its=r.days.flatMap(x=>x.items);const seen={};return (its.length?linkPlaces(T,its.map(x=>({...x}))):[{time:'',text:d.planB.trim()}]).map(x=>{const base='pb-'+hashStr((x.time||'')+'|'+(x.text||'')+'|'+(x.placeId||''));seen[base]=(seen[base]||0)+1;return {...x,id:base+(seen[base]>1?'-'+seen[base]:''),pb:1}})})():[];
   const E=d.planBOn&&pbItems.length?[...orig.filter(e=>done.has(e.id)),...pbItems]:orig;
   const lastDone=E.reduce((a,e,k)=>done.has(e.id)?k:a,-1);
   let nx=-1;if(isToday){nx=lastDone>=0?E.findIndex((e,k)=>k>lastDone&&!done.has(e.id)):E.findIndex(e=>{const v=hm(e.time);return v!=null&&v>=nowMin&&!done.has(e.id)});}
