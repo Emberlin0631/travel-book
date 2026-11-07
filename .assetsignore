@@ -1,4 +1,6 @@
 .git
+.wrangler
+node_modules
 worker.js
 wrangler.toml
 README.md
