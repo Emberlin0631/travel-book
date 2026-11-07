@@ -22,9 +22,11 @@
 
 部署：`npx wrangler deploy`（會同時上傳靜態檔案與 Worker）。app 預設打 `https://travel-book.jim99725.workers.dev/api/gmaps-list`；自架的人可在瀏覽器 console 設 `localStorage.setItem('tabisatsu.gmproxy','https://你的.workers.dev/api/gmaps-list')`。
 
+方法三（電腦、最穩）：景點分頁有一個可拖到書籤列的「匯入旅冊」書籤小工具。它在 Google 地圖清單頁執行，因為跟 Google 同源所以沒有 CORS 問題、也不經過任何伺服器；抓到清單後帶著 `#gm=<base64 JSON>` 開啟旅冊，旅冊啟動時看到 `#gm=` 就跳出勾選框（資料不會留在網址列，讀完就清掉）。
+
 沒有 Worker（GitHub Pages、離線）時的方法二：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼到同一個框，只會得到名稱與類別。
 
-已知限制：一次最多讀 500 個（`!4i500`）；Google 若對資料中心 IP 擋下請求（回 consent 頁或 429），app 會提示改用方法二。
+已知限制：一次最多讀 500 個（`!4i500`）。Google 對 Cloudflare 機房 IP 會回 429（實測 2026-11 如此），Worker 會依序換 `www.google.com`、`maps.google.com`、`www.google.com.tw`、`www.google.co.jp` 再試；全被擋時 app 會提示改用方法三或方法二。`/api/gmaps-list?u=…&debug=1` 會多回 `via`（成功的主機）與 `tried`。
 
 ## 授權與致謝
 

@@ -60,14 +60,29 @@ async function gmapsList(url) {
   try { id = await listIdFrom(raw); } catch (e) { return json({ error: e.message === 'blocked' ? 'blocked' : 'upstream' }, 502); }
   if (!id) return json({ error: 'notlist' }, 400);
   const pb = `!1m6!1s${id}!2e3!3m1!1e1!3m1!1e9!2e2!3e2!4i500`;
-  const api = `https://www.google.com/maps/preview/entitylist/getlist?hl=zh-TW&gl=tw&pb=${encodeURIComponent(pb)}`;
-  const r = await fetch(api, { headers: { 'user-agent': UA, 'accept-language': 'zh-TW,zh;q=0.9', 'referer': 'https://www.google.com/maps/' } });
-  if (!r.ok) return json({ error: 'upstream', status: r.status }, 502);
-  const txt = (await r.text()).replace(/^\)\]\}'\n?/, '');
-  let data;
-  try { data = parseList(JSON.parse(txt)); } catch (e) { return json({ error: 'upstream' }, 502); }
-  if (!data) return json({ error: 'notlist' }, 400);
-  return json(data, 200, { 'cache-control': 'public, max-age=300' });
+  // Google 對資料中心 IP 常回 429；換幾個主機依序試，哪個通就用哪個
+  const hosts = ['www.google.com', 'maps.google.com', 'www.google.com.tw', 'www.google.co.jp'];
+  const tried = [];
+  for (const h of hosts) {
+    const api = `https://${h}/maps/preview/entitylist/getlist?authuser=0&hl=zh-TW&gl=tw&pb=${encodeURIComponent(pb)}`;
+    let r;
+    try {
+      r = await fetch(api, { headers: {
+        'user-agent': UA, 'accept': '*/*', 'accept-language': 'zh-TW,zh;q=0.9,en;q=0.8',
+        'referer': `https://${h}/maps/`, 'origin': `https://${h}`, 'x-same-domain': '1',
+        'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty',
+        'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Windows"'
+      } });
+    } catch (e) { tried.push(h + ':fetch-failed'); continue; }
+    if (!r.ok) { tried.push(h + ':' + r.status); if (r.status !== 429 && r.status !== 403 && r.status !== 503) break; continue; }
+    const txt = (await r.text()).replace(/^\)\]\}'\n?/, '');
+    let data;
+    try { data = parseList(JSON.parse(txt)); } catch (e) { tried.push(h + ':badjson'); continue; }
+    if (!data) return json({ error: 'notlist' }, 400);
+    if (url.searchParams.get('debug')) data.via = h, data.tried = tried;
+    return json(data, 200, { 'cache-control': 'public, max-age=300' });
+  }
+  return json({ error: tried.some(t => /:(429|403|503)$/.test(t)) ? 'blocked' : 'upstream', tried }, 502);
 }
 
 export default {
