@@ -102,7 +102,9 @@ details.card>.inner{padding:0 12px 6px}
 .item .acts{display:grid;grid-template-columns:1fr 1fr;gap:3px}.item .acts .drag{display:inline-flex;align-items:center;justify-content:center}
 .dayempty{font-size:12.5px;color:var(--ui-mute);background:var(--tb-bg-card,#faf8f3);border:1px dashed var(--ui-line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;line-height:1.6}.linkbtn{background:none;border:0;padding:0;color:var(--ui-acc);font-weight:700;text-decoration:underline;font-size:inherit}
 .morebtn{justify-self:start;background:none;border:0;color:var(--ui-acc);font-size:12px;padding:2px 0;text-align:left}.morebtn:hover{text-decoration:underline}
+.morebtn.chips{display:flex;flex-wrap:wrap;gap:4px 10px;color:var(--ui-mute);font-size:12px;line-height:1.4}.morebtn.chips span{white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}.morebtn.chips:hover{text-decoration:none;color:var(--ui-acc)}
 .item .acts .mini{padding:3px 7px}
+@media (min-width:901px){.item .acts{grid-template-columns:repeat(4,auto)}}
 .item input,.item select{padding:6px 8px;font-size:13px}
 .ph-in{display:flex;gap:8px;align-items:center}
 .thumb{width:72px;height:52px;border-radius:6px;background:#eee center/cover;flex:0 0 auto}
@@ -1377,9 +1379,13 @@ function edBasic(){
   <div class="card"><h4>出發前提醒</h4><p class="hint">一行寫一則，會印在「出發資訊」頁。</p><textarea data-k="notes" rows="4" placeholder="例：肉製品不能帶回台灣">${esc(T.notes)}</textarea><div style="height:10px"></div></div>
   <div class="foot-note">行程資料只存在這台裝置的瀏覽器裡，不會上傳。唯一的例外：用「Google 地圖儲存清單匯入」時，那個清單的分享連結會經過旅冊的讀取服務去向 Google 取得清單，不會送出你的行程。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
 }
-function itemRow(i,j,it){const b=`days.${i}.items.${j}`;
-  return `<div class="item" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${it.placeId?'（留空就用景點名稱）':'要做什麼／去哪裡'}">${(()=>{const more=it.transport||it.note||it.reserve||it.placeId||openMore.has(it.id);const pl=`<select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option></select>`;
-  return more?`${pl}<div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約、連結景點</button>`})()}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
+function itemRow(i,j,it){const b=`days.${i}.items.${j}`;const pl=it.placeId?T.places.find(p=>p.id===it.placeId):null;const open=openMore.has(it.id);
+  /* 預設收合成一行（時間、文字、排序鈕），細節用灰色小字摘要；點摘要才展開。這樣一天 10 幾項也好拖曳排序 */
+  const chips=[pl?'連結：'+(pl.name||'未命名景點'):(it.placeId?'連結的景點已刪除':''),it.transport?'🚃 '+it.transport:'',it.note?'📝 '+it.note:'',it.reserve==='need'?'需預約':it.reserve==='done'?'已預約'+(it.resNo?' '+it.resNo:''):'',it.secret?'驚喜（送禮版隱藏）':''].filter(Boolean);
+  const sel=`<select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option></select>`;
+  const body=open?`${sel}<div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div><button class="morebtn" data-act="lessItem" data-a="${esc(it.id)}">－ 收合</button>`
+    :(chips.length?`<button class="morebtn chips" data-act="moreItem" data-a="${esc(it.id)}" title="展開編輯">${chips.map(c=>`<span>${esc(c)}</span>`).join('')}</button>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約、連結景點</button>`);
+  return `<div class="item ${open?'open':''}" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${pl?esc(pl.name)+'（留空就用景點名稱）':'要做什麼／去哪裡'}">${body}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
 function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId);
   return `<div class="item autoitem"><div class="ro-t">${esc(it.time)||'—'}</div><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，<a href="#" data-act="tab" data-a="stays">到住宿修改</a></small></div><div></div></div>`}
 const EMPTY_IMG='assets/travel-book/empty/';
@@ -1395,7 +1401,7 @@ function edDays(){
     return det(d.id,`<b>DAY.${i+1}</b> ${md(date)}（${wk(date)}）<span class="sum-t" data-sum="${i}">${esc(d.title)}</span><span class="cnt">${dayEntries(T,i).length} 項</span>${byDay[i]?`<span class="cnt warnc">⚠ ${byDay[i]}</span>`:''}`,
     `<div class="row">${fld('這天的主題','days.'+i+'.title','例：清水寺．祇園散步')}<div style="flex:0 0 34%">${fld('地區','days.'+i+'.area','例：京都')}</div></div><div class="f"><span>這天的照片（選填）</span>${photoIn('days.'+i+'.photo',d.photo)}${d.photo?posSel('days.'+i+'.photoPos',d.photoPos):''}</div>
     ${d.items.length||dayEntries(T,i).length?'':`<div class="dayempty">這天還是空的。可以一項一項加，或 <button class="linkbtn" data-act="openImport">貼上整段行程文字</button>（LINE 記事本、備忘錄都行）。</div>`}<div class="items" data-day="${i}">${dayEntries(T,i).map(it=>it.auto?autoRow(it):itemRow(i,it._j,it)).join('')}</div>
-    <div class="row" style="margin-top:6px"><button class="add" data-act="addItem" data-a="${i}">＋ 新增一項</button><button class="mini" data-act="sortItems" data-a="${i}" style="margin-bottom:6px">依時間排序</button></div>
+    <div class="row" style="margin-top:6px"><button class="add" data-act="addItem" data-a="${i}">＋ 新增一項</button><button class="mini" data-act="sortItems" data-a="${i}" style="margin-bottom:6px">依時間排序</button>${d.items.some(x=>openMore.has(x.id))?`<button class="mini" data-act="foldDay" data-a="${i}" style="margin-bottom:6px">全部收合</button>`:''}</div>
     ${area('備案（下雨、太累時改去哪裡；選填）','days.'+i+'.planB','例：下雨改去京都水族館',2)}
     ${n>1?`<div class="row" style="margin-bottom:10px"><select data-dayto="${i}" style="flex:1">${T.days.slice(0,n).map((x,k)=>k===i?'':`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(x.title)}</option>`).join('')}</select><button class="mini" data-act="copyDay" data-a="${i}">複製行程過去</button><button class="mini" data-act="swapDay" data-a="${i}">兩天對調</button></div>`:''}
     <details class="memsec"${d.memText||d.memPhotos.length?' open':''}><summary>旅行後：這天的回憶（照片、日記）</summary>
@@ -2075,6 +2081,8 @@ function onAct(e){
   const[i,j]=String(a).split('.').map(Number);
   switch(act){
     case'moreItem':openMore.add(a);renderEditor();return;
+    case'lessItem':openMore.delete(a);renderEditor();return;
+    case'foldDay':T.days[i].items.forEach(x=>openMore.delete(x.id));renderEditor();return;
     case'useCty':T.country=a;T.countrySet=true;toast('目的地改成 '+CTY[a].name);break;
     case'useTz':T.tz=+a;toast('時區改成 '+tzLabel(T.tz));break;
     case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;{const tf=TAB_FOLLOW[a];if(tf)wantFollow(tf[0],tf[1]);else followOpen()};return;
