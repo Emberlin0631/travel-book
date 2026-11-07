@@ -54,7 +54,16 @@ html.dark .tbtn.pri{background:#2f6d5b;border-color:#2f6d5b;color:#fff}html.dark
 html.dark .preview{background:var(--ui-bg)}
 .prevbar{position:sticky;top:0;z-index:4;background:rgba(236,232,225,.94);backdrop-filter:blur(4px);padding:9px 16px;font-size:12px;color:var(--ui-mute);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .prevbar .warn{color:#b23a28;font-weight:700}
-#pages{padding:10px 16px 90px}
+#pages{padding:10px 16px 24px}
+.preview{scroll-snap-type:y proximity}
+.pw{scroll-snap-align:start}
+.pager{position:sticky;bottom:14px;z-index:5;display:flex;gap:4px;align-items:center;width:max-content;margin:0 auto 14px;padding:5px;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:999px;box-shadow:0 4px 16px rgba(0,0,0,.14)}
+.pager button{border:0;background:none;min-width:38px;height:36px;border-radius:999px;font-size:20px;line-height:1;color:var(--ui-ink)}
+.pager button:hover{background:var(--tb-bg-card,#f3f0ea)}
+.pager button:disabled{opacity:.3}
+.pager select{width:auto;max-width:240px;border:0;background:none;font-size:13px;padding:4px 6px;height:36px;color:var(--ui-ink)}
+.pager .pgfit{font-size:12px;padding:0 10px;border-left:1px solid var(--ui-line);border-radius:0 999px 999px 0}
+@media (max-width:900px){.pager{bottom:78px}.pager select{max-width:150px}}
 .pw{position:relative;margin:0 auto 20px;box-shadow:0 3px 16px rgba(0,0,0,.16)}
 .pw>.pg{transform-origin:0 0;position:absolute;left:0;top:0}
 .pw.ovf{outline:3px solid #d0533b}
@@ -522,6 +531,7 @@ html.dark .thumb{background-color:#333}
   <section class="preview" id="preview">
     <div class="prevbar" id="prevbar"></div>
     <div id="pages"></div>
+    <div class="pager" id="pager" role="navigation" aria-label="翻頁"><button id="pgPrev" title="上一頁（←）" aria-label="上一頁">‹</button><select id="pgSel" aria-label="跳到第幾頁"></select><button id="pgNext" title="下一頁（→）" aria-label="下一頁">›</button><button id="pgFit" class="pgfit" title="切換：整頁顯示／放大看字"></button></div>
   </section>
 </div>
 <div class="mswitch"><button data-v="edit" class="on">編輯</button><button data-v="prev">預覽</button></div>
@@ -1294,12 +1304,33 @@ function renderPreview(){
   if(!T)return;
   const pv=$('#preview'),st=pv.scrollTop;
   const htmls=pagesFor(T,curMode());
-  const bad=mountPages($('#pages'),htmls,Math.min(pv.clientWidth-32,PW*1.1)||PW);
+  const pbH=$('#prevbar').offsetHeight||46,availH=pv.clientHeight-pbH-(PAGER_H+38);let w=Math.min(pv.clientWidth-32,PW*1.1)||PW;
+  if(FITPAGE&&availH>220)w=Math.min(w,availH*PW/PH);
+  const bad=mountPages($('#pages'),htmls,w);pv.style.scrollPaddingTop=(pbH+6)+'px';
   const wc=tripChecks(T).filter(c=>c.lv==='warn').length;
   $('#prevbar').innerHTML=`<select id="pmode" title="預覽和匯出都會用這個版本"><option value="">一般版</option><option value="big">長輩大字版</option><option value="memory">回憶冊</option></select><label class="monochk"><input type="checkbox" id="pmono" ${MONO?'checked':''}> 黑白省墨</label><span>共 ${htmls.length} 頁．A4 對折 ${Math.ceil(htmls.length/4)} 張</span><span title="依網路教學文章的 ibon 價格估算：A4 彩色 10 元、黑白 3 元一面；雙面怎麼計費、現在的價格都以門市為準">ibon 估價：${MONO?'黑白':'彩色'}約 ${Math.ceil(htmls.length/4)*2*(MONO?IBON.mono:IBON.color)} 元 ⓘ</span>`+(wc?`<a href="#" class="warn" data-goto="days">⚠ 行程檢查有 ${wc} 則提醒</a>`:'')+(bad.length?`<span class="warn">第 ${bad.map(i=>i+1).join('、')} 頁內容太多：請縮短文字或把行程拆到別天</span>`:'');
   $('#pmode').value=PMODE;
-  pv.scrollTop=st;
+  pv.scrollTop=st;updPager(true);
 }
+/* ---------- quick page navigation in the preview ---------- */
+const PAGER_H=48;let FITPAGE=LS.get('tabisatsu.fit')!=='width',PGCUR=0;
+function pageLabel(p,i){if(p.classList.contains('cover'))return'封面';if(p.classList.contains('day')){const n=$('.dn',p),d=$('.dt',p);return ((n?n.textContent:'')+' '+(d?d.textContent:'')).trim()}
+  const h=$('h2',p);return h?h.textContent.trim():p.classList.contains('blank')?'空白頁':'第 '+(i+1)+' 頁'}
+const pwTop=(w,pv)=>w.getBoundingClientRect().top-pv.getBoundingClientRect().top+pv.scrollTop;
+function curPage(){const pv=$('#preview'),ws=$$('#pages .pw');if(!ws.length)return 0;const y=pv.scrollTop+(parseFloat(pv.style.scrollPaddingTop)||0)+ws[0].offsetHeight*.4;let k=0;ws.forEach((w,i)=>{if(pwTop(w,pv)<=y)k=i});return k}
+function updPager(rebuild){const ws=$$('#pages .pw'),sel=$('#pgSel');if(!sel)return;
+  if(rebuild){sel.innerHTML=ws.map((w,i)=>`<option value="${i}">${i+1} / ${ws.length}　${esc(pageLabel($('.pg',w),i).slice(0,16))}</option>`).join('');$('#pgFit').textContent=FITPAGE?'放大看字':'整頁顯示'}
+  PGCUR=curPage();sel.value=PGCUR;$('#pgPrev').disabled=PGCUR<=0;$('#pgNext').disabled=PGCUR>=ws.length-1}
+function goPage(i,smooth=true){const ws=$$('#pages .pw');if(!ws.length)return;i=Math.max(0,Math.min(ws.length-1,i));const pv=$('#preview');
+  pv.scrollTo({top:pwTop(ws[i],pv)-(parseFloat(pv.style.scrollPaddingTop)||0),behavior:smooth?'smooth':'auto'});PGCUR=i;$('#pgSel').value=i;$('#pgPrev').disabled=i<=0;$('#pgNext').disabled=i>=ws.length-1}
+function bindPager(){const pv=$('#preview');let rt;pv.addEventListener('scroll',()=>{clearTimeout(rt);rt=setTimeout(()=>updPager(false),60)},{passive:true});
+  $('#pgPrev').addEventListener('click',()=>goPage(PGCUR-1));$('#pgNext').addEventListener('click',()=>goPage(PGCUR+1));
+  $('#pgSel').addEventListener('change',e=>goPage(+e.target.value));
+  $('#pgFit').addEventListener('click',()=>{const i=PGCUR;FITPAGE=!FITPAGE;LS.set('tabisatsu.fit',FITPAGE?'page':'width');renderPreview();goPage(i,false)});
+  document.addEventListener('keydown',e=>{const t=e.target;if(t.closest&&t.closest('input,textarea,select,[contenteditable]'))return;if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if($('.modal-bg')||!$('#home').hidden||$('#reader').classList.contains('on')||$('#today')?.classList.contains('on'))return;
+    if(innerWidth<=900&&!$('#main').classList.contains('show-prev'))return;
+    const k=e.key;if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();goPage(PGCUR+1)}else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();goPage(PGCUR-1)}else if(k==='Home'&&t===document.body){goPage(0)}else if(k==='End'&&t===document.body){goPage(1e9)}})}
 function openReader(){
   const r=$('#reader');r.classList.add('on');$('#rtitle').textContent=T.title||'未命名的旅行';
   mountPages($('#rpages'),pagesFor(T,curMode()),Math.min(innerWidth-20,PW*1.25));
@@ -1835,7 +1866,7 @@ function setupPWA(){
   if(!trips.length){const s=sampleTrip();trips=[s];await DB.put(s)}
   const cur=LS.get('tabisatsu.cur');T=trips.find(t=>t.id===cur)||trips.slice().sort((a,b)=>b.updated-a.updated)[0];
   applyUI();bind();bindToday();setupPWA();renderTripSel();renderEditor();renderPreview();histReset();
-  bindHome();if(!LS.get('tabisatsu.home'))openHome();else if(!LS.get('tabisatsu.guided'))setTimeout(()=>openGuide(0),600);
+  bindHome();bindPager();if(!LS.get('tabisatsu.home'))openHome();else if(!LS.get('tabisatsu.guided'))setTimeout(()=>openGuide(0),600);
   try{await document.fonts.ready;renderPreview()}catch(e){}
 })();
 </script>
