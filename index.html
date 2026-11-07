@@ -266,6 +266,7 @@ html.dark .thumb{background-color:#333}
   .item .acts .mini,.item .drag{min-width:38px;min-height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:15px}.item .acts{gap:6px}
   .mini{min-height:36px}
   .hide-m{display:none}
+  @media (max-width:480px){#redoBtn{display:none}.top select{font-size:13px}}
   .menu{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:45;max-width:none;max-height:min(78vh,calc(100vh - 60px));border-radius:16px 16px 0 0;padding:8px 10px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
   .menu::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--ui-line);margin:2px auto 8px}
   .menu button{padding:11px 12px}
@@ -895,6 +896,20 @@ const placeLink=p=>p.mapUrl||mapsURL(placeQuery(p));
 const GM_PROXY=LS.get('tabisatsu.gmproxy')||'https://travel-book.jim99725.workers.dev/api/gmaps-list';
 const GM_LIST_RE=/(?:!2s|\/placelists\/list\/|[?&]list=)([A-Za-z0-9_-]{16,})/;
 const isGmUrl=u=>/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|(www\.)?google\.[a-z.]+|maps\.google\.[a-z.]+)\//i.test(u);
+/* 從地址猜「地區」：台灣「臺中市北屯區」、日本「京都市東山区」／「Kobe Chuo」、韓國「서울 종로구」；猜不到回空字串 */
+function areaFromAddress(addr){let a=String(addr||'').trim();if(!a)return '';
+  a=a.replace(/^(日本|台灣|臺灣|대한민국|韓國|香港|澳門)[\s、,，]*/,'').replace(/^〒?\s*\d{3}-?\d{0,4}\s*/,'').replace(/^\d{3,6}\s*/,'');
+  let m=a.match(/^(台北市|臺北市|新北市|桃園市|台中市|臺中市|台南市|臺南市|高雄市|基隆市|新竹市|新竹縣|苗栗縣|彰化縣|南投縣|雲林縣|嘉義市|嘉義縣|屏東縣|宜蘭縣|花蓮縣|台東縣|臺東縣|澎湖縣|金門縣|連江縣)([^\s\d,，]{1,3}[區鄉鎮市])?/);
+  if(m)return (m[1]+(m[2]||'')).replace(/^臺/,'台');
+  m=a.match(/^(北海道|東京都|京都府|大阪府|(?:青森|岩手|宮城|秋田|山形|福島|茨城|栃木|群馬|埼玉|千葉|神奈川|新潟|富山|石川|福井|山梨|長野|岐阜|静岡|愛知|三重|滋賀|兵庫|奈良|和歌山|鳥取|島根|岡山|広島|山口|徳島|香川|愛媛|高知|福岡|佐賀|長崎|熊本|大分|宮崎|鹿児島|沖縄)県)([^\s\d,，区]{1,4}[市郡])?([^\s\d,，]{1,4}[区町村])?/);
+  if(m)return m[2]&&m[3]?m[2]+m[3]:(m[3]||m[2]||m[1]);
+  m=a.match(/^(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)[가-힣]*\s+([가-힣]{1,6}(?:구|군|시))/);
+  if(m)return m[1]+' '+m[2];
+  if(/日本\s*$/.test(a)&&a.includes(',')){const t=a.split(/\s*,\s*/);let pref=t.pop().replace(/\s*\d{3}-?\d{4}\s*日本$/,'').replace(/日本$/,'').trim();if(!pref&&t.length)pref=t.pop();
+    let city=t.pop()||'',ward='';if(/ Ward$/.test(city)){ward=city.replace(/ Ward$/,'');city=t.pop()||''}else if(t.length&&/ Ward$/.test(t[t.length-1]))ward=t.pop().replace(/ Ward$/,'');if(!city||/^\d/.test(city))city=pref;city=city.replace(/ City$/,'');if(city&&/^[A-Za-z]/.test(city))return city+(ward?' '+ward:'')}
+  m=a.match(/^([A-Za-z][A-Za-z .'-]*),\s*([A-Za-z][A-Za-z .'-]*?)(?:\s+City)?,\s*(?:([A-Za-z][A-Za-z .'-]*?)\s+Ward,)?/);
+  if(m&&/^(Tokyo|Osaka|Kyoto|Hyogo|Nara|Aichi|Fukuoka|Hokkaido|Kanagawa|Chiba|Saitama|Okinawa|Hiroshima|Miyagi|Ishikawa|Shizuoka|Nagano|Gifu|Shiga|Wakayama|Mie|Kagawa|Ehime|Oita|Kumamoto|Nagasaki|Kagoshima|Tochigi|Gunma|Ibaraki|Niigata|Toyama|Fukui|Yamanashi|Okayama|Yamaguchi|Tottori|Shimane|Tokushima|Kochi|Saga|Miyazaki|Aomori|Iwate|Akita|Yamagata|Fukushima)$/i.test(m[1]))return m[2]+(m[3]?' '+m[3]:'');
+  return ''}
 function gmCid(ids){try{return BigInt.asUintN(64,BigInt(ids[1])).toString()}catch(e){return ''}}
 /* getlist 回應（去掉 )]}' 前綴後）→ {title,owner,total,places[]} */
 function parseGmList(j){const L=j&&j[0];if(!L||!Array.isArray(L[8]))return null;
@@ -923,9 +938,9 @@ function gmPicker(res){const lc=x=>(x||'').toLowerCase().replace(/\s+/g,'');cons
     if(k==='all'||k==='none'){$$('label[data-q]:not(.hide) input',bg).forEach(c=>c.checked=k==='all');cnt();return}
     if(k==='cancel'){bg.remove();return}
     const sel=$$('input[data-gi]:checked',bg).map(c=>res.places[+c.dataset.gi]);bg.remove();if(!sel.length){toast('沒有勾選任何地點');return}
-    sel.forEach(p=>{const np=mk.place({name:p.name,address:p.address,lat:p.lat,lng:p.lng,mapUrl:p.mapUrl,tips:res.textOnly?'':p.note});T.places.push(np)});
+    let nArea=0;sel.forEach(p=>{const area=areaFromAddress(p.address);if(area)nArea++;const np=mk.place({name:p.name,area,address:p.address,lat:p.lat,lng:p.lng,mapUrl:p.mapUrl,tips:res.textOnly?'':p.note});T.places.push(np)});
     if(!T.countrySet){const g=guessCountry(T);if(g)T.country=g}if(!T.tzSet){const g=guessTz(T);if(g!=null)T.tz=g}
-    commit();toast('已加入 '+sel.length+' 個景點'+(res.textOnly?'（只有名稱，座標要自己補）':''))});
+    commit();toast('已加入 '+sel.length+' 個景點'+(res.textOnly?'（只有名稱，座標要自己補）':nArea?'，其中 '+nArea+' 個的「地區」是從地址猜的，可再改':''))});
   document.body.appendChild(bg);cnt()}
 /* 方法三：書籤小工具。在 Google 地圖清單頁按下去，程式在 google.com 自己的網域執行（同源，不卡 CORS），
    抓完清單後帶著資料開啟旅冊（#gm=…）。資料壓成陣列：[名稱, 地址, lat, lng, 備註, cid 有號字串] */
@@ -1352,8 +1367,8 @@ function edBasic(){
   <div class="foot-note">資料只存在這台裝置的瀏覽器裡，不會上傳。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
 }
 function itemRow(i,j,it){const b=`days.${i}.items.${j}`;
-  return `<div class="item" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${it.placeId?'（留空就用景點名稱）':'要做什麼／去哪裡'}">${(()=>{const more=it.transport||it.note||it.reserve||it.placeId||openMore.has(it.id);const pl=T.places.length?`<select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</select>`:'';
-  return more?`${pl}<div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約${T.places.length?'、連結景點':''}</button>`})()}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
+  return `<div class="item" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${it.placeId?'（留空就用景點名稱）':'要做什麼／去哪裡'}">${(()=>{const more=it.transport||it.note||it.reserve||it.placeId||openMore.has(it.id);const pl=`<select data-k="${b}.placeId"><option value="">— 不連結景點介紹頁 —</option>${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option></select>`;
+  return more?`${pl}<div class="row"><input data-k="${b}.transport" value="${esc(it.transport)}" placeholder="交通（選填）"><input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"></div><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約、連結景點</button>`})()}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
 function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId);
   return `<div class="item autoitem"><div class="ro-t">${esc(it.time)||'—'}</div><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，<a href="#" data-act="tab" data-a="stays">到住宿修改</a></small></div><div></div></div>`}
 const EMPTY_IMG='assets/travel-book/empty/';
@@ -2023,6 +2038,9 @@ function onField(e){
   const k=el.dataset.k;if(!k)return;
   const v=el.type==='checkbox'?el.checked:el.value;
   if(getPath(T,k)===v)return;
+  if(/\.placeId$/.test(k)&&v==='__new'){const m=k.match(/^days\.(\d+)\.items\.(\d+)\./);const it=m&&T.days[+m[1]]&&T.days[+m[1]].items[+m[2]];if(!it){el.value='';return}
+    const name=(it.text||'').trim();if(!name){el.value=it.placeId||'';toast('先在這一行寫上地點名稱，再選「變成新景點」');return}
+    const p=mk.place({name,area:T.days[+m[1]].area||''});T.places.push(p);it.placeId=p.id;openSet.add(p.id);touch(true);renderEditor();toast('已建立景點「'+name+'」並連結；到「景點」分頁可以補介紹、營業時間');return}
   setPath(T,k,v);
   if(k==='start'||k==='end'){padDays(T);$('#dateHint').innerHTML=dateHint()}
   if(k==='theme.color'){T.theme.color=okColor(v);$$('.swc').forEach(b=>b.classList.toggle('on',b.dataset.a===v));$$('.sw-prev').forEach(b=>b.style.setProperty('--sw',v))}
