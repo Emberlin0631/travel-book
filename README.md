@@ -51,6 +51,10 @@
 
 景點分頁最上面的「搜尋景點」直接在瀏覽器查維基百科（`wsQuery`：`generator=search` 加 `coordinates|description|langlinks|pageprops`），先查中文（`variant=zh-tw`），有座標的結果少於 3 個再查日文，依名稱相似度排序、略過消歧義頁。中文條目沒有座標時（例：清水寺），用日文同一條目的座標補。加入時帶名稱、日文名、座標與地圖連結（官方 Maps URLs 格式），勾選時另外帶入維基導言並記錄 `descSrc`（CC BY-SA 4.0，自動印在圖文來源頁）。只涵蓋有維基條目的地點，店家餐廳多半查不到。
 
+### 查 OpenStreetMap（店家、餐廳）
+
+維基查不到時，使用者按「查 OpenStreetMap」才會呼叫公開的 Nominatim（`osmSearch`）。依 Nominatim 使用規範（全部使用者合計每秒最多 1 次、不得做自動完成），只由按鈕觸發，並在本機排隊至少間隔 1.1 秒；帶 `countrycodes`（目的地國家）與 `viewbox`（行程已有景點的範圍，偏好但不限制）。加入時帶名稱、日文名（`name:ja`）、座標、地區、地址、類別，並記錄 `locSrc:'osm'`；圖文來源頁與手機閱讀版會列出這些地點並印出「© OpenStreetMap contributors，ODbL，https://www.openstreetmap.org/copyright」。實測（2026-11-08）：「一蘭 道頓堀」查得到；「中村藤吉 本店」會找到同名不同店，所以介面提醒使用者確認。用量變大時要改成自架或付費的 Nominatim。
+
 ## 景點介紹：維基百科導言（文字 CC BY-SA 4.0）
 
 景點分頁每個景點有「從維基百科找導言」，批次整理也有「缺介紹的找維基百科」。瀏覽器直接呼叫 Wikipedia API（`origin=*`，帶 `Api-User-Agent`），不經伺服器：先用座標 `list=geosearch`（400 m）找附近條目，再用 `list=search&srwhat=nearmatch` 以名稱核對；名稱對得上（`wpScore` ≥ 0.8）才算確定，座標附近但名稱不符的只列為「不確定」候選，批次模式不採用。語言順序依名稱字元決定（中文→日文→英文、假名→日文優先、拉丁字母→英文優先）；中文版用 `variant=zh-tw` 取繁體。導言取前幾句、去掉讀音括號，約 120–190 字。
