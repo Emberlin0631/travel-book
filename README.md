@@ -14,6 +14,10 @@
 
 `index.html` 走「先連網、失敗才用快取」，所以有網路時使用者打開就會拿到新版，不用改 `sw.js`。只有改了圖示或 `manifest.webmanifest` 時，才需要把 `sw.js` 裡的 `VERSION` 加一號，讓舊的快取被清掉。
 
+## Google「我的地圖」（My Maps）匯入（不需要 Worker）
+
+在「儲存清單」同一個框貼上我的地圖的分享連結（網址含 `mid=`），或直接貼 KML 文字。瀏覽器直接讀 `https://www.google.com/maps/d/kml?mid=…&forcekml=1`：2026-11-08 實測 google.com/robots.txt 對 `User-agent: *` 有 `Allow: /maps/d/`，回應帶 `Access-Control-Allow-Origin: *`，所以不經過旅冊的 Worker。只匯入點狀地標（線、區域略過），帶入名稱、座標、說明與 ExtendedData（放進「小提醒」），地圖連結用官方 Maps URLs 格式 `maps/search/?api=1&query=緯,經`。地圖要設成「知道連結的任何人都能查看」。
+
 ## 單一地點短網址（需要 Worker）
 
 「從 Google 地圖新增」貼完整網址時在瀏覽器裡直接解析名稱與座標；貼手機分享的 `maps.app.goo.gl` 短網址時，先新增景點，再呼叫 `GET /api/gmaps-place?u=…`。Worker 只讀轉址的 Location 標頭（最多 5 跳、每一跳都必須是 Google 地圖網域，不下載頁面），展開後從 `/maps/place/名稱/@緯,經` 或 `?q=名稱` 取名稱與座標回傳。讀不到就保留空白名稱讓使用者自己填。展開後網址的實際格式未在本機驗證（開發環境連不到 Google），部署後需要用真的短網址測一次。
