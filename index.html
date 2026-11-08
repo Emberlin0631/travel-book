@@ -786,6 +786,8 @@ const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'
      decorate(html,t) → html   post-process each page
      bkStyle(t) → css text     extra custom properties on the .bk container
      onSelect(t)               when the user switches to this template */
+/* 版型選單的小預覽：有封面插畫的版型直接顯示這趟行程會用到的那張（自動判斷城市；找不到就用日本通用） */
+const tplThumb=x=>{if(!CVART[x.id]||location.protocol==='file:')return x.prev;const n=artNameFor({...T,cover:'',opts:{...T.opts,acover:CVART[x.id].includes(T.opts.acover)?T.opts.acover:'auto'}},x.id)||x.id+'-japan';return `background:${x.id==='pastel'?ARTBG[n]||'#f6d1c7':'#e9c9a8'} url(assets/covers/${n}.webp) center ${x.id==='pastel'?'50%':'44%'}/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)`};
 /* 封面插畫（復古海報、粉彩）：assets/covers/<版型>-<城市>.webp。新增圖時把城市加進 CVART，檔名照格式放進資料夾 */
 const CVART={poster:['kyoto','osaka','tokyo','hokkaido','okinawa','nara','fukuoka','nagoya','japan'],pastel:['kyoto','osaka','tokyo','hokkaido','okinawa','nara','fukuoka','nagoya','japan']};
 const CVART_ZH={kyoto:'京都',osaka:'大阪',tokyo:'東京',hokkaido:'北海道',okinawa:'沖繩',nara:'奈良',fukuoka:'福岡',nagoya:'名古屋',japan:'日本'};
@@ -801,7 +803,8 @@ function artCity(t){const ks=Object.keys(CVART_ZH).filter(k=>k!=='japan');
   for(const r of t.regions||[]){const k=r==='aichi'?'nagoya':ks.includes(r)?r:null;if(k)return k}
   const txt=[t.title,t.subtitle,t.coverEn,...(t.days||[]).map(d=>d.area)].join(' ');for(const k of ks)if(txt.includes(CVART_ZH[k])||txt.toLowerCase().includes(k))return k;
   return t.country==='jp'||(!t.country&&guessCountry(t)==='jp')?'japan':null}
-function artName(t){const id=t.theme.template,set=CVART[id];if(!set)return null;const o=t.opts.acover||'auto';if(o==='photo')return null;
+function artName(t){return artNameFor(t,t.theme.template)}
+function artNameFor(t,id){const set=CVART[id];if(!set)return null;const o=t.opts.acover||'auto';if(o==='photo')return null;
   if(o!=='auto')return set.includes(o)?id+'-'+o:null;const c=artCity(t);if(c&&set.includes(c))return id+'-'+c;
   /* 沒有這個城市的插畫：有封面照片就用照片，沒有才退到日本通用 */
   return !t.cover&&c&&set.includes('japan')?id+'-japan':null}
@@ -1226,9 +1229,22 @@ const ohZh=s=>String(s||'').replace(/\bMo-Su\b/g,'每天').replace(/\b(Mo|Tu|We|
 function poiHTML(){if(POI.none&&POI.idx&&POI.idx.length)return `<p class="hint">要用旅冊地點庫，先<button class="linkbtn" data-act="regPick">選這趟的目的地</button>（例如京都、大阪）。</p>`;if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=poiName(a),sub=[nm!==a[0]?a[0]:'',a[2]&&a[2]!==nm?a[2]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
   return `<div class="wsr"><div><b>${esc(nm)}</b><div class="s">${esc(sub)}${a[10]?'・有營業時間':''}${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="poiAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join('')}
 function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=poiName(a),ja=nm!==a[0]?a[0]:(a[1]||'');
-  const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg,address:a[9]||'',hours:ohZh(a[10]),phone:a[13]||'',web:a[14]||'',cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
+  const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg,address:a[9]||'',hours:ohZh(a[10]),phone:fmtJpPhone(a[13]),web:a[14]||'',cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
   T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]||a[13]?'（營業時間、電話來自 OpenStreetMap，可能過時，出發前再確認）':''));
   if(/^Q\d+$/.test(a[11]||''))wdIntro(p.id,a[11])}
+/* 日本電話：OSM 的寫法很亂（81753518000、+81-75-351-8000、075 351 8000…），統一成國內撥號格式。
+   只有已知區碼（東京 03、大阪 06、手機、0120 與主要城市的 3 位數區碼）才加連字號；其他區碼長度不一，只轉成 0 開頭、不亂斷 */
+const JP_AC3=new Set(['011','017','018','019','022','023','024','025','026','027','028','029','042','043','044','045','046','047','048','049','052','053','054','055','058','059','072','073','075','076','077','078','079','082','083','084','086','087','089','092','093','095','096','097','098','099']);
+function fmtJpPhone(raw){const s=String(raw||'').trim();if(!s)return'';const one=s.split(/[;,／/]/)[0].trim();let d=one.replace(/[^\d+]/g,'');
+  if(d.startsWith('+81'))d='0'+d.slice(3).replace(/^0/,'');else if(/^81\d{9,10}$/.test(d))d='0'+d.slice(2);else if(d.startsWith('+'))return one;
+  if(!/^0\d{9,10}$/.test(d))return one;
+  if(/^0[5789]0\d{8}$/.test(d))return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
+  if(/^0120\d{6}$/.test(d))return `${d.slice(0,4)}-${d.slice(4,7)}-${d.slice(7)}`;
+  if(/^0800\d{7}$/.test(d))return `${d.slice(0,4)}-${d.slice(4,7)}-${d.slice(7)}`;
+  if(d.length!==10)return d;
+  if(/^0[36]/.test(d))return `${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}`;
+  if(JP_AC3.has(d.slice(0,3)))return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+  /* 原本就有分隔的照原樣（只改成 0 開頭） */const parts=one.replace(/^\+?81[\s-]?/,'0').replace(/^00/,'0').split(/[\s-]+/).filter(Boolean);return parts.length===3&&parts.join('')===d?parts.join('-'):d}
 /* 地點庫裡有 Wikidata 編號的地點：用編號直接找到對應的維基百科條目（中文→日文→英文），自動帶入導言；不用猜名字 */
 async function wdIntro(pid,qid){const t0=T;try{const j=await mwApi('www.wikidata.org',{action:'wbgetentities',ids:qid,props:'sitelinks',sitefilter:'zhwiki|jawiki|enwiki'});
   const sl=j.entities?.[qid]?.sitelinks||{};let x=null;for(const l of ['zh','ja','en']){const ti=sl[l+'wiki']?.title;if(!ti)continue;try{x=await wpExtract(l,ti)}catch(e){x=null}if(x)break}
@@ -1867,7 +1883,7 @@ function edBasic(){
   ${fld('同行者','travelers','例：小明＆小美')}
   <div class="f"><span>封面照片</span>${photoIn('cover',T.cover,'wide')}${T.cover?posSel('coverPos',T.coverPos):''}</div></div>
   <div class="card"><h4>外觀</h4>
-  <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${x.prev}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
+  <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${tplThumb(x)}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
   ${tplOf(T).palette?`<div class="f"><span>${esc(tplOf(T).name)}推薦配色（深色頁、文字都會跟著變）</span><div class="sw pal">${tplOf(T).palette.map(([c,n])=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${n}" title="${n}"><span>${n}</span></button>`).join('')}</div></div>`:''}
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
   ${T.theme.template==='beni'?fld('封面英文大字（留空會依國家自動帶入，目前：'+esc(coverEn({...T,coverEn:''}))+'）','coverEn','例：OSAKA & KYOTO'):''}
