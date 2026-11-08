@@ -13,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="旅冊">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/travel-book/style-tokens.css">
 <style>
 /* UI colours come from the Travel Book design tokens (style-tokens.css). --ui-acc / --ui-dark are darker steps of --tb-primary-deep so text on white keeps ≥4.5:1 contrast. Booklet print CSS (#bkcss) does not use these. */
@@ -490,6 +490,39 @@ html.dark .thumb{background-color:#333}
 .dfoot{margin-top:12px;display:grid;gap:6px}
 .dfoot div{background:var(--soft);border-radius:6px;padding:6px 10px;font-size:.9em}
 .dfoot b{color:var(--c);margin-right:8px}
+/* ===== 和紅（beni）：深紅／深灰資訊頁＋米色行程頁、襯線大字 ===== */
+.cv-en,.cv-mon,.cv-ti,.bh{display:none}
+.bk.tpl-beni{--paper:#e8e0c7;--ink:#4a2427;--mute:#8a6d61;--line:#cdbb9d;--head:"Noto Serif TC","Songti TC","PMingLiU","Noto Serif CJK TC",serif;--en:"Cormorant Garamond","Noto Serif TC",serif}
+.bk.mono.tpl-beni{--paper:#fff}
+.bk.tpl-beni:not(.mono) .pg:is([data-k="cover"],[data-k="info"],[data-k="stay"],[data-k="route"],[data-k="coll"],[data-k="plist"]){--paper:#6e2f33;--ink:#f0e6cd;--mute:#d3bea4;--line:rgba(240,230,205,.3);--soft:rgba(255,255,255,.07);--tint:rgba(255,255,255,.06);--c:#e3c99c}
+.bk.tpl-beni:not(.mono) .pg:is([data-k="pack"],[data-k="res"],[data-k="budget"],[data-k="emg"]){--paper:#3d3c4a;--ink:#f0e6cd;--mute:#c9bcae;--line:rgba(240,230,205,.25);--soft:rgba(255,255,255,.07);--tint:rgba(255,255,255,.06);--c:#d6a996}
+.bk.tpl-beni:not(.mono) .pg:is([data-k="cover"],[data-k="info"],[data-k="stay"],[data-k="route"],[data-k="coll"],[data-k="plist"],[data-k="pack"],[data-k="res"],[data-k="budget"],[data-k="emg"]) :is(.ref,.cv-days,.sd,.chip){color:#3a1b1e}
+.tpl-beni .ph{margin-bottom:1.3em}.tpl-beni .ph-en{font-family:var(--en);font-weight:600;font-size:12px;letter-spacing:.42em;color:var(--mute)}.tpl-beni .ph h2{font-weight:700;letter-spacing:.42em;font-size:21px}
+.tpl-beni .pg h2,.tpl-beni .pg h3{font-weight:700}.tpl-beni .place h2{letter-spacing:.08em;font-size:1.9em}.tpl-beni .ptag{font-family:var(--en);letter-spacing:.35em}
+.tpl-beni .pn{font-family:var(--en);letter-spacing:.2em}
+/* cover */
+.bk.tpl-beni .pg.cover .cv-en{display:block;position:absolute;left:0;right:0;top:78px;text-align:center;font-family:var(--en);font-weight:600;font-size:60px;line-height:1;letter-spacing:.3em;padding-left:.3em;color:var(--ink);z-index:2;white-space:nowrap}
+.bk.tpl-beni .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:148px;text-align:center;font-family:var(--en);font-weight:700;font-size:16px;letter-spacing:.32em;padding-left:.32em;color:var(--ink);z-index:2}
+.bk.tpl-beni .pg.cover .cv-img{left:92px;right:92px;top:126px;height:400px;border:0;border-radius:0;transform:none;box-shadow:none;filter:saturate(.82) sepia(.08)}
+.bk.tpl-beni .pg.cover .cv-img::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(110,47,51,.1),rgba(110,47,51,.18))}
+.bk.tpl-beni .pg.cover .cv-txt{top:552px;left:40px;right:40px;text-align:center}
+.bk.tpl-beni .pg.cover .cv-ti{display:block;font-family:var(--en);font-weight:600;font-size:15px;letter-spacing:.38em;padding-left:.38em;color:var(--mute);margin-bottom:6px}
+.bk.tpl-beni .pg.cover h1{font-size:26px;letter-spacing:.24em;font-weight:700;margin-top:4px;line-height:1.35;max-width:none}
+.bk.tpl-beni .pg.cover .cv-days{display:none}.bk.tpl-beni .pg.cover .cv-date{font-family:var(--en);font-weight:700;letter-spacing:.24em;color:var(--ink);margin-top:10px}.bk.tpl-beni .pg.cover .cv-stat,.bk.tpl-beni .pg.cover .cv-sub,.bk.tpl-beni .pg.cover .cv-who{color:var(--mute)}
+.bk.tpl-beni.bc-full .pg.cover .cv-img{left:0;right:0;top:0;height:100%}
+.bk.tpl-beni.bc-full .pg.cover .cv-img::after{background:linear-gradient(rgba(70,25,28,.35),rgba(70,25,28,.15) 40%,rgba(70,25,28,.82) 72%)}
+.bk.tpl-beni.bc-full .pg.cover :is(.cv-en,.cv-mon,h1,.cv-date){color:#f4ead2}.bk.tpl-beni.bc-full .pg.cover :is(.cv-ti,.cv-sub,.cv-stat,.cv-who){color:#e2cfb5}
+/* day */
+.bk.tpl-beni .pg.day .bh{display:flex;justify-content:space-between;align-items:flex-start;margin:0 0 .9em;position:relative;z-index:1}
+.bh-day{font-family:var(--en);font-weight:700;font-size:34px;line-height:1;color:var(--c);letter-spacing:.04em}.bh-area{font-family:var(--head);font-weight:700;font-size:20px;letter-spacing:.5em;color:var(--c);margin-top:6px}
+.bh-r{text-align:right}.bh-md{font-family:var(--en);font-weight:700;font-size:32px;line-height:1;letter-spacing:.12em;color:var(--c)}
+.wkst{display:flex;gap:4px;justify-content:flex-end;margin-top:7px}.wkst i{font-style:normal;width:25px;height:25px;border-radius:50%;background:var(--c);color:#f4ead2;font-family:var(--head);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bk.tpl-beni .pg.day .dn,.bk.tpl-beni .pg.day .dill{display:none}
+.bk.tpl-beni .pg.day .dh{border-bottom:1px solid var(--c);padding-bottom:.5em;position:relative;z-index:1}.bk.tpl-beni .pg.day .dd .dt{font-size:1.25em;letter-spacing:.06em}
+.bk.tpl-beni .pg.day .dphoto{position:absolute;right:-38px;top:0;bottom:0;width:42%;height:auto;margin:0;border-radius:0;opacity:.3;filter:sepia(.35) saturate(.7);-webkit-mask-image:linear-gradient(to right,transparent,#000 45%);mask-image:linear-gradient(to right,transparent,#000 45%);z-index:0}
+.bk.tpl-beni .pg.day :is(.tl,.dfoot,.planb,.dnotes){position:relative;z-index:1}
+.bk.tpl-beni .tl .t{font-family:var(--en);font-weight:700;font-size:1.12em;letter-spacing:.03em}.bk.tpl-beni .tl li{border-bottom-color:var(--line)}
+.bk.tpl-beni .pkh{font-family:var(--head);letter-spacing:.35em;text-align:center;background:#efe6cd;color:#3d3c4a;padding:.2em 0;margin-top:.8em}.bk.mono.tpl-beni .pkh{background:#fff;border:1px solid #999}
 /* place */
 .place .pimg{position:absolute;left:0;right:0;top:0;height:300px;background:center/cover}
 .tpl-journal .place .pimg{left:32px;right:32px;top:32px;height:262px;border:6px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15)}
@@ -665,6 +698,10 @@ const TEMPLATES=[
   {id:'journal',name:'手帳風',desc:'米色紙感、襯線標題',tier:'free',paper:'#f5eee1',softMix:.13,cover:COVER_STYLES,prev:'background:#f5eee1;box-shadow:inset 0 0 0 4px #f5eee1,inset 0 0 0 5px #d8c9ae'},
   {id:'wafu',name:'和風',desc:'雙線框、藍染色調',tier:'free',paper:'#f7f4ec',softMix:.13,cover:COVER_STYLES,prev:'background:#f7f4ec;box-shadow:inset 0 0 0 5px #f7f4ec,inset 0 0 0 6px var(--sw),inset 0 0 0 8px #f7f4ec,inset 0 0 0 9px var(--sw)'},
   {id:'minimal',name:'極簡',desc:'黑白細線、留白多',tier:'free',paper:'#ffffff',softMix:.1,cover:COVER_STYLES,prev:'background:#fff;border-top:2px solid #111'},
+  {id:'beni',name:'和紅',desc:'深紅與米色、襯線大字，像雜誌；深色頁較耗墨',tier:'free',paper:'#e8e0c7',softMix:.12,
+   cover:{key:'opts.bcover',label:'封面樣式',options:[['frame','相框（照片在中間）'],['full','滿版照片']]},
+   prev:'background:linear-gradient(90deg,#6e2f33 0 50%,#e8e0c7 50%);box-shadow:inset 0 0 0 3px #6e2f33',
+   onSelect:t=>{if(['#5f7c6c','#2f5d50'].includes(t.theme.color))t.theme.color='#7b2f35'}},
   {id:'matcha',name:'抹茶手帳',desc:'水彩插圖、季節裝飾',tier:'free',paper:'#fbf7ef',softMix:.13,
    cover:{key:'opts.mcover',label:'封面底圖',options:[['a','A．角落綠葉'],['b','B．遠山小樹'],['c','C．藍天草地']]},
    prev:'background:#fbf7ef url(assets/booklet/cat-temple.webp) right 6px center/auto 70% no-repeat;box-shadow:inset 0 0 0 4px #fbf7ef,inset 0 0 0 5px #d8d4cb;border-radius:6px',
@@ -677,7 +714,7 @@ const TEMPLATES=[
 ];
 const TPL=Object.fromEntries(TEMPLATES.map(x=>[x.id,x]));
 const tplOf=t=>TPL[t&&t.theme&&t.theme.template]||TEMPLATES[0];
-const COLORS=['#5f7c6c','#2f5d50','#b5452c','#c0872b','#3d5a80','#7b4b94','#c8607e','#4a4a4a','#5b7f3a'];
+const COLORS=['#5f7c6c','#2f5d50','#7b2f35','#b5452c','#c0872b','#3d5a80','#7b4b94','#c8607e','#4a4a4a','#5b7f3a'];
 
 /* ---------- storage ---------- */
 const DB={db:null,mem:new Map(),
@@ -777,8 +814,8 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
-    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
@@ -1179,6 +1216,8 @@ const COUNTRIES=[
 const CTY=Object.fromEntries(COUNTRIES.map(c=>[c.id,c]));
 function guessCountry(t){const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area),...t.stays.map(s=>s.name+' '+s.address)].join(' ');for(const c of COUNTRIES)if(c.re.test(txt))return c.id;return null}
 const ctyOf=t=>CTY[t.country]||CTY.xx;
+const CTY_EN={jp:'JAPAN',kr:'KOREA',tw:'TAIWAN',hk:'HONG KONG',mo:'MACAU',sg:'SINGAPORE',my:'MALAYSIA',th:'THAILAND',vn:'VIETNAM',id:'INDONESIA',ph:'PHILIPPINES',cn:'CHINA',us:'U.S.A.',ca:'CANADA',gb:'U.K.',fr:'FRANCE',it:'ITALY',es:'SPAIN',de:'GERMANY',eu:'EUROPE',au:'AUSTRALIA',nz:'NEW ZEALAND'};
+const coverEn=t=>(t.coverEn||'').trim()||CTY_EN[t.country]||'JOURNEY';
 const TZ_GUESS=[[9,/東京|京都|大阪|奈良|神戶|神戸|名古屋|橫濱|横浜|福岡|札幌|函館|小樽|那霸|沖繩|廣島|金澤|仙台|箱根|鎌倉|日光|高山|宇治|姬路|富士|輕井澤|北海道|九州|四國|日本|首爾|釜山|濟州|韓國/],[8,/台北|臺北|台灣|台中|高雄|香港|澳門|新加坡|上海|北京|吉隆坡|峇里|巴里島|馬尼拉/],[7,/曼谷|清邁|普吉|河內|胡志明|雅加達|金邊/],[0,/倫敦|里斯本|冰島/],[1,/巴黎|柏林|羅馬|巴塞隆納|馬德里|阿姆斯特丹|布拉格|維也納|蘇黎世|米蘭/],[-5,/紐約|波士頓|多倫多|邁阿密/],[-8,/洛杉磯|舊金山|西雅圖|溫哥華/],[10,/雪梨|墨爾本/],[12,/奧克蘭|紐西蘭/],[-10,/夏威夷|檀香山/]];
 function guessTz(t){const c=guessCountry(t);if(c&&CTY[c].tz!=null)return CTY[c].tz;const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area)].join(' ');for(const[tz,re]of TZ_GUESS)if(re.test(txt))return tz;return null}
 const TZS=[[-12,'國際換日線西側（無人島）'],[-11,'美屬薩摩亞'],[-10,'夏威夷'],[-9,'阿拉斯加（冬季）'],[-8,'洛杉磯、溫哥華（冬季）'],[-7,'鳳凰城、丹佛（冬季）'],[-6,'墨西哥城、芝加哥（冬季）'],[-5,'紐約、多倫多（冬季）'],[-4,'波多黎各、委內瑞拉'],[-3.5,'紐芬蘭（冬季）'],[-3,'聖保羅、布宜諾斯艾利斯'],[-2,'南喬治亞島'],[-1,'亞速群島（冬季）'],[0,'倫敦、里斯本（冬季）'],[1,'巴黎、柏林、羅馬（冬季）'],[2,'雅典、開羅（冬季）'],[3,'伊斯坦堡、莫斯科'],[3.5,'德黑蘭'],[4,'杜拜'],[4.5,'喀布爾'],[5,'喀拉蚩、馬爾地夫'],[5.5,'印度、斯里蘭卡'],[5.75,'尼泊爾'],[6,'達卡'],[6.5,'仰光'],[7,'曼谷、河內、雅加達'],[8,'台灣、香港、新加坡、峇里島'],[9,'日本、韓國'],[9.5,'阿德萊德（冬季）'],[10,'布里斯本、關島'],[11,'雪梨（夏季）、索羅門群島'],[12,'紐西蘭（冬季）、斐濟'],[13,'東加、紐西蘭（夏季）'],[14,'吉里巴斯線群島']];
@@ -1288,17 +1327,18 @@ const pn=no=>`<div class="pn">${no}</div>`;
 
 function renderPages(t,splits,mode={}){
   const tp=tplOf(t);tp.prepare&&tp.prepare(t);
-  try{const out=renderPages0(t,splits,mode);return tp.decorate?out.map(h=>tp.decorate(h,t)):out}finally{tp.finish&&tp.finish()}
+  try{const out=renderPages0(t,splits,mode);const res=tp.decorate?out.map(h=>tp.decorate(h,t)):out;return out.kinds?res.map((h,i)=>typeof h==='string'?h.replace(/^<section /,`<section data-k="${out.kinds[i]}" `):h):res}finally{tp.finish&&tp.finish()}
 }
 function renderPages0(t,splits,mode={}){
   const C=buildPages(t,splits,mode),{ref,days,dIdx,visits,placeById,entries,vis}=C;
   const season=seasonOf(t),useIll=t.opts.illus;
   const nItems=days.reduce((a,d)=>a+d.items.filter(it=>it.text||it.placeId||it.stayId).length,0),nStays=t.stays.filter(s=>s.name).length;
   const sref=s=>s&&ref.stay[s.id]?`<span class="ref">P.${ref.stay[s.id]}</span>`:'';
-  return C.pages.map((pg,ix)=>{const no=ix+1;switch(pg.k){
+  const OUT=C.pages.map((pg,ix)=>{const no=ix+1;switch(pg.k){
   case'cover':{const n=days.length;const art=t.cover?'':useIll?scene(tripCat(t),season,559,476,3):'<span>JOURNEY</span>';
     const stat=n?`<div class="cv-stat">${n} 天．${nItems} 個地點${nStays?`．住宿 ${nStays} 間`:''}</div>`:'';
-    return `<section class="pg cover"><div class="cv-img ${!t.cover&&useIll?'ill-bg':''}"${bg(t.cover,t.coverPos)}>${art}</div><div class="cv-txt">${n?`<div class="cv-days">${n} DAYS</div>`:''}<h1>${esc(t.title||'未命名的旅行')}</h1>${t.subtitle?`<div class="cv-sub">${esc(t.subtitle)}</div>`:''}<div class="cv-date">${fmtRange(t)}</div>${stat}${t.travelers?`<div class="cv-who">${esc(t.travelers)}</div>`:''}</div></section>`}
+    const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],sd=pd(t.start);
+    return `<section class="pg cover"><div class="cv-en" style="font-size:${Math.min(60,Math.floor(470/Math.max(1,[...coverEn(t)].length)))}px">${esc(coverEn(t))}</div>${sd?`<div class="cv-mon">${MON[sd.getUTCMonth()]} ${sd.getUTCFullYear()}</div>`:''}<div class="cv-img ${!t.cover&&useIll?'ill-bg':''}"${bg(t.cover,t.coverPos)}>${art}</div><div class="cv-txt"><div class="cv-ti">Travel Itinerary</div>${n?`<div class="cv-days">${n} DAYS</div>`:''}<h1>${esc(t.title||'未命名的旅行')}</h1>${t.subtitle?`<div class="cv-sub">${esc(t.subtitle)}</div>`:''}<div class="cv-date">${fmtRange(t)}</div>${stat}${t.travelers?`<div class="cv-who">${esc(t.travelers)}</div>`:''}</div></section>`}
   case'route':{const st=pg.stops;
     const leg=st.filter(s=>s.idx).map(s=>{const names=[...new Set(s.idx.map(i=>stayFor(t,dayDate(t,i))).filter(Boolean).map(x=>x.name))];
       return `<div class="irow"><div class="k">${esc(s.sub)}</div><div><b>${esc(s.name)}</b>${s.idx.map(i=>days[i].title?`<span class="s">　${esc(days[i].title)}</span>`:'').join('')}${names.length?`<div class="s">住宿：${names.map(esc).join('、')}</div>`:''}</div></div>`}).join('');
@@ -1329,7 +1369,7 @@ function renderPages0(t,splits,mode={}){
     const dc=dayColor(t,i),cntI=d.items.filter(it=>it.text||it.placeId||it.stayId).length,notes=t.opts.dayNotes&&pg.last;
     const sun=daySun(t,i);
     const meta=[`${md(date)}（${wk(date)}）`,d.area?esc(d.area):'',cntI?`${cntI} 個地點`:'',sun?`日出 ${sun[0]}．日落 ${sun[1]}`:''].filter(Boolean).join('．');
-    return `<section class="pg day" data-day="${d.id}" data-from="${pg.from}"${dc?` style="${cvars(dc,t.theme.template)}"`:''}><div class="body fit${notes?' col':''}"><div class="dh"><div class="dn">DAY.<b>${i+1}</b></div><div class="dd"><div class="date">${meta}</div><div class="dt">${esc(d.title)}${pg.cont?'<span class="cont">（續）</span>':''}</div></div>${useIll&&!pg.cont?`<div class="dill">${ill(dayCat(t,i))}</div>`:''}</div>${d.photo&&!pg.cont?`<div class="dphoto"${bg(d.photo,d.photoPos)}></div>`:''}<ol class="tl">${items}</ol>${foot?`<div class="dfoot">${foot}</div>`:''}${pb}${notes?'<div class="dnotes"><span>MEMO</span></div>':''}</div>${pn(no)}</section>`}
+    return `<section class="pg day" data-day="${d.id}" data-from="${pg.from}"${dc?` style="${cvars(dc,t.theme.template)}"`:''}><div class="body fit${notes?' col':''}">${(()=>{const dt=pd(date),w=dt?dt.getUTCDay():0,jp=ctyOf(t).id==='jp',st=jp?['日月火水木金土'[w],'曜','日']:['星','期','日一二三四五六'[w]];return `<div class="bh"><div><div class="bh-day">Day ${i+1}</div>${d.area?`<div class="bh-area">${esc(d.area)}</div>`:''}</div><div class="bh-r">${dt?`<div class="bh-md">${p2(dt.getUTCMonth()+1)}.${p2(dt.getUTCDate())}</div><div class="wkst">${st.map(x=>`<i>${x}</i>`).join('')}</div>`:''}</div></div>`})()}<div class="dh"><div class="dn">DAY.<b>${i+1}</b></div><div class="dd"><div class="date">${meta}</div><div class="dt">${esc(d.title)}${pg.cont?'<span class="cont">（續）</span>':''}</div></div>${useIll&&!pg.cont?`<div class="dill">${ill(dayCat(t,i))}</div>`:''}</div>${d.photo&&!pg.cont?`<div class="dphoto"${bg(d.photo,d.photoPos)}></div>`:''}<ol class="tl">${items}</ol>${foot?`<div class="dfoot">${foot}</div>`:''}${pb}${notes?'<div class="dnotes"><span>MEMO</span></div>':''}</div>${pn(no)}</section>`}
   case'stay':{const s=pg.s,n=nights(s.checkin,s.checkout);
     const ds=days.map((d,i)=>({d,i,date:dayDate(t,i)})).filter(x=>s.checkin&&s.checkout&&x.date>=s.checkin&&x.date<=s.checkout);
     const span=ds.length?`DAY.${ds[0].i+1}${ds.length>1?'–'+(ds[ds.length-1].i+1):''}（P.${ref.day[ds[0].d.id]}）`:'';
@@ -1397,7 +1437,7 @@ function renderPages0(t,splits,mode={}){
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">JAPANESE PHRASES${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>常用日文</h2></div><div class="phl">${rows}</div><p class="rnote">〇〇的地方換成地名或店名，直接指給對方看也可以。</p></div>${pn(no)}</section>`}
   case'notes':return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">MEMO</span><h2>旅行筆記</h2></div><div class="lines"></div></div>${pn(no)}</section>`;
   }});
-}
+  OUT.kinds=C.pages.map(p=>p.k);return OUT}
 /* split long days across pages: measure at a slightly reduced size, then break where the timeline overflows */
 function computeSplits(t,mode={}){
   const m=$('#measure'),splits={},n=dayCount(t);
@@ -1431,7 +1471,7 @@ function computeSplits(t,mode={}){
 const pagesFor=(t,mode={})=>renderPages(t,computeSplits(t,mode),mode);
 function mixHex(a,b,p){const A=[1,3,5].map(i=>parseInt(a.substr(i,2),16)),B=[1,3,5].map(i=>parseInt(b.substr(i,2),16));return '#'+A.map((v,i)=>Math.round(v*p+B[i]*(1-p)).toString(16).padStart(2,'0')).join('')}
 function cvars(c,tpl){c=okColor(c);const tp=TPL[tpl]||TEMPLATES[0];return `--c:${c};--soft:${mixHex(c,tp.paper,tp.softMix)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`}
-const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${tplOf(t).bkStyle?tplOf(t).bkStyle(t):''}">`;
+const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} bc-${t.opts.bcover} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${tplOf(t).bkStyle?tplOf(t).bkStyle(t):''}">`;
 function fitEl(el){let fs=1;el.style.setProperty('--fs',fs);while(el.scrollHeight>el.clientHeight+1&&fs>0.72){fs=+(fs-0.04).toFixed(2);el.style.setProperty('--fs',fs)}return el.scrollHeight>el.clientHeight+1}
 function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.body.fit',p);if(b&&fitEl(b))bad.push(i)});return bad}
 
@@ -1479,6 +1519,7 @@ function edBasic(){
   <div class="card"><h4>外觀</h4>
   <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${x.prev}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
+  ${T.theme.template==='beni'?fld('封面英文大字（留空會依國家自動帶入，目前：'+esc(coverEn({...T,coverEn:''}))+'）','coverEn','例：OSAKA & KYOTO'):''}
   <div class="row">${(c=>`<label class="f"><span>${c.label}</span><select data-k="${c.key}">${c.options.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>`)(tplOf(T).cover)}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
   <label class="f"><span>資訊詳細程度</span><select data-k="opts.detail"><option value="brief">精簡：每日只列時間和名稱，景點合併成「景點速查」</option><option value="std">標準</option><option value="full">完整：每日行程加上營業時間、費用、景點提醒</option></select></label>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
@@ -1839,7 +1880,7 @@ document.getElementById('drvx').addEventListener('click',function(){document.get
 async function exportDigital(){const h=digitalHTML(T);if(await saveFile(safeName(T.title)+'_手機閱讀版.html',h,'text/html'))toast('已下載手機閱讀版')}
 async function exportHTML(){
   const a=await offscreenPages();const inner=a.innerHTML;a.innerHTML='';
-  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}\n${EXPORT_CSS}</style></head><body><div class="bar"><button onclick="print()">列印／存成 PDF</button><span>列印設定：紙張 A5、邊界「無」、勾選「背景圖形」</span></div>${inner}<script>function z(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-16)/${PW}))}z();addEventListener('resize',z)<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}\n${EXPORT_CSS}</style></head><body><div class="bar"><button onclick="print()">列印／存成 PDF</button><span>列印設定：紙張 A5、邊界「無」、勾選「背景圖形」</span></div>${inner}<script>function z(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-16)/${PW}))}z();addEventListener('resize',z)<\/script></body></html>`;
   if(await saveFile(safeName(T.title)+(PMODE?'_'+MODE_NAME[PMODE]:'')+'_小冊.html',html,'text/html'))toast('已下載'+MODE_NAME[PMODE]+'小冊');
 }
 const GIFT_CSS=`body{margin:0;background:#3b3632;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;color:#2b2622}
@@ -1896,7 +1937,7 @@ async function giftHTML(preview){
   let enc='';if(n){a.innerHTML=bkOpen(T)+pagesFor(T).join('')+'</div>';fitAll(a);enc=btoa(unescape(encodeURIComponent(a.innerHTML))).split('').reverse().join('')}
   a.innerHTML='';
   const g=T.gift,c=okColor(T.theme.color),data=JSON.stringify({start:T.start,n,enc,id:T.id,p:preview?1:0}).replace(/</g,'\\u003c');
-  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(g.to?'給 '+g.to+' 的旅行':T.title||'旅行禮物')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet"><style>:root{--c:${c}}${$('#bkcss').textContent}\n${GIFT_CSS}</style></head><body>
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(g.to?'給 '+g.to+' 的旅行':T.title||'旅行禮物')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"><style>:root{--c:${c}}${$('#bkcss').textContent}\n${GIFT_CSS}</style></head><body>
 <div class="env" id="env"><div class="stage"><div class="envelope"><div class="back"></div><div class="letter"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div>${nl(g.letter)}</div><div class="pocket"></div><div class="flap"></div><div class="seal">旅</div></div><div class="tap">點信封打開</div><button class="skipenv" id="skipEnv">先不拆，直接看行程</button></div>
 <div class="card"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div><div>${nl(g.letter)||esc(T.title)}</div>${g.from?`<div class="lt-from">— ${esc(g.from)}</div>`:''}<button id="toBook">打開旅行小冊</button></div></div>
 <div id="book" style="display:none"><div class="cdbar" id="cd"></div><button class="reletter" id="reLetter">再看一次信</button><div id="pages">${masked}</div></div>
@@ -2157,7 +2198,7 @@ function imposeSheets(pgs){
 async function exportA4(){
   const a=await offscreenPages();const pgs=$$('.pg',a).map(x=>x.outerHTML);const open=bkOpen(T,curMode());a.innerHTML='';
   const im=imposeSheets(pgs);
-  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}｜A4 對折小冊</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}
+  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}｜A4 對折小冊</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}
 ${A4_CSS}
 body{margin:0;background:#4a4744;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif}
 .bar{position:sticky;top:0;z-index:5;background:#1f2a27;color:#fff;padding:10px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;line-height:1.6}
