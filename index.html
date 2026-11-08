@@ -191,6 +191,7 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .memthumbs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.memthumbs .thumb{position:relative;width:64px;height:48px}.memthumbs .thumb .mini{position:absolute;top:-6px;right:-6px;padding:0 5px;font-size:10px}
 .used{font-size:12px;color:var(--ui-acc);margin:-4px 0 10px}
 .used.no{color:var(--ui-mute)}
+.wsres{margin-top:6px}.wsr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--ui-line)}.wsr small{color:var(--ui-mute,#888);margin-left:4px}.wsr .s{font-size:12px;color:var(--ui-mute,#888)}
 .filebtn{display:inline-block;cursor:pointer;margin-top:8px}.gchip.auto{border-style:dashed;opacity:.8}
 .gchip{font-style:normal;font-size:11px;color:var(--ui-acc);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
 .noprint{font-style:normal;font-size:11px;color:var(--ui-mute);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
@@ -1070,6 +1071,28 @@ async function wpFindOne(i){const p=T.places[i];if(!p||(!p.name&&p.lat==null)){t
   <div class="row"><button class="btn" data-wp="x">取消</button></div></div>`;
   bg.addEventListener('click',e=>{const b=e.target.closest('[data-wp]');if(!b){if(e.target===bg)bg.remove();return}bg.remove();if(b.dataset.wp==='x')return;const x=got[+b.dataset.wp];p.desc=x.text;p.descSrc=wpSrc(x);if(!p.jaName&&x.lang==='ja'&&x.title!==p.name)p.jaName=x.title;commit();toast('已放入介紹，可以再修改；來源會自動印在圖文來源頁')});
   document.body.appendChild(bg)}
+/* 搜尋景點：直接查維基百科（中文，找不到再查日文），帶入名稱、日文名、座標；介紹可選擇一起帶入（CC BY-SA，自動標示來源）。
+   只涵蓋有維基條目的地點（寺廟、神社、公園、車站…），店家、餐廳多半查不到。全部在瀏覽器裡查，不經過旅冊伺服器 */
+let WS=null,WS_Q='';
+const wsClean=t=>String(t||'').replace(/\s*[(（][^()（）]*[)）]\s*$/,'').trim();
+async function wsQuery(lang,q){const p={action:'query',generator:'search',gsrsearch:q,gsrlimit:8,gsrnamespace:0,prop:'coordinates|description|langlinks|pageprops',colimit:'max',lllimit:'max',ppprop:'disambiguation',redirects:1};
+  if(lang==='zh'){p.lllang='ja';p.variant='zh-tw'}else p.lllang='zh';
+  const j=await wpApi(lang,p);return (j.query?.pages||[]).filter(pg=>!pg.pageprops||!('disambiguation' in pg.pageprops)).sort((a,b)=>(a.index||0)-(b.index||0)).map(pg=>({lang,title:pg.title,desc:pg.description||'',lat:pg.coordinates?.[0]?.lat??null,lng:pg.coordinates?.[0]?.lon??null,other:(pg.langlinks||[])[0]?.title||''}))}
+function wsResHTML(){if(!WS)return '';return WS.length?WS.map((x,k)=>{const nm=x.lang==='zh'?wsClean(x.title):wsClean(x.other||x.title),ja=x.lang==='ja'?x.title:x.other,had=T.places.some(p=>p.name&&wpNorm(p.name)===wpNorm(nm));
+    return `<div class="wsr"><div><b>${esc(nm)}</b>${ja&&ja!==nm?` <small>${esc(ja)}</small>`:''}${x.desc?`<div class="s">${esc(x.desc)}</div>`:''}<div class="s">${x.lat!=null?'有座標':'<span class="have">沒有座標</span>'}・${x.lang==='zh'?'中文':'日文'}維基百科${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="wsAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join(''):'<p class="hint">維基百科找不到。店家、餐廳通常沒有條目，可以用下面「從 Google 地圖新增」。</p>'}
+async function wsSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('輸入景點名稱，例如：清水寺、伏見稻荷');return}const box=$('#wsRes');if(box)box.innerHTML='<p class="hint">查詢中…</p>';
+  try{let L=/[぀-ヿ]/.test(q)?[]:await wsQuery('zh',q);if(L.filter(x=>x.lat!=null).length<3){const J=await wsQuery('ja',q);const have=new Set(L.map(x=>x.other||x.title));J.forEach(x=>{if(!have.has(x.title))L.push(x)})}
+    L=L.map((x,i)=>({...x,i,sc:Math.max(wpScore(q,x.title),x.other?wpScore(q,x.other):0)})).sort((a,b)=>b.sc-a.sc||a.i-b.i).slice(0,10);
+    /* 中文條目常沒有座標（例：清水寺），改用另一語言的同一條目補 */
+    const miss=L.filter(x=>x.lat==null&&x.other);for(const lang of ['ja','zh']){const M=miss.filter(x=>(x.lang==='zh'?'ja':'zh')===lang);if(!M.length)continue;
+      try{const j=await wpApi(lang,{action:'query',titles:M.map(x=>x.other).join('|'),prop:'coordinates',redirects:1});const by={};(j.query?.pages||[]).forEach(pg=>{if(pg.coordinates?.[0])by[pg.title]=pg.coordinates[0]});(j.query?.redirects||[]).forEach(r=>{if(by[r.to])by[r.from]=by[r.to]});
+        M.forEach(x=>{const c=by[x.other];if(c){x.lat=c.lat;x.lng=c.lon}})}catch(e){}}
+    WS=L;WS_Q=q;if(box)box.innerHTML=wsResHTML()}
+  catch(e){if(box)box.innerHTML='';toast(e.message==='ratelimit'?`維基百科暫時限制查詢，請等 ${e.retry} 秒再試`:'查詢失敗，請確認有連上網路')}}
+async function wsAdd(k){const x=WS[k];if(!x)return;const nm=x.lang==='zh'?wsClean(x.title):wsClean(x.other||x.title),ja=x.lang==='ja'?x.title:x.other;
+  const p=mk.place({name:nm,jaName:ja&&ja!==nm?wsClean(ja):'',lat:x.lat,lng:x.lng,mapUrl:x.lat!=null?`https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}`:''});T.places.push(p);openSet.add(p.id);
+  const withDesc=$('#wsDesc')?.checked;commit();toast('已加入「'+nm+'」'+(withDesc?'，正在帶入介紹…':''));
+  if(withDesc){try{const e=await wpExtract(x.lang,x.title);const q=T.places.find(z=>z.id===p.id);if(e&&q&&!q.desc.trim()){q.desc=e.text;q.descSrc=wpSrc(e);commit();toast('已帶入「'+nm+'」的維基介紹，來源會印在圖文來源頁')}}catch(err){toast('介紹沒帶到，可以之後在景點裡按「從維基百科找介紹」')}}}
 async function wpFillMany(ids){const list=T.places.filter(p=>ids.has(p.id)&&!p.desc.trim()&&(p.name||p.lat!=null));if(!list.length){toast('勾選的景點都已經有介紹');return}
   let ok=0,none=0,unsure=0;const btn=$('[data-act=bulkWp]');if(btn){btn.disabled=true}
   for(let k=0;k<list.length;k++){const p=list[k];if(btn)btn.textContent=`查詢中 ${k+1}/${list.length}…`;
@@ -1740,7 +1763,8 @@ function edDays(){
 function edPlaces(){
   const C=buildPages(T);
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
-  return `<div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址和手機分享的短網址（maps.app.goo.gl）都會自動帶出名稱；短網址要連網經過旅冊的讀取服務展開，讀不到時請自己填，地圖連結和 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
+  return `<div class="card"><h4>搜尋景點（維基百科）</h4><p class="hint">寺廟、神社、公園、車站這類有維基條目的地點，會帶入名稱、日文名和座標；店家、餐廳多半查不到。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><div id="wsRes" class="wsres">${wsResHTML()}</div></div>
+  <div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址和手機分享的短網址（maps.app.goo.gl）都會自動帶出名稱；短網址要連網經過旅冊的讀取服務展開，讀不到時請自己填，地圖連結和 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
   <div class="card"><h4>從 Google 地圖一次匯入多個地點</h4><p class="hint">會列出地點讓你勾選，已經在景點裡的預設不勾。三種方法都只在你的瀏覽器裡處理，不經過旅冊的伺服器：</p>
   ${(b=>b?`<p class="hint"><b>書籤小工具（電腦，儲存清單用）</b>：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著名稱、地址、座標和備註回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}
   <p class="hint"><b>Google「我的地圖」</b>：地圖設成「知道連結的任何人都能查看」，把分享連結貼在下面；不想公開就用「匯出成 KML/KMZ」，再選擇那個檔案。會帶入名稱、座標、說明和圖層。</p>
@@ -2483,6 +2507,8 @@ function onAct(e){
     case'bulkBook':{if(!BULKSEL.size){toast('先勾選景點');return}T.places.forEach(p=>{if(BULKSEL.has(p.id))p.book=a});toast(`已把 ${BULKSEL.size} 個景點設為「${a==='yes'?'一律印':a==='no'?'不印':'自動'}」`);break}
     case'bulkDel':{if(!BULKSEL.size){toast('先勾選景點');return}const n=BULKSEL.size;modal('刪除景點',`要刪除勾選的 <b>${n}</b> 個景點嗎？已排進行程的那幾行會保留文字，但不再連結介紹頁。`,[['取消'],['刪除',()=>{T.days.forEach(d=>d.items.forEach(x=>{if(BULKSEL.has(x.placeId)){const p=T.places.find(q=>q.id===x.placeId);if(!x.text&&p)x.text=p.name;x.placeId=''}}));T.places=T.places.filter(p=>!BULKSEL.has(p.id));BULKSEL.clear();commit()},'danger']]);return}
     case'planPlace':{const sel=$(`[data-plan="${i}"]`);if(!sel||sel.value===''){toast('先選要排進哪一天');return}const k=+sel.value;T.days[k].items.push({id:uid(),time:'',text:'',placeId:T.places[i].id,transport:'',note:'',secret:false,reserve:'',resNo:''});openSet.add(T.days[k].id);toast(`已排進 DAY.${k+1}`);break}
+    case'wsSearch':wsSearch();return;
+    case'wsAdd':wsAdd(+b.dataset.a);return;
     case'addFromMap':{const u=okUrl($('#mapPaste').value);if(!u){toast('請貼上 https 開頭的 Google 地圖連結');return}const r=parseMapsUrl(u);const p=normalize({places:[{name:r.name||'',mapUrl:u,lat:r.lat,lng:r.lng}]}).places[0];T.places.push(p);openSet.add(p.id);
       const short=/^https:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(u);
       if(!r.name&&short){toast('已新增，正在讀取地點名稱…');const tid=T.id;fetch(GM_PLACE_API+'?u='+encodeURIComponent(u)).then(x=>x.ok?x.json():null).catch(()=>null).then(j=>{const t=trips.find(x=>x.id===tid),q=t&&t.places.find(x=>x.id===p.id);if(!q)return;
