@@ -567,6 +567,7 @@ html.dark .thumb{background-color:#333}
 .bk.tpl-poster .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:132px;text-align:center;font-family:var(--en);font-size:15px;letter-spacing:.5em;padding-left:.5em;color:var(--ink);opacity:.8;text-transform:uppercase;z-index:2}
 .bk.tpl-poster .pg.cover .cv-img{left:0;right:0;top:30%;bottom:0;height:auto;filter:sepia(.2) saturate(.85) contrast(1.03)}
 .bk.tpl-poster .pg.cover.art .cv-img{display:none}
+.bk.tpl-poster .pg.cover.art :is(.cv-en,.cv-mon){text-shadow:0 0 6px rgba(246,239,224,.95),0 0 14px rgba(246,239,224,.85),0 0 28px rgba(246,239,224,.6)}
 .bk.tpl-poster .pg.cover .cv-txt{left:50%;right:auto;top:auto;bottom:46px;transform:translateX(-50%);width:max-content;max-width:78%;text-align:center;background:rgba(246,239,224,.94);border:1px solid rgba(46,42,37,.45);outline:1px solid rgba(246,239,224,.94);outline-offset:3px;padding:12px 26px 13px;z-index:2}
 .bk.tpl-poster .pg.cover h1{font-size:23px;font-weight:700;letter-spacing:.16em;line-height:1.35;margin:0;max-width:none}
 .bk.tpl-poster .pg.cover :is(.cv-ti,.cv-days,.cv-stat){display:none}
@@ -786,7 +787,7 @@ const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'
      bkStyle(t) → css text     extra custom properties on the .bk container
      onSelect(t)               when the user switches to this template */
 /* 封面插畫（復古海報、粉彩）：assets/covers/<版型>-<城市>.webp。新增圖時把城市加進 CVART，檔名照格式放進資料夾 */
-const CVART={poster:['kyoto','osaka','tokyo','hokkaido'],pastel:['kyoto','osaka','hokkaido','okinawa','nara','fukuoka','japan']};
+const CVART={poster:['kyoto','osaka','tokyo','hokkaido','okinawa','nara','fukuoka','nagoya','japan'],pastel:['kyoto','osaka','hokkaido','okinawa','nara','fukuoka','japan']};
 const CVART_ZH={kyoto:'京都',osaka:'大阪',tokyo:'東京',hokkaido:'北海道',okinawa:'沖繩',nara:'奈良',fukuoka:'福岡',nagoya:'名古屋',japan:'日本'};
 function artOptions(id){return [['auto','自動（依目的地）'],['photo','用我的封面照片'],...CVART[id].map(k=>[k,(k==='japan'?'日本通用':CVART_ZH[k])+'插畫'])]}
 const ART={img:{},failed:new Set(),busy:{}};
