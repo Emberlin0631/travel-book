@@ -1094,10 +1094,12 @@ async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return nul
   const base=poiPick(T,idx);if(!base.length){POI.none=true;return []}POI.none=false;const tok=String(q).trim().split(/\s+/).map(x=>pkey(x,N)).filter(Boolean);
   const run=async regs=>{const all=(await Promise.all(regs.map(r=>poiRegion(r,N).catch(()=>[])))).flat();
   /* 輸入的是類型（毛線、咖啡、拉麵…）就列出那一類，也用日文常見寫法再比一次（毛線→毛糸） */const ty=[...Object.entries(OSM_TYPE).filter(([t,l])=>pkey(l,N)===k).map(([t])=>t),...(POI_TY[q.trim()]||[])];
-  const syn=(POI_SYN[q.trim()]||[]).map(x=>pkey(x,N));
+  const syn=(POI_SYN[q.trim()]||[]).map(x=>pkey(x,N)),KS=poiKeys(k,N);
   const sc1=(s,k)=>s===k?100:s.startsWith(k)?80:s.includes(k)?60:tok.length>1&&tok.every(t=>s.includes(t))?50:0;
-  const res=[];for(const x of all){let best=0;for(const s of x.k){let sc=sc1(s,k);if(sc){sc-=Math.min(15,(s.length-k.length)*.5);if(sc>best)best=sc}}
-    for(const s of x.k2){let sc=sc1(s,k);if(sc){sc-=12+Math.min(15,(s.length-k.length)*.5);if(sc>best)best=sc}}/* 別名、讀音比對到的排後面 */
+  /* KS：原字串＋台灣俗稱對到的日文名（扣 3 分）＋去掉「車站／站／駅」（車站加分，其他扣分） */
+  const kv=(s,x,ex)=>{let b=0;for(const [kk,pen] of KS){let sc=sc1(s,kk);if(sc){sc-=ex+Math.min(15,(s.length-kk.length)*.5)+(pen==='st'?(x.t==='station'?-6:8):pen);if(sc>b)b=sc}}return b};
+  const res=[];for(const x of all){let best=0;for(const s of x.k){const sc=kv(s,x,0);if(sc>best)best=sc}
+    for(const s of x.k2){const sc=kv(s,x,12);if(sc>best)best=sc}/* 別名、讀音比對到的排後面 */
     if(!best&&syn.length&&x.k.some(s=>syn.some(y=>s.includes(y))))best=55;
     if(!best&&ty.includes(x.t))best=40;
     if(best){if(/temple|shrine|museum|nature/.test(x.a[6])||x.a[11])best+=4;if(/^(attraction|theme_park|zoo|aquarium|museum|castle|viewpoint|place_of_worship|gallery|garden|park|marketplace|water|waterfall|peak|volcano|mountain_range|valley|gorge|beach|bay|cape|hot_spring|island|islet|national_park)$/.test(x.t))best+=20;if(x.t==='station'||x.a[6]==='hotel')best-=4;if(/memorial|monument/.test(x.t))best-=10;res.push({x,sc:best})}}
@@ -1108,6 +1110,21 @@ async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return nul
    避免 Wikidata 的正式名（鹿苑寺）蓋掉大家熟悉的叫法 */
 const hasKana=s=>/[\u3040-\u30ff]/.test(s||'');
 const poiName=a=>{if(hasKana(a[0]))return a[2]||a[0];const N=POI.norm;if(!N)return a[0];let o='';for(const ch of a[0])o+=N.jp.get(ch)??ch;return o};
+/* 台灣俗稱 → OpenStreetMap 上的日文名。輸入含左邊的詞就也用右邊的名稱找。
+   右邊的名稱用 tools/check-alias.mjs 對照地點庫檢查過；新增後請再跑一次 */
+const POI_ALIAS={'環球影城':['ユニバーサル・スタジオ・ジャパン','ユニバーサルシティ'],'環球':['ユニバーサル・スタジオ・ジャパン','ユニバーサルシティ'],'usj':['ユニバーサル・スタジオ・ジャパン','ユニバーサルシティ'],
+  '任天堂世界':['スーパー・ニンテンドー・ワールド'],'瑪利歐':['スーパー・ニンテンドー・ワールド'],'任天堂':['ニンテンドーオオサカ','スーパー・ニンテンドー・ワールド'],'寶可夢':['ポケモンセンター','ポケモンカフェ'],'寶可夢中心':['ポケモンセンター'],'寶可夢咖啡':['ポケモンカフェ'],
+  '竹林小徑':['嵐山竹林','竹林の道'],'竹林步道':['嵐山竹林','竹林の道'],'嵐山竹林':['嵐山竹林','竹林の道'],'小火車':['トロッコ嵯峨','トロッコ嵐山'],
+  '二年坂':['二寧坂'],'三年坂':['産寧坂'],'哲學之道':['哲学の道'],'天保山摩天輪':['天保山大観覧車'],'hep摩天輪':['HEP FIVE観覧車'],'梅田摩天輪':['HEP FIVE観覧車'],
+  '梅田藍天':['梅田スカイビル','空中庭園展望台'],'空中庭園':['梅田スカイビル','空中庭園展望台'],'阿倍野':['あべのハルカス','ハルカス300'],'harukas':['あべのハルカス','ハルカス300'],
+  '固力果':['道頓堀グリコサイン'],'跑跑人':['道頓堀グリコサイン'],'天守閣':['大阪城天守閣'],'難波':['なんば'],
+  '唐吉訶德':['ドン・キホーテ'],'驚安殿堂':['ドン・キホーテ'],'激安殿堂':['ドン・キホーテ'],'唐吉':['ドン・キホーテ'],'松本清':['マツモトキヨシ'],'大國藥妝':['ダイコクドラッグ'],
+  '優衣庫':['ユニクロ'],'大創':['ダイソー'],'星巴克':['スターバックス'],'麥當勞':['マクドナルド'],
+  '關西機場':['関西国際空港'],'關西國際機場':['関西国際空港'],'關空':['関西国際空港'],'伊丹機場':['大阪国際空港'],'大阪機場':['大阪国際空港','関西国際空港']};
+let POI_AK=null;
+function poiKeys(k,N){if(!POI_AK)POI_AK=Object.entries(POI_ALIAS).map(([a,b])=>[pkey(a,N),b.map(x=>pkey(x,N))]).sort((x,y)=>y[0].length-x[0].length);
+  /* 比對到的俗稱越長越優先（「寶可夢中心」先於「寶可夢」） */let pen=3;const KS=[[k,0]],seen=new Set([k]);for(const [a,b] of POI_AK)if(a.length>1&&k.includes(a)){for(const y of b)if(!seen.has(y)){seen.add(y);KS.push([y,pen])}pen=10}
+  const m=k.match(/^(.+?)(车站|站|驿|駅)$/);if(m&&!seen.has(m[1]))KS.push([m[1],'st']);return KS}
 /* 台灣常用中文 → 日文店名常見寫法（找店名用）；類型 → OSM 類別 */
 const POI_SYN={'毛線':['毛糸','yarn'],'拉麵':['ラーメン','らーめん','拉麺'],'咖啡':['カフェ','珈琲','coffee'],'甜點':['スイーツ','菓子'],'藥妝':['ドラッグ','薬局'],'百貨':['百貨店'],'壽司':['寿司','鮨','すし'],'燒肉':['焼肉'],'居酒屋':['居酒屋'],'抹茶':['抹茶'],'和菓子':['和菓子'],'烏龍麵':['うどん'],'蕎麥麵':['そば','蕎麦'],'丼飯':['丼'],'章魚燒':['たこ焼'],'大阪燒':['お好み焼'],'書店':['書店','本屋'],'二手':['古着','リサイクル']};
 const POI_TY={'毛線':['wool','sewing','fabric','haberdashery','craft','handicraft'],'手藝':['sewing','fabric','haberdashery','craft','handicraft'],'藥妝':['chemist','cosmetics'],'百貨':['department_store','mall'],'二手':['second_hand'],'伴手禮':['gift','confectionery'],'湖':['water'],'瀑布':['waterfall'],'海灘':['beach'],'溫泉':['hot_spring'],'島':['island','islet'],'國立公園':['national_park']};
@@ -1136,7 +1153,7 @@ async function wsSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('�
 /* 維基查不到時（多半是店家、餐廳），使用者按了才查 OpenStreetMap 的 Nominatim：
    規範是全部使用者合計每秒最多 1 次、不得自動完成，所以只在按鈕觸發、並在本機排隊至少隔 1.1 秒。結果要使用者自己確認，資料標示 © OpenStreetMap contributors（ODbL） */
 let OSM=null,OSM_T=0,OSM_Q='';
-const OSM_TYPE={restaurant:'餐廳',fast_food:'速食',cafe:'咖啡',bar:'酒吧',pub:'酒吧',ice_cream:'冰淇淋',bakery:'麵包店',confectionery:'甜點',pastry:'甜點',hotel:'住宿',hostel:'住宿',guest_house:'住宿',attraction:'景點',museum:'博物館',viewpoint:'展望點',place_of_worship:'寺社',shrine:'神社',temple:'寺院',park:'公園',garden:'庭園',station:'車站',department_store:'百貨',mall:'商場',supermarket:'超市',convenience:'便利商店',gift:'伴手禮',craft:'手作',fabric:'布料',wool:'毛線',books:'書店',clothes:'服飾',sewing:'手藝',haberdashery:'手藝材料',second_hand:'二手',variety_store:'雜貨',chemist:'藥妝',cosmetics:'美妝',tea:'茶',coffee:'咖啡豆',alcohol:'酒',marketplace:'市場',castle:'城',ruins:'遺跡',archaeological_site:'遺址',monument:'紀念碑',memorial:'紀念碑',gallery:'美術館',zoo:'動物園',aquarium:'水族館',theme_park:'主題樂園',food_court:'美食街',deli:'熟食',seafood:'海鮮',stationery:'文具',toys:'玩具',anime:'動漫',music:'音樂',jewelry:'飾品',shoes:'鞋',bag:'包包',antiques:'古董',water:'湖泊',waterfall:'瀑布',peak:'山',volcano:'火山',mountain_range:'山地',valley:'溪谷',gorge:'峽谷',beach:'海灘',bay:'海灣',cape:'岬',cliff:'斷崖',rock:'奇岩',hot_spring:'溫泉',spring:'湧泉',wetland:'濕地',island:'島',islet:'島',archipelago:'群島',national_park:'國立公園',protected_area:'自然保護區'};
+const OSM_TYPE={restaurant:'餐廳',fast_food:'速食',cafe:'咖啡',bar:'酒吧',pub:'酒吧',ice_cream:'冰淇淋',bakery:'麵包店',confectionery:'甜點',pastry:'甜點',hotel:'住宿',hostel:'住宿',guest_house:'住宿',attraction:'景點',museum:'博物館',viewpoint:'展望點',place_of_worship:'寺社',shrine:'神社',temple:'寺院',park:'公園',garden:'庭園',station:'車站',department_store:'百貨',mall:'商場',supermarket:'超市',convenience:'便利商店',gift:'伴手禮',craft:'手作',fabric:'布料',wool:'毛線',books:'書店',clothes:'服飾',sewing:'手藝',haberdashery:'手藝材料',second_hand:'二手',variety_store:'雜貨',chemist:'藥妝',cosmetics:'美妝',tea:'茶',coffee:'咖啡豆',alcohol:'酒',marketplace:'市場',castle:'城',ruins:'遺跡',archaeological_site:'遺址',monument:'紀念碑',memorial:'紀念碑',gallery:'美術館',zoo:'動物園',aquarium:'水族館',theme_park:'主題樂園',food_court:'美食街',deli:'熟食',seafood:'海鮮',stationery:'文具',toys:'玩具',anime:'動漫',music:'音樂',jewelry:'飾品',shoes:'鞋',bag:'包包',antiques:'古董',aerodrome:'機場',water:'湖泊',waterfall:'瀑布',peak:'山',volcano:'火山',mountain_range:'山地',valley:'溪谷',gorge:'峽谷',beach:'海灘',bay:'海灣',cape:'岬',cliff:'斷崖',rock:'奇岩',hot_spring:'溫泉',spring:'湧泉',wetland:'濕地',island:'島',islet:'島',archipelago:'群島',national_park:'國立公園',protected_area:'自然保護區'};
 const osmCat=x=>{const t=x.type||'',c=x.category||'';if(/restaurant|fast_food|food_court/.test(t))return 'food';if(/cafe|ice_cream|bakery|confectionery|pastry|tea/.test(t))return 'cafe';if(c==='shop'||/department_store|mall|marketplace/.test(t))return 'shop';if(/hotel|hostel|guest_house|motel/.test(t))return 'hotel';if(/museum|gallery/.test(t))return 'museum';if(/station|halt/.test(t))return 'train';if(/park|garden/.test(t))return 'nature';return ''};
 async function osmSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('先輸入名稱');return}const box=$('#osmRes');const wait=OSM_T+1100-Date.now();OSM_T=Math.max(Date.now(),OSM_T+1100);if(wait>0)await new Promise(r=>setTimeout(r,wait));
   if(box)box.innerHTML='<p class="hint">查詢 OpenStreetMap 中…</p>';

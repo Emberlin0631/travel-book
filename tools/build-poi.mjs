@@ -35,9 +35,9 @@ export const REGIONS = JP.map(([id, ja, zh]) => ({ id, name: ja, zh, country: 'j
 const F = [['nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"]["name"]'], ['nwr["shop"]["name"]'],
   ['nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park|hotel|hostel|guest_house)$"]["name"]', 'nwr["amenity"~"^(place_of_worship|marketplace)$"]["name"]',
    'nwr["leisure"~"^(park|garden)$"]["name"]', 'nwr["railway"="station"]["name"]', 'nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"]'],
-  // 自然景點（湖、瀑布、山、溪谷、海灘、島、國立公園…）只收有 Wikidata 的，避免一堆沒名氣的池塘、小山
+  // 自然景點（湖、瀑布、山、溪谷、海灘、島、國立公園…）與機場，只收有 Wikidata 的，避免一堆沒名氣的池塘、小山、直升機場
   ['nwr["natural"~"^(water|waterfall|peak|volcano|mountain_range|valley|gorge|beach|bay|cape|cliff|rock|hot_spring|spring|wetland)$"]["name"]["wikidata"]', 'nwr["waterway"="waterfall"]["name"]["wikidata"]',
-   'nwr["place"~"^(island|islet|archipelago)$"]["name"]["wikidata"]', 'nwr["boundary"~"^(national_park|protected_area)$"]["name"]["wikidata"]']];
+   'nwr["place"~"^(island|islet|archipelago)$"]["name"]["wikidata"]', 'nwr["boundary"~"^(national_park|protected_area)$"]["name"]["wikidata"]', 'nwr["aeroway"="aerodrome"]["name"]["wikidata"]']];
 // 宣告的 timeout 越大，伺服器越晚排到；180 秒以內優先權比較高
 export const query = (area, f, bb) => `[out:json][timeout:180];area${area}->.a;(${f.map(x => `${x}(area.a)${bb ? `(${bb.map(n => n.toFixed(4)).join(',')})` : ''};`).join('')});out center tags;`;
 export const queries = area => F.map(f => query(area, f));
@@ -50,7 +50,7 @@ const SHOP_SKIP = new Set(['hairdresser', 'beauty', 'massage', 'car', 'car_repai
   'agrarian', 'garden_centre', 'pet_grooming', 'nutrition_supplements', 'e-cigarette', 'tobacco', 'vacant', 'no', 'convenience', 'kiosk', 'travel_agency', 'rental', 'video_games', 'computer']);
 
 export function catOf(t) {
-  if (t.railway === 'station') return 'train';
+  if (t.railway === 'station' || t.aeroway) return 'train';
   if (/^(hotel|hostel|guest_house)$/.test(t.tourism || '')) return 'hotel';
   if (/^(museum|gallery|aquarium)$/.test(t.tourism || '')) return 'museum';
   if (t.amenity === 'place_of_worship') return t.religion === 'shinto' ? 'shrine' : 'temple';
@@ -60,7 +60,7 @@ export function catOf(t) {
   if (t.leisure || t.tourism === 'viewpoint' || t.natural || t.waterway || t.place || t.boundary) return 'nature';
   return 'city';
 }
-const typeOf = t => t.railway ? 'station' : t.tourism || t.amenity || (t.shop ? 'shop:' + t.shop : '') || t.leisure || t.historic || t.natural || t.waterway || t.place || t.boundary || '';
+const typeOf = t => t.railway ? 'station' : t.aeroway ? 'aerodrome' : t.tourism || t.amenity || (t.shop ? 'shop:' + t.shop : '') || t.leisure || t.historic || t.natural || t.waterway || t.place || t.boundary || '';
 
 let MAP = null;
 async function cjk() { if (!MAP) MAP = JSON.parse(await fs.readFile(path.join(ROOT, 'tools', 'cjk-map.json'), 'utf8')); return MAP; }
