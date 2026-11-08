@@ -189,6 +189,7 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .memthumbs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.memthumbs .thumb{position:relative;width:64px;height:48px}.memthumbs .thumb .mini{position:absolute;top:-6px;right:-6px;padding:0 5px;font-size:10px}
 .used{font-size:12px;color:var(--ui-acc);margin:-4px 0 10px}
 .used.no{color:var(--ui-mute)}
+.gchip.auto{border-style:dashed;opacity:.8}
 .gchip{font-style:normal;font-size:11px;color:var(--ui-acc);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
 .noprint{font-style:normal;font-size:11px;color:var(--ui-mute);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
 .bulkbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;padding:8px 10px;background:#f7f5f1;border-radius:8px}.bulkbar .brow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bulkbar select{min-width:140px}.bcnt{font-size:12px;color:#666}
@@ -468,6 +469,17 @@ html.dark .thumb{background-color:#333}
 .irow{display:grid;grid-template-columns:5.2em 1fr;gap:8px;padding:.35em 0;border-bottom:1px dashed var(--line)}
 .irow .k{color:var(--c);font-weight:700;font-size:.9em}
 .irow .s{font-size:.85em;color:var(--mute)}
+/* 登機證樣式航班卡 */
+.bp{display:grid;grid-template-columns:1fr 6.6em;border:1.5px solid var(--c);border-radius:10px;margin:.3em 0 .7em;overflow:hidden;break-inside:avoid;background:var(--paper,#fff)}
+.bp-m{padding:.55em .8em .6em}.bp-s{border-left:1.5px dashed var(--c);padding:.55em .55em .5em;display:flex;flex-direction:column;justify-content:space-between;text-align:center}
+.bp-h{display:flex;justify-content:space-between;align-items:baseline;font-size:.72em;letter-spacing:.14em;color:var(--c);font-weight:700}.bp-h i{font-style:normal;letter-spacing:0;color:var(--ink)}
+.bp-r{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.4em;margin:.25em 0 .3em}.bp-r>div:last-child{text-align:right}
+.bp-a{font-size:1.85em;font-weight:800;letter-spacing:.04em;line-height:1.05;color:var(--ink)}.bp-a.tx{font-size:1.15em;letter-spacing:0}.bp-n{font-size:.75em;color:var(--mute)}
+.bp-p{width:2.2em;height:2.2em;color:var(--c)}
+.bp-f{display:flex;gap:1.2em;border-top:1px solid var(--line);padding-top:.35em;font-size:.8em}.bp-f div{display:flex;flex-direction:column}.bp-f small{font-size:.7em;letter-spacing:.12em;color:var(--mute)}.bp-f b{font-size:1.05em}
+.bp-x{font-size:.75em;color:var(--mute);margin-top:.3em}
+.bp-s .bp-c{font-weight:800;font-size:1.05em;color:var(--ink)}.bp-s small{font-size:.65em;letter-spacing:.12em;color:var(--mute)}
+.bp-bc{display:flex;gap:1px;height:2.6em;align-items:stretch;justify-content:center}.bp-bc span{background:var(--ink)}
 .rem{margin:0;padding-left:1.2em}
 .rem li{margin-bottom:.25em}
 /* day */
@@ -824,7 +836,7 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,placeSort:t.opts?.placeSort==='list'?'list':'visit',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,placeSort:t.opts?.placeSort==='list'?'list':'visit',autoGroup:t.opts?.autoGroup!==false,flightCard:t.opts?.flightCard!==false,detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
@@ -877,13 +889,14 @@ const CAT_RE={plane:/機場|航廈|空港|airport/i,hotel:/飯店|旅館|酒店|
   museum:/博物館|美術館|水族館|資料館|紀念館|海遊館/,cafe:/咖啡|カフェ|cafe|coffee|甜點|甜品|甘味|パフェ|蛋糕|冰淇淋|抹茶/i,food:/拉麵|ラーメン|麵|食|餐|飯|市場|燒|壽司|丼|居酒屋|料理|小吃|道頓堀/,
   shop:/百貨|商店|購物|逛街|藥妝|商場|outlet|mall|老街|伴手禮|心齋橋/i,beach:/海|灣|港|沙灘/,nature:/山|公園|庭園|森|瀑布|溪|湖|竹林|花園|賞楓|賞櫻/,train:/站|電車|JR|新幹線|地鐵|巴士|公車|鐵|→/};
 /* ---- 交通段：transport 一行一段，「路線｜起站→迄站｜班距、車廂、票價｜出口或路標」----
-   路線色只收錄查證過色名的路線（Osaka Metro 6 線、東京 Metro＋都營 13 線、阪急 3 線）；色碼是依色名取的近似值。
-   其他路線（京都地鐵、京阪、南海、JR…）用主題色，不猜。中央線、東西線同名，依當天地區判斷東京或大阪。 */
+   路線色只收錄查證過色名的路線（Osaka Metro 6 線、東京 Metro＋都營 13 線、阪急 3 線、JR京都線／JR神戸線＝藍、大阪環状線＝橘）；色碼是依色名取的近似值。
+   其他路線（京都地鐵、京阪、南海、JR 其他線…）用主題色，不猜。中央線、東西線同名，依當天地區判斷東京或大阪。 */
 const LINES=[
   [/御堂筋/,'#e5171f','御堂筋線'],[/谷町/,'#7b3f98','谷町線'],[/四つ橋|四橋/,'#0078ba','四つ橋線'],[/千日前/,'#e44d93','千日前線'],[/堺筋/,'#814721','堺筋線'],
   [/銀座線/,'#ff9500','銀座線'],[/丸ノ内|丸之內/,'#f62e36','丸ノ内線'],[/日比谷線/,'#9caeb7','日比谷線'],[/千代田線/,'#00bb85','千代田線'],[/有楽町線|有樂町線/,'#c1a470','有楽町線'],[/半蔵門|半藏門/,'#8f76d6','半蔵門線'],[/南北線/,'#00ac9b','南北線'],[/副都心/,'#9c5e31','副都心線'],
   [/浅草線|淺草線/,'#e85298','浅草線'],[/三田線/,'#0079c2','三田線'],[/都営新宿|都營新宿|新宿線/,'#6cbb5a','新宿線'],[/大江戸|大江戶/,'#b6007a','大江戸線'],
   [/阪急.*神戸|阪急.*神戶/,'#1e5aa8','阪急神戸線'],[/阪急.*宝塚|阪急.*寶塚/,'#ef7d1a','阪急宝塚線'],[/阪急.*京都/,'#21944a','阪急京都線'],
+  [/JR\s*京都線|JR\s*神[戸戶]線/,'#0072bc','JR京都線'],[/環[状狀]線/,'#f08300','大阪環状線'],
   [/中央線/,{tokyo:null,osaka:'#019a66'},'中央線'],[/東西線/,{tokyo:'#009bbf',osaka:null},'東西線']];
 function lineColor(name,ctx){const n=String(name||'');for(const [re,c] of LINES){if(!re.test(n))continue;if(typeof c==='string')return c;const city=/東京|東京都|新宿|渋谷|澀谷|池袋|上野|淺草|浅草|銀座/.test(ctx)?'tokyo':/大阪|梅田|難波|なんば|心斎橋|心齋橋|天王寺|本町/.test(ctx)?'osaka':'';return city&&c[city]||null}return null}
 function parseLegs(tr){const L=String(tr||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);if(!L.some(x=>/[｜|]/.test(x)))return null;
@@ -903,11 +916,24 @@ const TIC={plane:'<path d="M2 13l8-1 5-7h2l-2 7 5 .5 1.5-2H23l-1 3.5 1 3.5h-1.5L
   train:'<path d="M7 3h10a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2zM5 11h14M8.5 14.5h.01M15.5 14.5h.01M8 18l-2 3M16 18l2 3"/>'};
 const ticOf=cat=>({plane:'plane',hotel:'bed',cafe:'cafe',food:'food',shop:'shop',train:'train'})[cat]||'pin';
 const ticSVG=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TIC[k]}</svg>`;
+/* 登機證樣式航班卡：出發、抵達裡有 3 個大寫英文字母（機場代碼）就放大印，沒有就印地名；時間寫成 06:50–10:15 會分成起飛、抵達 */
+const IATA=s=>{const m=String(s||'').match(/(?:^|[^A-Za-z])([A-Z]{3})(?![A-Za-z])/);return m?m[1]:''};
+const PLANE='<svg class="bp-p" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 13l8-1 5-7h2l-2 7 5 .5 1.5-2H23l-1 3.5 1 3.5h-1.5L20 15.5l-5 .5 2 7h-2l-5-7-8-1z"/></svg>';
+function barcode(seed){let h=2166136261;for(const ch of String(seed||'x'))h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;let o='';for(let k=0;k<26;k++){h=Math.imul(h^(h>>>13),1103515245)+12345>>>0;o+=`<span style="width:${1+(h>>>28)%3}px"></span>`}return `<div class="bp-bc" aria-hidden="true">${o}</div>`}
+function passHTML(f){const end=(a,c)=>{const code=IATA(a),name=String(a||'').replace(code,'').replace(/\s+/g,' ').trim();return code?`<div><div class="bp-a">${code}</div>${name?`<div class="bp-n">${esc(name)}</div>`:''}</div>`:`<div><div class="bp-a tx">${esc(a||'—')}</div></div>`};
+  const m=String(f.time||'').match(TIME_RE),dep=m?`${p2(+m[1])}:${m[2]}`:f.time,arr=m&&m[3]!=null?`${p2(+m[3])}:${m[4]}`:'';
+  const air=/^[A-Z0-9]{2}\s*\d{1,4}[A-Z]?$/i.test(String(f.code||'').trim())||IATA(f.from)||IATA(f.to);
+  const fld=(k,v)=>v?`<div><small>${k}</small><b>${esc(v)}</b></div>`:'';
+  return `<div class="bp"><div class="bp-m"><div class="bp-h"><span>${air?'BOARDING PASS':'TICKET'}</span><i>${esc(f.label||'航班')}</i></div><div class="bp-r">${end(f.from)}${PLANE}${end(f.to)}</div><div class="bp-f">${fld('DATE',f.date?md(f.date)+'（'+wk(f.date)+'）':'')}${fld(air?'DEPART':'出發',dep)}${fld(air?'ARRIVE':'抵達',arr)}${fld(air?'FLIGHT':'班次',f.code)}</div>${f.note?`<div class="bp-x">${nl(f.note)}</div>`:''}</div><div class="bp-s"><small>${air?'FLIGHT':'NO.'}</small><div class="bp-c">${esc(f.code||'—')}</div>${barcode((f.code||'')+f.date+f.from)}</div></div>`}
 /* 景點依行程先後排序：第一次出現的（第幾天, 那天第幾項）；沒排進行程的放最後，維持景點清單原順序 */
 function visitOrder(t,days,vis=()=>true){const key={};days.forEach((d,i)=>d.items.forEach((it,j)=>{if(it.placeId&&vis(it)&&!(it.placeId in key))key[it.placeId]=i*1000+j}));
   const pos=Object.fromEntries(t.places.map((p,k)=>[p.id,k]));return (a,b)=>((key[a.id]??1e9)-(key[b.id]??1e9))||(pos[a.id]-pos[b.id])}
 function detectCat(x){x=String(x||'');for(const[k]of CATS){if(k!=='city'&&CAT_RE[k].test(x))return k}return'city'}
 const placeCat=p=>p.cat||detectCat(p.name+' '+p.area);
+/* 合集分組：手動填的優先；沒填的餐廳、咖啡、購物自動歸「吃吃喝喝」「購物」（只看手選分類或名稱，不看地區——地區寫「心齋橋」不代表是店）；填「-」＝單獨一頁 */
+const AUTOG={food:'吃吃喝喝',cafe:'吃吃喝喝',shop:'購物'};
+const autoGrp=(t,p)=>t.opts.autoGroup===false?'':AUTOG[p.cat||detectCat(p.name)]||'';
+const grpOf=(t,p)=>p.group==='-'?'':p.group||autoGrp(t,p);
 const W0='#fff6e5',INK='#3b3a36',SAND='#eadcbf';
 const ILL={
 temple:`<ellipse cx="60" cy="106" rx="48" ry="6" fill="${SAND}"/><rect x="34" y="72" width="52" height="32" fill="#c8553d"/><rect x="53" y="84" width="14" height="20" fill="#7a2e22"/><path d="M14 75 Q60 56 106 75 L98 66 Q60 50 22 66Z" fill="${INK}"/><rect x="44" y="48" width="32" height="18" fill="#c8553d"/><path d="M27 51 Q60 34 93 51 L86 43 Q60 30 34 43Z" fill="${INK}"/><rect x="58" y="16" width="4" height="18" fill="${INK}"/><circle cx="60" cy="16" r="3.5" fill="#e9a23b"/>`,
@@ -1318,9 +1344,9 @@ function buildPages(t,splits={},mode={}){
   {const planned=new Set();days.forEach(d=>d.items.forEach(it=>{if(it.placeId&&vis(it))planned.add(it.placeId)}));t.places.forEach(p=>{if(p.book==='no'||(p.book!=='yes'&&!planned.has(p.id)))hidden.add(p.id)})}
   /* 分組：同一組有 2 個以上要印的景點 → 排成合集頁（一頁 3 個），放在該組第一個景點原本的位置 */
   const byVisit=t.opts.placeSort==='list'?null:visitOrder(t,days,vis);
-  const groups={};t.places.forEach(p=>{if(p.group&&!hidden.has(p.id))(groups[p.group]=groups[p.group]||[]).push(p)});if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
-  const pushPlace=p=>{if(placed.has(p.id))return;const G=p.group&&groups[p.group];
-    if(G&&G.length>1){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const parts=Math.ceil(L.length/4);for(let k=0;k<parts;k++)pages.push({k:'coll',g:p.group,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
+  const groups={};t.places.forEach(p=>{const g=grpOf(t,p);if(g&&!hidden.has(p.id))(groups[g]=groups[g]||[]).push(p)});if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
+  const pushPlace=p=>{if(placed.has(p.id))return;const g=grpOf(t,p),G=g&&groups[g];
+    if(G&&G.length>1){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const parts=Math.ceil(L.length/4);for(let k=0;k<parts;k++)pages.push({k:'coll',g,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
     placed.add(p.id);pages.push({k:'place',p})};
   const mem=!!mode.memory,off=new Set(t.opts.hide||[]);
   const pushC=key=>{for(const c of t.custom){if(c.after!==key)continue;
@@ -1399,7 +1425,7 @@ function renderPages0(t,splits,mode={}){
       return `<tr><td class="ovd"${dc?` style="color:${dc}"`:''}>DAY.<b>${i+1}</b></td><td class="ovdate">${md(date)}<small>（${wk(date)}）</small></td><td><div class="ovt">${esc(d.title)}</div>${hl?`<div class="ovh">${esc(hl)}</div>`:''}</td><td class="ovs">${st?esc(st.name)+sref(st):''}</td><td class="ovp">${ref.day[d.id]?'P.'+ref.day[d.id]:''}</td></tr>`}).join('');
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">ITINERARY</span><h2>行程總覽</h2></div><table class="ov"><thead><tr><th>DAY</th><th>日期</th><th>行程</th><th>住宿</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${pn(no)}</section>`}
   case'info':{
-    const fl=t.flights.length?`<div class="sec"><h3>交通</h3>${t.flights.map(f=>`<div class="irow"><div class="k">${esc(f.label||'航班')}</div><div><b>${esc([md(f.date)+(f.date?`（${wk(f.date)}）`:''),f.time].filter(Boolean).join(' '))}</b> ${esc(f.code)}<div>${esc(f.from)}${f.from||f.to?' → ':''}${esc(f.to)}</div>${f.note?`<div class="s">${nl(f.note)}</div>`:''}</div></div>`).join('')}</div>`:'';
+    const fl=t.flights.length?`<div class="sec"><h3>交通</h3>${t.flights.map(f=>t.opts.flightCard?passHTML(f):`<div class="irow"><div class="k">${esc(f.label||'航班')}</div><div><b>${esc([md(f.date)+(f.date?`（${wk(f.date)}）`:''),f.time].filter(Boolean).join(' '))}</b> ${esc(f.code)}<div>${esc(f.from)}${f.from||f.to?' → ':''}${esc(f.to)}</div>${f.note?`<div class="s">${nl(f.note)}</div>`:''}</div></div>`).join('')}</div>`:'';
     const sy=t.stays.length?`<div class="sec"><h3>住宿</h3>${t.stays.map(s=>{const n=nights(s.checkin,s.checkout);return `<div class="irow"><div class="k">${s.checkin?md(s.checkin):''}${s.checkout?' – '+md(s.checkout):''}</div><div><b>${esc(s.name)}</b>${n?`<span class="s">（${n} 晚）</span>`:''}${sref(s)}${s.address?`<div class="s">${esc(s.address)}</div>`:''}</div></div>`}).join('')}</div>`:'';
     const lines=t.notes.split('\n').map(x=>x.trim()).filter(Boolean);
     const rm=lines.length?`<div class="sec"><h3>出發前提醒</h3><ul class="rem">${lines.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
@@ -1581,6 +1607,8 @@ function edBasic(){
   <label class="f"><span>資訊詳細程度</span><select data-k="opts.detail"><option value="brief">精簡：每日只列時間和名稱，景點合併成「景點速查」</option><option value="std">標準</option><option value="full">完整：每日行程加上營業時間、費用、景點提醒</option></select></label>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
   <label class="f"><span>景點介紹頁的順序</span><select data-k="opts.placeSort"><option value="visit">依行程先後（第一次去的日子、時間）</option><option value="list">依景點分頁的清單順序</option></select></label>
+  <label class="chk"><input type="checkbox" data-k="opts.autoGroup" ${T.opts.autoGroup?'checked':''}> 餐廳、咖啡、購物自動合成「吃吃喝喝」「購物」合集頁（景點自己填了分組的照填的；填「-」單獨一頁）</label>
+  <label class="chk"><input type="checkbox" data-k="opts.flightCard" ${T.opts.flightCard?'checked':''}> 出發資訊頁的航班印成登機證樣式</label>
   <label class="chk"><input type="checkbox" data-k="opts.dayColors" ${T.opts.dayColors?'checked':''}> 每天用不同顏色</label>
   <label class="chk"><input type="checkbox" data-k="opts.illus" ${T.opts.illus?'checked':''}> 自動插圖（沒放照片的封面、景點頁、住宿頁會畫插圖）</label>
   <label class="f"><span>季節裝飾</span><select data-k="opts.season"><option value="auto">依出發月份自動</option><option value="sakura">櫻花</option><option value="summer">夏日</option><option value="maple">楓葉</option><option value="snow">雪</option><option value="none">不要</option></select></label>
@@ -1635,12 +1663,12 @@ function edPlaces(){
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
   return `<div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址可以自動帶出名稱；短網址（maps.app.goo.gl）抓不到名稱，請自己填，但 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
   <div class="card"><h4>從 Google 地圖「儲存清單」一次匯入</h4><p class="hint">在 Google 地圖打開你的清單（想去的地點、收藏…）→ 分享 → 複製連結，貼在這裡；會列出清單裡的地點讓你勾選，帶入名稱、地址、座標和備註。這一步需要網路：分享連結會經過旅冊的讀取服務向 Google 取清單，不會送出你的行程。<br>方法二（不用連線服務）：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼在這裡，但只會有名稱。</p><textarea id="gmPaste" rows="2" placeholder="https://maps.app.goo.gl/…  或貼上清單頁複製的文字"></textarea><div class="row" style="margin-top:8px"><button class="mini" data-act="gmList">讀取清單</button></div>${(b=>b?`<p class="hint" style="margin-top:10px">方法三（電腦、最穩）：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著整份清單回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}</div>
-  <datalist id="grpList">${[...new Set(T.places.map(p=>p.group).filter(Boolean))].map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+  <datalist id="grpList">${[...new Set(T.places.map(p=>p.group).filter(g=>g&&g!=='-'))].map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
   <p class="hint">同一「分組」的景點（例：毛線店、吃吃喝喝）會排成一頁 3 間的合集頁。排進某一天的景點會印成一整頁介紹；還沒排進行程的先當「收藏」，<b>預設不印</b>，想印可以在該景點改成「一律印」。${unplanned?`目前有 <b>${unplanned}</b> 個景點還沒排進行程。`:''}</p>${T.places.length>1?`<div class="bulkbar" id="bulkbar"><button class="mini" data-act="bulkTog">${BULK?'結束批次整理':'批次整理'}</button>${BULK?`<span class="bcnt" id="bcnt">已選 0</span><button class="mini" data-act="bulkAll">全選</button><button class="mini" data-act="bulkNone">全不選</button><button class="mini" data-act="bulkUnplanned">只選沒排進行程的</button><div class="brow"><select id="bulkDay"><option value="">排進哪一天…</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(d.title)}</option>`).join('')}</select><button class="mini" data-act="bulkPlan">排進去</button></div><div class="brow"><button class="mini" data-act="bulkWp">缺介紹的找維基百科</button><input id="bulkGrp" list="grpList" placeholder="分組名稱" style="width:130px;flex:0 0 auto"><button class="mini" data-act="bulkGrp">設成這一組</button><button class="mini" data-act="bulkBook" data-a="yes">一律印</button><button class="mini" data-act="bulkBook" data-a="">自動</button><button class="mini" data-act="bulkBook" data-a="no">不印</button><button class="mini danger" data-act="bulkDel">刪除</button></div>`:''}</div>`:''}`+
   (T.places.length?'':emptyIll('02-no-places','還沒有景點','貼上 Google 地圖連結，或按下面的「新增景點」。<br>想去但還沒決定哪天的地方，也可以先收在這裡。'))+
   T.places.map((p,i)=>{const v=(C.visits[p.id]||[]).map(x=>'DAY.'+(x+1)).join('、');
     const printed=p.book==='yes'||(p.book!=='no'&&v);
-    return det(p.id,`${BULK?`<input type="checkbox" class="bsel" data-bsel="${p.id}" ${BULKSEL.has(p.id)?'checked':''} onclick="event.stopPropagation()">`:''}<b>${esc(p.name||'未命名景點')}</b><span class="sum-t">${esc(p.area)}${p.group?`　<i class="gchip">${esc(p.group)}</i>`:''}${printed?'':'　<i class="noprint">不印</i>'}</span>`,
+    return det(p.id,`${BULK?`<input type="checkbox" class="bsel" data-bsel="${p.id}" ${BULKSEL.has(p.id)?'checked':''} onclick="event.stopPropagation()">`:''}<b>${esc(p.name||'未命名景點')}</b><span class="sum-t">${esc(p.area)}${(g=>g?`　<i class="gchip${p.group?'':' auto'}"${p.group?'':' title="自動分組"'}>${esc(g)}</i>`:'')(grpOf(T,p))}${printed?'':'　<i class="noprint">不印</i>'}</span>`,
     `<div class="used ${v?'':'no'}">${v?'已排進：'+v:'還沒有排進任何一天'}${printed?'':'，不會印進小冊'}</div>
     <label class="f"><span>印進小冊</span><select data-k="places.${i}.book"><option value="">自動（排進行程才印）</option><option value="yes">一律印</option><option value="no">不印（只留在景點清單）</option></select></label>
     <div class="row">${fld('名稱','places.'+i+'.name','例：伏見稻荷大社')}${fld('地區','places.'+i+'.area','例：東山')}</div>
@@ -1649,7 +1677,7 @@ function edPlaces(){
     <div class="f"><span>照片</span>${photoIn('places.'+i+'.photo',p.photo)}${p.photo?posSel('places.'+i+'.photoPos',p.photoPos):''}<div class="row" style="margin-top:6px;align-items:center;gap:8px"><button class="mini" data-act="cmFind" data-a="${i}">從 Wikimedia Commons 找照片</button><span class="hint" style="margin:0">${p.photoSrc?`目前：${esc(p.photoSrc.author)}／${esc(p.photoSrc.license)}，會自動標示`:'只列可印刷分享的授權；地標較找得到'}</span></div></div>
     ${fld('Google 地圖連結（選填，QR code 會直接用這個）','places.'+i+'.mapUrl','貼上 Google 地圖的分享連結')}
     ${area('介紹','places.'+i+'.desc','空一行就是新段落；留白的話，印出來會變成可以手寫的「現場筆記」',5)}<div class="row" style="margin:-6px 0 10px;align-items:center;gap:8px"><button class="mini" data-act="wpFind" data-a="${i}">從維基百科找導言</button><span class="hint" style="margin:0">地標較找得到，店家多半沒有；文字 CC BY-SA 4.0，會自動標示來源${p.descSrc?`。目前來源：${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉`:''}</span></div>
-    <label class="f"><span>分組（選填；同一組有 2 個以上要印的景點，會排在同一頁）</span><input data-k="places.${i}.group" value="${esc(p.group)}" list="grpList" placeholder="例：毛線店、吃吃喝喝、飯店附近、機場美食"></label>
+    <label class="f"><span>分組（選填；同一組有 2 個以上要印的景點，會排在同一頁）</span><input data-k="places.${i}.group" value="${esc(p.group)}" list="grpList" placeholder="${(a=>a?`未填：自動歸到「${a}」；填 - 單獨一頁`:'例：毛線店、飯店附近、機場美食')(autoGrp(T,p))}"></label>
     <div class="row">${fld('營業時間','places.'+i+'.hours')}${fld('費用','places.'+i+'.price')}</div>
     <div class="f"><span>付款與退稅（你查到的，會印成小標籤；不會自動查）</span><div class="wkrow">${PAYS.map(x=>`<label><input type="checkbox" data-pay="${i}" data-v="${x[0]}" ${p.pay.includes(x[0])?'checked':''}> ${x[1]}</label>`).join('')}</div></div>
     <div class="f"><span>公休日（依你填的提醒，不會自動查官網；出發前請再確認）</span><div class="wkrow">${[1,2,3,4,5,6,0].map(w=>`<label><input type="checkbox" data-closed="${i}" data-w="${w}" ${p.closed.includes(w)?'checked':''}>${WK[w]}</label>`).join('')}</div></div>
@@ -1726,7 +1754,7 @@ function edLists(){
 function edTrans(){
   return `<div class="card"><h4>航班／長途交通</h4>${T.flights.map((f,i)=>`<div style="border-top:${i?'1px dashed var(--ui-line)':'0'};padding-top:${i?'10px':'0'}">
   <div class="row">${fld('名稱','flights.'+i+'.label','例：去程')}${fld('班次','flights.'+i+'.code','例：IT 210')}</div>
-  <div class="row">${fld('日期','flights.'+i+'.date','','date')}${fld('時間','flights.'+i+'.time','例：06:50')}</div>
+  <div class="row">${fld('日期','flights.'+i+'.date','','date')}${fld('時間','flights.'+i+'.time','例：06:50 或 06:50–10:15（起飛–抵達）')}</div>
   <div class="row">${fld('出發','flights.'+i+'.from','例：桃園 TPE')}${fld('抵達','flights.'+i+'.to','例：關西 KIX')}</div>
   <label class="f"><span>起飛時間是哪個時區（匯出行事曆用）</span><select data-k="flights.${i}.tz"><option value="">自動：${!f.date||f.date<=T.start?'出發地 '+tzLabel(T.homeTz):'目的地 '+tzLabel(T.tz)}</option>${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label>
   ${fld('備註','flights.'+i+'.note','例：第一航廈')}
