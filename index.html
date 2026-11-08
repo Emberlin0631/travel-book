@@ -787,14 +787,14 @@ const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'
      bkStyle(t) → css text     extra custom properties on the .bk container
      onSelect(t)               when the user switches to this template */
 /* 封面插畫（復古海報、粉彩）：assets/covers/<版型>-<城市>.webp。新增圖時把城市加進 CVART，檔名照格式放進資料夾 */
-const CVART={poster:['kyoto','osaka','tokyo','hokkaido','okinawa','nara','fukuoka','nagoya','japan'],pastel:['kyoto','osaka','hokkaido','okinawa','nara','fukuoka','japan']};
+const CVART={poster:['kyoto','osaka','tokyo','hokkaido','okinawa','nara','fukuoka','nagoya','japan'],pastel:['kyoto','osaka','tokyo','hokkaido','okinawa','nara','fukuoka','japan']};
 const CVART_ZH={kyoto:'京都',osaka:'大阪',tokyo:'東京',hokkaido:'北海道',okinawa:'沖繩',nara:'奈良',fukuoka:'福岡',nagoya:'名古屋',japan:'日本'};
 function artOptions(id){return [['auto','自動（依目的地）'],['photo','用我的封面照片'],...CVART[id].map(k=>[k,(k==='japan'?'日本通用':CVART_ZH[k])+'插畫'])]}
 const ART={img:{},failed:new Set(),busy:{}};
 /* 粉彩插畫的底色：封面字用同色系深色，換主題色也不會出現藍底紅字 */
 /* 物件太低會壓到下方中文標題：往上移幾 px（頁面高 794），空出來的地方用底色補 */
 const ARTUP={'pastel-kyoto':110};
-const ARTBG={'pastel-kyoto':'#f6d0c6','pastel-osaka':'#fce4ab','pastel-hokkaido':'#e0d5ef','pastel-okinawa':'#c7e6e0','pastel-nara':'#f3dcbf','pastel-fukuoka':'#cee5d6','pastel-japan':'#c5d9eb'};
+const ARTBG={'pastel-kyoto':'#f6d0c6','pastel-osaka':'#fce4ab','pastel-tokyo':'#bcd8ee','pastel-hokkaido':'#e0d5ef','pastel-okinawa':'#c7e6e0','pastel-nara':'#f3dcbf','pastel-fukuoka':'#cee5d6','pastel-japan':'#c5d9eb'};
 /* 依行程猜城市：建立行程時選的熱門城市 → 都道府縣 → 標題文字；都沒有但在日本 → 日本通用 */
 function artCity(t){const ks=Object.keys(CVART_ZH).filter(k=>k!=='japan');
   for(const c of t.cities||[]){const k=ks.find(k=>CVART_ZH[k]===c);if(k)return k}
