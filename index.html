@@ -205,7 +205,8 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .btn.danger{background:#b23a28;color:#fff}
 .tbtn.icon{padding:5px 8px;font-size:15px;line-height:1}.tbtn:disabled{opacity:.35;cursor:default}
 .bkbar{display:flex;gap:10px;align-items:center;background:#fdf1d6;color:#7a5a12;font-size:12.5px;padding:8px 14px;border-bottom:1px solid #f0dca8}.bkbar[hidden]{display:none}.bkbar .mini{margin-left:auto}
-.monochk{display:flex;gap:4px;align-items:center}.monochk input{width:auto}
+.monochk{display:flex;gap:4px;align-items:center}
+.sw.pal{gap:10px 12px;flex-wrap:wrap}.sw.pal .swc{position:relative;margin-bottom:16px}.sw.pal .swc span{position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);font-size:11px;color:var(--ui-mute,#777);white-space:nowrap}.monochk input{width:auto}
 .gdots{display:flex;gap:6px;margin-bottom:12px}.gdots span{width:8px;height:8px;border-radius:50%;background:#ddd}.gdots span.on{background:var(--ui-acc)}
 .prevbar select{width:auto;padding:3px 6px;font-size:12px}
 .mnote{font-size:11px;color:var(--ui-mute);padding:4px 12px 6px;border-bottom:1px solid var(--ui-line);margin-bottom:4px}
@@ -492,9 +493,9 @@ html.dark .thumb{background-color:#333}
 .dfoot b{color:var(--c);margin-right:8px}
 /* ===== 和紅（beni）：深紅／深灰資訊頁＋米色行程頁、襯線大字 ===== */
 .cv-en,.cv-mon,.cv-ti,.bh{display:none}
-.bk.tpl-beni{--paper:#e8e0c7;--ink:#4a2427;--mute:#8a6d61;--line:#cdbb9d;--head:"Noto Serif TC","Songti TC","PMingLiU","Noto Serif CJK TC",serif;--en:"Cormorant Garamond","Noto Serif TC",serif}
+.bk.tpl-beni{--paper:#e8e0c7;--ink:var(--bink,#4a2427);--mute:var(--bmute,#8a6d61);--line:#cdbb9d;--head:"Noto Serif TC","Songti TC","PMingLiU","Noto Serif CJK TC",serif;--en:"Cormorant Garamond","Noto Serif TC",serif}
 .bk.mono.tpl-beni{--paper:#fff}
-.bk.tpl-beni:not(.mono) .pg:is([data-k="cover"],[data-k="info"],[data-k="stay"],[data-k="route"],[data-k="coll"],[data-k="plist"]){--paper:#6e2f33;--ink:#f0e6cd;--mute:#d3bea4;--line:rgba(240,230,205,.3);--soft:rgba(255,255,255,.07);--tint:rgba(255,255,255,.06);--c:#e3c99c}
+.bk.tpl-beni:not(.mono) .pg:is([data-k="cover"],[data-k="info"],[data-k="stay"],[data-k="route"],[data-k="coll"],[data-k="plist"]){--paper:var(--bd,#6e2f33);--ink:#f0e6cd;--mute:#d3bea4;--line:rgba(240,230,205,.3);--soft:rgba(255,255,255,.07);--tint:rgba(255,255,255,.06);--c:#e3c99c}
 .bk.tpl-beni:not(.mono) .pg:is([data-k="pack"],[data-k="res"],[data-k="budget"],[data-k="emg"]){--paper:#3d3c4a;--ink:#f0e6cd;--mute:#c9bcae;--line:rgba(240,230,205,.25);--soft:rgba(255,255,255,.07);--tint:rgba(255,255,255,.06);--c:#d6a996}
 .bk.tpl-beni:not(.mono) .pg:is([data-k="cover"],[data-k="info"],[data-k="stay"],[data-k="route"],[data-k="coll"],[data-k="plist"],[data-k="pack"],[data-k="res"],[data-k="budget"],[data-k="emg"]) :is(.ref,.cv-days,.sd,.chip){color:#3a1b1e}
 .tpl-beni .ph{margin-bottom:1.3em}.tpl-beni .ph-en{font-family:var(--en);font-weight:600;font-size:12px;letter-spacing:.42em;color:var(--mute)}.tpl-beni .ph h2{font-weight:700;letter-spacing:.42em;font-size:21px}
@@ -504,13 +505,13 @@ html.dark .thumb{background-color:#333}
 .bk.tpl-beni .pg.cover .cv-en{display:block;position:absolute;left:0;right:0;top:78px;text-align:center;font-family:var(--en);font-weight:600;font-size:60px;line-height:1;letter-spacing:.3em;padding-left:.3em;color:var(--ink);z-index:2;white-space:nowrap}
 .bk.tpl-beni .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:148px;text-align:center;font-family:var(--en);font-weight:700;font-size:16px;letter-spacing:.32em;padding-left:.32em;color:var(--ink);z-index:2}
 .bk.tpl-beni .pg.cover .cv-img{left:92px;right:92px;top:126px;height:400px;border:0;border-radius:0;transform:none;box-shadow:none;filter:saturate(.82) sepia(.08)}
-.bk.tpl-beni .pg.cover .cv-img::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(110,47,51,.1),rgba(110,47,51,.18))}
+.bk.tpl-beni .pg.cover .cv-img::after{content:"";position:absolute;inset:0;background:var(--bd,#6e2f33);opacity:.14}
 .bk.tpl-beni .pg.cover .cv-txt{top:552px;left:40px;right:40px;text-align:center}
 .bk.tpl-beni .pg.cover .cv-ti{display:block;font-family:var(--en);font-weight:600;font-size:15px;letter-spacing:.38em;padding-left:.38em;color:var(--mute);margin-bottom:6px}
 .bk.tpl-beni .pg.cover h1{font-size:26px;letter-spacing:.24em;font-weight:700;margin-top:4px;line-height:1.35;max-width:none}
 .bk.tpl-beni .pg.cover .cv-days{display:none}.bk.tpl-beni .pg.cover .cv-date{font-family:var(--en);font-weight:700;letter-spacing:.24em;color:var(--ink);margin-top:10px}.bk.tpl-beni .pg.cover .cv-stat,.bk.tpl-beni .pg.cover .cv-sub,.bk.tpl-beni .pg.cover .cv-who{color:var(--mute)}
 .bk.tpl-beni.bc-full .pg.cover .cv-img{left:0;right:0;top:0;height:100%}
-.bk.tpl-beni.bc-full .pg.cover .cv-img::after{background:linear-gradient(rgba(70,25,28,.35),rgba(70,25,28,.15) 40%,rgba(70,25,28,.82) 72%)}
+.bk.tpl-beni.bc-full .pg.cover .cv-img::after{background:linear-gradient(var(--bd,#6e2f33),transparent 38%,transparent 46%,var(--bd,#6e2f33) 76%);opacity:.9}
 .bk.tpl-beni.bc-full .pg.cover :is(.cv-en,.cv-mon,h1,.cv-date){color:#f4ead2}.bk.tpl-beni.bc-full .pg.cover :is(.cv-ti,.cv-sub,.cv-stat,.cv-who){color:#e2cfb5}
 /* day */
 .bk.tpl-beni .pg.day .bh{display:flex;justify-content:space-between;align-items:flex-start;margin:0 0 .9em;position:relative;z-index:1}
@@ -556,7 +557,7 @@ html.dark .thumb{background-color:#333}
 .sn{font-weight:700;line-height:1.35;font-size:.95em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ss{font-size:.75em;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp{font-size:.8em;color:var(--c);font-weight:700}.sno{font-size:.7em;color:var(--mute);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ptags{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-start;margin:.25em 0 .4em}.ptg{font-size:.7em;line-height:1.5;border:1px solid var(--line);border-radius:3px;padding:0 5px;color:var(--c);white-space:nowrap}.ptg.cash{background:#fbeee6;border-color:#e3b39a;color:#a4502a;font-weight:700}
+.ptags{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-start;margin:.25em 0 .4em}.ptg{font-size:.7em;line-height:1.5;border:1px solid var(--line);border-radius:3px;padding:0 5px;color:var(--c);white-space:nowrap}.ptg.p-cash{background:#fbeee6;border-color:#e3b39a;color:#a4502a;font-weight:700}
 .glist{display:flex;flex-direction:column}.gi{display:flex;gap:14px;align-items:flex-start;padding:.85em 0;border-bottom:1px dashed var(--line)}.gi:first-child{padding-top:.2em}.gi:last-child{border-bottom:0}
 .gimg{flex:0 0 37%;aspect-ratio:4/3;background:center/cover;background-color:var(--soft);border-radius:6px;overflow:hidden}.gill svg,.gill img{width:100%;height:100%;display:block;object-fit:cover}.gini{display:flex;align-items:center;justify-content:center;font-size:2.6em;font-weight:900;color:var(--c)}
 .gx{flex:1;min-width:0}.gh b{font-size:1.15em;line-height:1.3}.gh small{margin-left:.5em;color:var(--mute);font-size:.78em}.gv{font-size:.72em;color:var(--mute);margin:.1em 0}
@@ -701,6 +702,7 @@ const TEMPLATES=[
   {id:'beni',name:'和紅',desc:'深紅與米色、襯線大字，像雜誌；深色頁較耗墨',tier:'free',paper:'#e8e0c7',softMix:.12,
    cover:{key:'opts.bcover',label:'封面樣式',options:[['frame','相框（照片在中間）'],['full','滿版照片']]},
    prev:'background:linear-gradient(90deg,#6e2f33 0 50%,#e8e0c7 50%);box-shadow:inset 0 0 0 3px #6e2f33',
+   palette:[['#7b2f35','深紅'],['#2f4a6b','藍染'],['#4e6b4f','抹茶'],['#7a5230','焦茶'],['#3a3a44','墨'],['#8a4a6a','葡萄']],
    onSelect:t=>{if(['#5f7c6c','#2f5d50'].includes(t.theme.color))t.theme.color='#7b2f35'}},
   {id:'matcha',name:'抹茶手帳',desc:'水彩插圖、季節裝飾',tier:'free',paper:'#fbf7ef',softMix:.13,
    cover:{key:'opts.mcover',label:'封面底圖',options:[['a','A．角落綠葉'],['b','B．遠山小樹'],['c','C．藍天草地']]},
@@ -861,7 +863,7 @@ function sampleTrip(){
 
 /* ---------- illustrations (original flat SVGs, zero per-booklet cost) ---------- */
 const PAYS=[['cash','只收現金'],['card','可刷卡'],['ic','IC 卡'],['qr','行動支付'],['tax','可退稅']];
-const payTags=p=>p.pay&&p.pay.length?`<div class="ptags">${PAYS.filter(x=>p.pay.includes(x[0])).map(x=>`<span class="ptg ${x[0]}">${x[1]}</span>`).join('')}</div>`:'';
+const payTags=p=>p.pay&&p.pay.length?`<div class="ptags">${PAYS.filter(x=>p.pay.includes(x[0])).map(x=>`<span class="ptg p-${x[0]}">${x[1]}</span>`).join('')}</div>`:'';
 const CATS=[['plane','機場'],['hotel','住宿'],['temple','寺廟'],['shrine','神社'],['museum','博物館'],['cafe','咖啡甜點'],['food','美食'],['shop','購物'],['beach','海邊'],['nature','山與公園'],['train','交通'],['city','城市']];
 const CAT_RE={plane:/機場|航廈|空港|airport/i,hotel:/飯店|旅館|酒店|hotel|ホテル|民宿|入住|退房/i,temple:/寺|五重塔|大佛/,shrine:/神社|大社|神宮|稻荷|鳥居|八幡/,
   museum:/博物館|美術館|水族館|資料館|紀念館|海遊館/,cafe:/咖啡|カフェ|cafe|coffee|甜點|甜品|甘味|パフェ|蛋糕|冰淇淋|抹茶/i,food:/拉麵|ラーメン|麵|食|餐|飯|市場|燒|壽司|丼|居酒屋|料理|小吃|道頓堀/,
@@ -1470,7 +1472,11 @@ function computeSplits(t,mode={}){
 }
 const pagesFor=(t,mode={})=>renderPages(t,computeSplits(t,mode),mode);
 function mixHex(a,b,p){const A=[1,3,5].map(i=>parseInt(a.substr(i,2),16)),B=[1,3,5].map(i=>parseInt(b.substr(i,2),16));return '#'+A.map((v,i)=>Math.round(v*p+B[i]*(1-p)).toString(16).padStart(2,'0')).join('')}
-function cvars(c,tpl){c=okColor(c);const tp=TPL[tpl]||TEMPLATES[0];return `--c:${c};--soft:${mixHex(c,tp.paper,tp.softMix)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`}
+function deepHex(hex,L,S=.5){const [r,g,b]=[1,3,5].map(i=>parseInt(hex.substr(i,2),16)/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0,s=0,l=(mx+mn)/2;
+  if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}
+  l=Math.min(l,L);s=Math.min(s,S);const C=(1-Math.abs(2*l-1))*s,X=C*(1-Math.abs((h/60)%2-1)),m=l-C/2;const [a,b2,c]=h<60?[C,X,0]:h<120?[X,C,0]:h<180?[0,C,X]:h<240?[0,X,C]:h<300?[X,0,C]:[C,0,X];
+  return '#'+[a,b2,c].map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('')}
+function cvars(c,tpl){c=okColor(c);const tp=TPL[tpl]||TEMPLATES[0];const ink=deepHex(c,.2,.45);return `--c:${c};--soft:${mixHex(c,tp.paper,tp.softMix)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`+(tpl==='beni'?`;--bd:${deepHex(c,.3)};--bink:${ink};--bmute:${mixHex(ink,'#e8e0c7',.55)}`:'')}
 const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} bc-${t.opts.bcover} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${tplOf(t).bkStyle?tplOf(t).bkStyle(t):''}">`;
 function fitEl(el){let fs=1;el.style.setProperty('--fs',fs);while(el.scrollHeight>el.clientHeight+1&&fs>0.72){fs=+(fs-0.04).toFixed(2);el.style.setProperty('--fs',fs)}return el.scrollHeight>el.clientHeight+1}
 function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.body.fit',p);if(b&&fitEl(b))bad.push(i)});return bad}
@@ -1518,6 +1524,7 @@ function edBasic(){
   <div class="f"><span>封面照片</span>${photoIn('cover',T.cover,'wide')}${T.cover?posSel('coverPos',T.coverPos):''}</div></div>
   <div class="card"><h4>外觀</h4>
   <div class="tpls">${TEMPLATES.map(x=>`<button class="tplc ${T.theme.template===x.id?'on':''}" data-act="tpl" data-a="${x.id}"><div class="sw-prev" style="--sw:${T.theme.color};${x.prev}"></div><b>${x.name}<span class="tag-free">免費</span></b><small>${x.desc}</small></button>`).join('')}</div>
+  ${tplOf(T).palette?`<div class="f"><span>${esc(tplOf(T).name)}推薦配色（深色頁、文字都會跟著變）</span><div class="sw pal">${tplOf(T).palette.map(([c,n])=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${n}" title="${n}"><span>${n}</span></button>`).join('')}</div></div>`:''}
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
   ${T.theme.template==='beni'?fld('封面英文大字（留空會依國家自動帶入，目前：'+esc(coverEn({...T,coverEn:''}))+'）','coverEn','例：OSAKA & KYOTO'):''}
   <div class="row">${(c=>`<label class="f"><span>${c.label}</span><select data-k="${c.key}">${c.options.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>`)(tplOf(T).cover)}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
