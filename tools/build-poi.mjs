@@ -141,7 +141,7 @@ async function wikidataLabels(ids) {
 const r5 = x => Math.round(x * 1e5) / 1e5;
 const km = (a, b, c, d) => Math.hypot((a - c) * 111, (b - d) * 111 * Math.cos(a * Math.PI / 180));
 
-/* 一筆 = [名稱, 日文名, 繁中名, 英文名, 緯度, 經度, 類別, 細類, 區, 地址, 營業時間, Wikidata, 平假名/別名]（尾端空白欄位省略） */
+/* 一筆 = [名稱, 日文名, 繁中名, 英文名, 緯度, 經度, 類別, 細類, 區, 地址, 營業時間, Wikidata, 平假名/別名, 電話, 網站]（尾端空白欄位省略） */
 export async function compact(region, elements, wd = {}) {
   const M = await cjk();
   const rows = [], seen = new Map();
@@ -157,7 +157,9 @@ export async function compact(region, elements, wd = {}) {
     const area = t['addr:suburb'] || t['addr:city_district'] || t['addr:city'] || t['addr:town'] || '';
     const addr = [t['addr:province'], t['addr:city'], t['addr:suburb'], t['addr:quarter'], t['addr:neighbourhood'], t['addr:block_number'] || t['addr:housenumber']].filter(Boolean).join(' ');
     const extra = [t['name:ja-Hira'], t.alt_name].filter(Boolean).join(';');
-    const row = [t.name, t['name:ja'] && t['name:ja'] !== t.name ? t['name:ja'] : '', zh && zh !== t.name ? zh : '', t['name:en'] || '', r5(lat), r5(lng), catOf(t), typeOf(t), area, addr, t.opening_hours || '', t.wikidata || '', extra];
+    const phone = String(t.phone || t['contact:phone'] || '').split(';')[0].trim();
+    const web = [t.website, t['contact:website'], t.url].map(u => String(u || '').split(';')[0].trim()).find(u => /^https?:\/\/[^\s]+$/i.test(u)) || '';
+    const row = [t.name, t['name:ja'] && t['name:ja'] !== t.name ? t['name:ja'] : '', zh && zh !== t.name ? zh : '', t['name:en'] || '', r5(lat), r5(lng), catOf(t), typeOf(t), area, addr, t.opening_hours || '', t.wikidata || '', extra, phone, web];
     // 同名、相距 60 公尺內視為同一地點（同一間店常同時有點和面）
     const same = seen.get(row[0]) || [];
     if (same.some(s => km(s[4], s[5], row[4], row[5]) < 0.06)) continue;
@@ -171,7 +173,7 @@ export async function compact(region, elements, wd = {}) {
   return { v: 1, id: region.id, name: region.name, country: region.country, built: new Date().toISOString().slice(0, 10),
     src: '© OpenStreetMap contributors', license: 'ODbL 1.0 — https://opendatacommons.org/licenses/odbl/ ・ https://www.openstreetmap.org/copyright',
     bbox: rows.length ? [pct(la, .005), pct(lo, .005), pct(la, .995), pct(lo, .995)] : null, n: rows.length,
-    cols: ['name', 'ja', 'zh', 'en', 'lat', 'lng', 'cat', 'type', 'area', 'addr', 'hours', 'wikidata', 'alt'], rows };
+    cols: ['name', 'ja', 'zh', 'en', 'lat', 'lng', 'cat', 'type', 'area', 'addr', 'hours', 'wikidata', 'alt', 'phone', 'web'], rows };
 }
 
 async function buildOne(region) {

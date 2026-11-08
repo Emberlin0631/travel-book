@@ -80,3 +80,14 @@ test('自然景點：湖、瀑布、島、國立公園歸「自然」，細類�
   const out = await compact({ id: 't', name: 'T', country: 'jp' }, [E({ name: '十和田湖', natural: 'water', wikidata: 'Q1' }, 40.46, 140.88, 'relation')]);
   assert.equal(out.rows[0][6], 'nature'); assert.equal(out.rows[0][7], 'water');
 });
+
+test('電話與網站：取第一個，網址要是 http(s)', async () => {
+  const out = await compact({ id: 't', name: 'T', country: 'jp' }, [
+    E({ name: '一蘭', amenity: 'restaurant', phone: '+81 75-1234-5678;+81 75-0000-0000', website: 'https://ichiran.com/' }),
+    E({ name: '店B', shop: 'books', 'contact:phone': '075-111-2222', website: 'ichiran.com' }, 35.01),
+  ]);
+  const a = out.rows.find(r => r[0] === '一蘭'), b = out.rows.find(r => r[0] === '店B');
+  assert.equal(a[13], '+81 75-1234-5678'); assert.equal(a[14], 'https://ichiran.com/');
+  assert.equal(b[13], '075-111-2222'); assert.equal(b.length, 14, '不合格的網址不收，尾端空欄位省略');
+  assert.deepEqual(out.cols.slice(-2), ['phone', 'web']);
+});
