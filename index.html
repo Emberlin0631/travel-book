@@ -822,7 +822,7 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,placeSort:t.opts?.placeSort==='list'?'list':'visit',detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
@@ -900,6 +900,9 @@ const TIC={plane:'<path d="M2 13l8-1 5-7h2l-2 7 5 .5 1.5-2H23l-1 3.5 1 3.5h-1.5L
   train:'<path d="M7 3h10a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2zM5 11h14M8.5 14.5h.01M15.5 14.5h.01M8 18l-2 3M16 18l2 3"/>'};
 const ticOf=cat=>({plane:'plane',hotel:'bed',cafe:'cafe',food:'food',shop:'shop',train:'train'})[cat]||'pin';
 const ticSVG=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TIC[k]}</svg>`;
+/* 景點依行程先後排序：第一次出現的（第幾天, 那天第幾項）；沒排進行程的放最後，維持景點清單原順序 */
+function visitOrder(t,days,vis=()=>true){const key={};days.forEach((d,i)=>d.items.forEach((it,j)=>{if(it.placeId&&vis(it)&&!(it.placeId in key))key[it.placeId]=i*1000+j}));
+  const pos=Object.fromEntries(t.places.map((p,k)=>[p.id,k]));return (a,b)=>((key[a.id]??1e9)-(key[b.id]??1e9))||(pos[a.id]-pos[b.id])}
 function detectCat(x){x=String(x||'');for(const[k]of CATS){if(k!=='city'&&CAT_RE[k].test(x))return k}return'city'}
 const placeCat=p=>p.cat||detectCat(p.name+' '+p.area);
 const W0='#fff6e5',INK='#3b3a36',SAND='#eadcbf';
@@ -1302,7 +1305,8 @@ function buildPages(t,splits={},mode={}){
   /* 景點收錄：book='yes' 一律印、'no' 不印、''（預設）只在排進某一天時才印——匯入上百個收藏不會把小冊變成景點目錄 */
   {const planned=new Set();days.forEach(d=>d.items.forEach(it=>{if(it.placeId&&vis(it))planned.add(it.placeId)}));t.places.forEach(p=>{if(p.book==='no'||(p.book!=='yes'&&!planned.has(p.id)))hidden.add(p.id)})}
   /* 分組：同一組有 2 個以上要印的景點 → 排成合集頁（一頁 3 個），放在該組第一個景點原本的位置 */
-  const groups={};t.places.forEach(p=>{if(p.group&&!hidden.has(p.id))(groups[p.group]=groups[p.group]||[]).push(p)});
+  const byVisit=t.opts.placeSort==='list'?null:visitOrder(t,days,vis);
+  const groups={};t.places.forEach(p=>{if(p.group&&!hidden.has(p.id))(groups[p.group]=groups[p.group]||[]).push(p)});if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
   const pushPlace=p=>{if(placed.has(p.id))return;const G=p.group&&groups[p.group];
     if(G&&G.length>1){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const parts=Math.ceil(L.length/4);for(let k=0;k<parts;k++)pages.push({k:'coll',g:p.group,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
     placed.add(p.id);pages.push({k:'place',p})};
@@ -1325,7 +1329,7 @@ function buildPages(t,splits={},mode={}){
       if(mem&&(d.memText.trim()||d.memPhotos.length)){const ph=d.memPhotos,np=Math.max(1,Math.ceil(ph.length/4));for(let q=0;q<np;q++)pages.push({k:'memory',d,i,photos:ph.slice(q*4,q*4+4),first:q===0,part:q+1,parts:np})}
       pushC('day:'+d.id);
       if(t.opts.placeOrder==='after-day'&&t.opts.detail!=='brief'&&!off.has('places'))for(const it of d.items){if(vis(it)&&it.placeId&&placeById[it.placeId]&&!hidden.has(it.placeId))pushPlace(placeById[it.placeId])}})},
-    places(){const L=t.places.filter(p=>!placed.has(p.id)&&!hidden.has(p.id));
+    places(){const L=t.places.filter(p=>!placed.has(p.id)&&!hidden.has(p.id));if(byVisit)L.sort(byVisit);
       if(t.opts.detail==='brief'){for(let i=0;i<L.length;i+=5)pages.push({k:'plist',list:L.slice(i,i+5),part:i/5+1,parts:Math.ceil(L.length/5)})}else for(const p of L)pushPlace(p);pushC('places')},
     taxi(){if(!mem&&t.opts.taxiCards){const tg=[...t.stays.filter(s=>s.name&&(s.jaName||s.jaAddress)),...t.places.filter(p=>!hidden.has(p.id)&&(p.jaName||p.jaAddress))];for(let i=0;i<tg.length;i+=2)pages.push({k:'taxi',list:tg.slice(i,i+2)})}},
     phrases(){if(!mem&&t.opts.phrasePage){const L=PHRASES.filter(g=>t.opts.phraseCats.includes(g[0]));const flat=[];L.forEach(g=>{flat.push({h:g[1]});g[2].forEach(x=>flat.push({p:x}))});
@@ -1564,6 +1568,7 @@ function edBasic(){
   <div class="row">${(c=>`<label class="f"><span>${c.label}</span><select data-k="${c.key}">${c.options.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>`)(tplOf(T).cover)}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
   <label class="f"><span>資訊詳細程度</span><select data-k="opts.detail"><option value="brief">精簡：每日只列時間和名稱，景點合併成「景點速查」</option><option value="std">標準</option><option value="full">完整：每日行程加上營業時間、費用、景點提醒</option></select></label>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
+  <label class="f"><span>景點介紹頁的順序</span><select data-k="opts.placeSort"><option value="visit">依行程先後（第一次去的日子、時間）</option><option value="list">依景點分頁的清單順序</option></select></label>
   <label class="chk"><input type="checkbox" data-k="opts.dayColors" ${T.opts.dayColors?'checked':''}> 每天用不同顏色</label>
   <label class="chk"><input type="checkbox" data-k="opts.illus" ${T.opts.illus?'checked':''}> 自動插圖（沒放照片的封面、景點頁、住宿頁會畫插圖）</label>
   <label class="f"><span>季節裝飾</span><select data-k="opts.season"><option value="auto">依出發月份自動</option><option value="sakura">櫻花</option><option value="summer">夏日</option><option value="maple">楓葉</option><option value="snow">雪</option><option value="none">不要</option></select></label>
@@ -1887,7 +1892,7 @@ function digitalHTML(t){
   const stays=t.stays.filter(s=>s.name).map(s=>`<div class="card" style="padding:10px 14px"><div class="nm">${esc(s.name)}</div>${stayBox(s)}</div>`).join('');
   const flights=t.flights.filter(f=>f.from||f.to||f.code).map(f=>`<div class="it"><div class="tm">${esc(f.time)||'—'}</div><div><div class="nm">${esc(f.label||'交通')} ${esc(f.code)}</div><div class="sub">${f.date?md(f.date)+'（'+wk(f.date)+'）':''} ${esc(f.from)} → ${esc(f.to)}</div>${f.note?`<div class="sub">${esc(f.note)}</div>`:''}</div></div>`).join('');
   const planned=new Set();t.days.slice(0,dayCount(t)).forEach(d=>d.items.forEach(it=>{if(it.placeId)planned.add(it.placeId)}));
-  const places0=t.places.filter(p=>p.name&&p.book!=='no'&&(p.book==='yes'||planned.has(p.id)));
+  const places0=t.places.filter(p=>p.name&&p.book!=='no'&&(p.book==='yes'||planned.has(p.id)));if(t.opts.placeSort!=='list')places0.sort(visitOrder(t,t.days.slice(0,dayCount(t))));
   const places=places0.map(p=>`<details class="card" style="padding:10px 14px"><summary style="font-size:15px;color:var(--ink);font-weight:700">${esc(p.name)}${p.area?`<span class="sub">　${esc(p.area)}</span>`:''}${p.group?`<span class="sub">　#${esc(p.group)}</span>`:''}</summary>${p.pay.length?`<div class="sub" style="margin:6px 0">${PAYS.filter(x=>p.pay.includes(x[0])).map(x=>x[1]).join('・')}</div>`:''}${placeBox(p)}</details>`).join('');
   const ck=(id,txt,sub='')=>`<label class="ck"><input type="checkbox" data-ck="${esc(id)}"><span>${esc(txt)}${sub?`<small class="sub">　${esc(sub)}</small>`:''}</span></label>`;
   const shops=t.shops.filter(x=>x.name).map(x=>ck('s'+x.id,x.name,[x.store,x.price].filter(Boolean).join('・'))).join('');
