@@ -1,7 +1,7 @@
 // node --test test/   —— 用固定的 Google getlist 回應片段驗證 worker.js 的解析器，Google 改格式時這裡會先紅
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseList, LIST_RE } from '../worker.js';
+import { parseList, LIST_RE, placeFromUrl } from '../worker.js';
 
 // 2026-11 實際回應的結構（已把個人備註與頭像網址換成假資料）
 const FIX = [[["NxV8zQJUGQho9N09FWXhjb9mVh0-Qg",3,[[1],[9]],1,1],4,[2,1,"https://www.google.com/maps/placelists/list/NxV8zQJUGQho9N09FWXhjb9mVh0-Qg"],["Ember","https://lh3.googleusercontent.com/a/x","1"],"Want to go","",null,null,
@@ -39,4 +39,13 @@ test('LIST_RE：三種清單網址都能取出 id', () => {
     `https://www.google.com/maps/@24.18,120.62,11z/data=!4m3!11m2!2s${id}!3e2`,
   ]) assert.equal((u.match(LIST_RE) || [])[1], id, u);
   assert.equal('https://www.google.com/maps/place/Foo/data=!4m2!3m1!1s0x123:0x456'.match(LIST_RE), null, '一般地點網址不該被當成清單');
+});
+
+test('placeFromUrl：/maps/place/ 與 ?q= 兩種展開後網址', () => {
+  const a = placeFromUrl('https://www.google.com/maps/place/%E6%B8%85%E6%B0%B4%E5%AF%BA/@34.9948561,135.7850463,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d34.9948561!4d135.7850463');
+  assert.equal(a.name, '清水寺'); assert.equal(a.lat, 34.9948561); assert.equal(a.lng, 135.7850463);
+  const b = placeFromUrl('https://maps.google.com/maps?q=%E9%8C%A6%E5%B8%82%E5%A0%B4&ftid=0x6001089f2d0e5a7b:0x4c4b0a8b&entry=gps');
+  assert.equal(b.name, '錦市場'); assert.equal(b.lat, undefined);
+  const c = placeFromUrl('https://maps.google.com/maps?q=35.0036,135.7649');
+  assert.equal(c.name, undefined); assert.equal(c.lat, 35.0036);
 });
