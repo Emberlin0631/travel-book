@@ -10,7 +10,7 @@
 
 - `index.html`：整個 app（單一檔案）
 - `manifest.webmanifest`、`sw.js`、`icons/`：加到主畫面與離線使用
-- `worker.js`、`wrangler.toml`、`.assetsignore`：Cloudflare Worker。靜態檔案照常由 Workers Static Assets 提供，另外只有一個 `/api/gmaps-place`（展開單一地點短網址，見下）
+- `tools/`：地點庫產生器（不會上傳）。`worker.js`、`wrangler.toml`、`.assetsignore`：Cloudflare Worker。靜態檔案照常由 Workers Static Assets 提供，另外只有一個 `/api/gmaps-place`（展開單一地點短網址，見下）
 
 `index.html` 走「先連網、失敗才用快取」，所以有網路時使用者打開就會拿到新版，不用改 `sw.js`。只有改了圖示或 `manifest.webmanifest` 時，才需要把 `sw.js` 裡的 `VERSION` 加一號，讓舊的快取被清掉。
 
@@ -50,6 +50,20 @@
 ## 搜尋景點（維基百科）
 
 景點分頁最上面的「搜尋景點」直接在瀏覽器查維基百科（`wsQuery`：`generator=search` 加 `coordinates|description|langlinks|pageprops`），先查中文（`variant=zh-tw`），有座標的結果少於 3 個再查日文，依名稱相似度排序、略過消歧義頁。中文條目沒有座標時（例：清水寺），用日文同一條目的座標補。加入時帶名稱、日文名、座標與地圖連結（官方 Maps URLs 格式），勾選時另外帶入維基導言並記錄 `descSrc`（CC BY-SA 4.0，自動印在圖文來源頁）。只涵蓋有維基條目的地點，店家餐廳多半查不到。
+
+### 旅冊地點庫（自建，`poi/`）
+
+`tools/build-poi.mjs`（Node 18 以上、不需安裝套件）從 OpenStreetMap 的 Overpass API 抓 `REGIONS` 裡的城市（目前京都市、大阪市、奈良市、神戸市），收景點、寺社、博物館、公園、車站、住宿、餐廳、咖啡甜點、店家（排除美髮、修車、洗衣、便利商店等觀光客用不到的類型，也排除沒有 Wikidata 的路邊石碑），再用 Wikidata 補繁體中文名稱，沒有的話把 OSM 的 `name:zh` 用 OpenCC 對照表轉成繁體。同名且相距 60 公尺內的視為同一筆。輸出：
+
+- `poi/<城市>.json`：`rows` 每筆 `[名稱, 日文名, 繁中名, 英文名, 緯度, 經度, 類別, 細類, 區, 地址, 營業時間(OSM 格式), Wikidata, 平假名/別名]`
+- `poi/index.json`：城市清單與範圍；`poi/norm.json`：搜尋用的字形對照（日文新字體→繁體、繁體→簡體）；`poi/LICENSE.txt`
+- `tools/cache/`：Overpass 原始回應（不會上傳）
+
+在網站資料夾執行 `node tools/build-poi.mjs`（或 `node tools/build-poi.mjs kyoto` 只更新一個城市），再 `npx wrangler deploy`。建議每 1～3 個月更新一次。Overpass 忙碌（502/429）時會自動等待重試。2026-11-08 實測京都市：Overpass 回 13,697 筆，過濾後約 9,900 筆，約 0.8 MB（gzip 約 0.23 MB）。
+
+網站端（`poiSearch`）：依行程的座標、地區、標題挑要載入的城市（都對不上時載入同一國家的全部城市），在瀏覽器裡比對；比對前把日文新字體與簡體都轉成同一寫法、片假名轉平假名，所以「伏見稻荷」「京都タワー」「kyoto tower」都找得到。搜尋順序：地點庫 → 維基百科 →（使用者按了才查）Nominatim。加入時帶名稱（有繁中名就用繁中，日文原名放日文名）、座標、區、地址、營業時間（轉成中文星期）、類別，記錄 `locSrc:'osm'` 以便在圖文來源頁標示。`poi/` 在 service worker 裡走網路優先，更新後不會卡舊版。
+
+授權：`poi/*.json` 是 OpenStreetMap 的衍生資料庫，依 ODbL 必須同樣以 ODbL 公開並標示 © OpenStreetMap contributors（檔案內與 `poi/LICENSE.txt` 已寫明）；印出的小冊屬於「作品」，在圖文來源頁標示即可。`tools/cjk-map.json` 由 OpenCC（Apache-2.0）的轉換表產生。
 
 ### 查 OpenStreetMap（店家、餐廳）
 

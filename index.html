@@ -191,7 +191,7 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .memthumbs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.memthumbs .thumb{position:relative;width:64px;height:48px}.memthumbs .thumb .mini{position:absolute;top:-6px;right:-6px;padding:0 5px;font-size:10px}
 .used{font-size:12px;color:var(--ui-acc);margin:-4px 0 10px}
 .used.no{color:var(--ui-mute)}
-.wsres{margin-top:6px}.wsr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--ui-line)}.wsr small{color:var(--ui-mute,#888);margin-left:4px}.wsr .s{font-size:12px;color:var(--ui-mute,#888)}
+.wsres{margin-top:6px}.wsh{font-size:12px;font-weight:700;color:var(--ui-acc);margin:8px 0 2px}.wsr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--ui-line)}.wsr small{color:var(--ui-mute,#888);margin-left:4px}.wsr .s{font-size:12px;color:var(--ui-mute,#888)}
 .filebtn{display:inline-block;cursor:pointer;margin-top:8px}.gchip.auto{border-style:dashed;opacity:.8}
 .gchip{font-style:normal;font-size:11px;color:var(--ui-acc);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
 .noprint{font-style:normal;font-size:11px;color:var(--ui-mute);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
@@ -1073,14 +1073,37 @@ async function wpFindOne(i){const p=T.places[i];if(!p||(!p.name&&p.lat==null)){t
   document.body.appendChild(bg)}
 /* 搜尋景點：直接查維基百科（中文，找不到再查日文），帶入名稱、日文名、座標；介紹可選擇一起帶入（CC BY-SA，自動標示來源）。
    只涵蓋有維基條目的地點（寺廟、神社、公園、車站…），店家、餐廳多半查不到。全部在瀏覽器裡查，不經過旅冊伺服器 */
-let WS=null,WS_Q='';
+let WS=null,WS_Q='',WS_POI=null;
+/* 旅冊地點庫（poi/）：tools/build-poi.mjs 從 OpenStreetMap 產生的靜態檔，依行程挑城市載入，在瀏覽器裡搜尋（不經過伺服器、離線也能用）。
+   比對時把日文新字體、簡體都轉成同一種寫法（OpenCC 對照表），片假名轉平假名，所以「伏見稻荷」查得到「伏見稲荷」 */
+const POI={idx:null,norm:null,reg:{},load:{}};
+async function poiIndex(){if(POI.idx)return POI.idx;try{const r=await fetch('poi/index.json',{cache:'no-cache'});POI.idx=r.ok?((await r.json()).regions||[]):[]}catch(e){POI.idx=[]}return POI.idx}
+async function poiNorm(){if(POI.norm)return POI.norm;const j=await (await fetch('poi/norm.json')).json();const mp=p=>{const A=[...p[0]],B=[...p[1]];return new Map(A.map((c,i)=>[c,B[i]]))};POI.norm={jp:mp(j.jp2t),ts:mp(j.t2s)};return POI.norm}
+const kata2hira=s=>s.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+function pkey(s,N){s=String(s||'').normalize('NFKC').toLowerCase();let o='';for(const ch of s){const a=N.jp.get(ch)??ch;o+=N.ts.get(a)??a}return kata2hira(o).replace(/[\s・·･\-_'"’.,，、。()（）「」『』【】\[\]&＆!！?？~〜]/g,'')}
+function poiPick(t,idx){const pts=[...t.places,...t.stays].filter(p=>p.lat!=null);const inB=(r,p)=>r.bbox&&p.lat>=r.bbox[0]-.05&&p.lat<=r.bbox[2]+.05&&p.lng>=r.bbox[1]-.05&&p.lng<=r.bbox[3]+.05;
+  const text=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.area+' '+p.address),...t.stays.map(x=>x.name+' '+x.address)].join(' ');
+  let L=idx.filter(r=>pts.some(p=>inB(r,p))||text.includes(r.name.replace(/市$/,'')));if(!L.length)L=idx.filter(r=>!t.country||r.country===t.country);return L}
+function poiRegion(r,N){if(POI.reg[r.id])return Promise.resolve(POI.reg[r.id]);if(!POI.load[r.id])POI.load[r.id]=fetch(r.file).then(x=>x.json()).then(j=>{const rows=j.rows.map(a=>({a,reg:j.name,k:[a[0],a[1],a[2],a[3],...String(a[12]||'').split(';')].filter(Boolean).map(x=>pkey(x,N))}));POI.reg[r.id]=rows;return rows}).catch(e=>{delete POI.load[r.id];throw e});return POI.load[r.id]}
+async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return null;const N=await poiNorm(),k=pkey(q,N);if(!k)return [];
+  const all=(await Promise.all(poiPick(T,idx).map(r=>poiRegion(r,N).catch(()=>[])))).flat(),tok=String(q).trim().split(/\s+/).map(x=>pkey(x,N)).filter(Boolean);
+  const res=[];for(const x of all){let best=0;for(const s of x.k){let sc=s===k?100:s.startsWith(k)?80:s.includes(k)?60:tok.length>1&&tok.every(t=>s.includes(t))?50:0;if(sc){sc-=Math.min(15,(s.length-k.length)*.5);if(sc>best)best=sc}}
+    if(best){if(/temple|shrine|museum|nature/.test(x.a[6])||x.a[11])best+=4;res.push({x,sc:best})}}
+  return res.sort((a,b)=>b.sc-a.sc).slice(0,8).map(r=>r.x)}
+const OH_D={Mo:'一',Tu:'二',We:'三',Th:'四',Fr:'五',Sa:'六',Su:'日'};
+const ohZh=s=>String(s||'').replace(/\bMo-Su\b/g,'每天').replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,(m,a,b)=>'週'+OH_D[a]+'至'+OH_D[b]).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,m=>'週'+OH_D[m]).replace(/\bPH\b/g,'國定假日').replace(/\boff\b/g,'休').replace(/;\s*/g,'；');
+function poiHTML(){if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=a[2]||a[0],sub=[a[2]?a[0]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
+  return `<div class="wsr"><div><b>${esc(nm)}</b><div class="s">${esc(sub)}${a[10]?'・有營業時間':''}${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="poiAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join('')}
+function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=a[2]||a[0],ja=a[2]?a[0]:(a[1]||'');
+  const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg.replace(/市$/,''),address:a[9]||'',hours:ohZh(a[10]),cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
+  T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]?'（營業時間來自 OpenStreetMap，可能過時，出發前再確認）':''))}
 const wsClean=t=>String(t||'').replace(/\s*[(（][^()（）]*[)）]\s*$/,'').trim();
 async function wsQuery(lang,q){const p={action:'query',generator:'search',gsrsearch:q,gsrlimit:8,gsrnamespace:0,prop:'coordinates|description|langlinks|pageprops',colimit:'max',lllimit:'max',ppprop:'disambiguation',redirects:1};
   if(lang==='zh'){p.lllang='ja';p.variant='zh-tw'}else p.lllang='zh';
   const j=await wpApi(lang,p);return (j.query?.pages||[]).filter(pg=>!pg.pageprops||!('disambiguation' in pg.pageprops)).sort((a,b)=>(a.index||0)-(b.index||0)).map(pg=>({lang,title:pg.title,desc:pg.description||'',lat:pg.coordinates?.[0]?.lat??null,lng:pg.coordinates?.[0]?.lon??null,other:(pg.langlinks||[])[0]?.title||''}))}
-function wsResHTML(){if(!WS)return '';return WS.length?WS.map((x,k)=>{const nm=x.lang==='zh'?wsClean(x.title):wsClean(x.other||x.title),ja=x.lang==='ja'?x.title:x.other,had=T.places.some(p=>p.name&&wpNorm(p.name)===wpNorm(nm));
-    return `<div class="wsr"><div><b>${esc(nm)}</b>${ja&&ja!==nm?` <small>${esc(ja)}</small>`:''}${x.desc?`<div class="s">${esc(x.desc)}</div>`:''}<div class="s">${x.lat!=null?'有座標':'<span class="have">沒有座標</span>'}・${x.lang==='zh'?'中文':'日文'}維基百科${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="wsAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join(''):'<p class="hint">維基百科找不到。店家、餐廳通常沒有條目，可以按「查 OpenStreetMap」，或用下面「從 Google 地圖新增」。</p>'}
-async function wsSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('輸入景點名稱，例如：清水寺、伏見稻荷');return}const box=$('#wsRes');if(box)box.innerHTML='<p class="hint">查詢中…</p>';
+function wsResHTML(){if(!WS)return poiHTML();return poiHTML()+(WS.length?`<div class="wsh">維基百科</div>`:'')+(WS.length?WS.map((x,k)=>{const nm=x.lang==='zh'?wsClean(x.title):wsClean(x.other||x.title),ja=x.lang==='ja'?x.title:x.other,had=T.places.some(p=>p.name&&wpNorm(p.name)===wpNorm(nm));
+    return `<div class="wsr"><div><b>${esc(nm)}</b>${ja&&ja!==nm?` <small>${esc(ja)}</small>`:''}${x.desc?`<div class="s">${esc(x.desc)}</div>`:''}<div class="s">${x.lat!=null?'有座標':'<span class="have">沒有座標</span>'}・${x.lang==='zh'?'中文':'日文'}維基百科${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="wsAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join(''):'<p class="hint">維基百科找不到。店家、餐廳通常沒有條目，可以按「查 OpenStreetMap」，或用下面「從 Google 地圖新增」。</p>')}
+async function wsSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('輸入景點名稱，例如：清水寺、伏見稻荷');return}const box=$('#wsRes');WS=null;WS_Q=q;try{WS_POI=await poiSearch(q)}catch(e){WS_POI=null}if(box)box.innerHTML=poiHTML()+'<p class="hint">查詢維基百科中…</p>';
   try{let L=/[぀-ヿ]/.test(q)?[]:await wsQuery('zh',q);if(L.filter(x=>x.lat!=null).length<3){const J=await wsQuery('ja',q);const have=new Set(L.map(x=>x.other||x.title));J.forEach(x=>{if(!have.has(x.title))L.push(x)})}
     L=L.map((x,i)=>({...x,i,sc:Math.max(wpScore(q,x.title),x.other?wpScore(q,x.other):0)})).sort((a,b)=>b.sc-a.sc||a.i-b.i).slice(0,10);
     /* 中文條目常沒有座標（例：清水寺），改用另一語言的同一條目補 */
@@ -1088,7 +1111,7 @@ async function wsSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('�
       try{const j=await wpApi(lang,{action:'query',titles:M.map(x=>x.other).join('|'),prop:'coordinates',redirects:1});const by={};(j.query?.pages||[]).forEach(pg=>{if(pg.coordinates?.[0])by[pg.title]=pg.coordinates[0]});(j.query?.redirects||[]).forEach(r=>{if(by[r.to])by[r.from]=by[r.to]});
         M.forEach(x=>{const c=by[x.other];if(c){x.lat=c.lat;x.lng=c.lon}})}catch(e){}}
     WS=L;WS_Q=q;if(box)box.innerHTML=wsResHTML()}
-  catch(e){if(box)box.innerHTML='';toast(e.message==='ratelimit'?`維基百科暫時限制查詢，請等 ${e.retry} 秒再試`:'查詢失敗，請確認有連上網路')}}
+  catch(e){if(box)box.innerHTML=poiHTML();toast(e.message==='ratelimit'?`維基百科暫時限制查詢，請等 ${e.retry} 秒再試`:'查詢失敗，請確認有連上網路')}}
 /* 維基查不到時（多半是店家、餐廳），使用者按了才查 OpenStreetMap 的 Nominatim：
    規範是全部使用者合計每秒最多 1 次、不得自動完成，所以只在按鈕觸發、並在本機排隊至少隔 1.1 秒。結果要使用者自己確認，資料標示 © OpenStreetMap contributors（ODbL） */
 let OSM=null,OSM_T=0,OSM_Q='';
@@ -1782,7 +1805,7 @@ function edDays(){
 function edPlaces(){
   const C=buildPages(T);
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
-  return `<div class="card"><h4>搜尋景點（維基百科）</h4><p class="hint">先查維基百科：寺廟、神社、公園、車站這類有條目的地點，會帶入名稱、日文名和座標（也能帶入介紹）。店家、餐廳多半查不到，再按「查 OpenStreetMap」（開放地圖，會帶入座標、地區、地址）。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><div id="wsRes" class="wsres">${wsResHTML()}</div><div class="row" style="margin-top:6px"><button class="mini" data-act="osmSearch">查 OpenStreetMap（店家、餐廳）</button></div><div id="osmRes" class="wsres">${osmResHTML()}</div></div>
+  return `<div class="card"><h4>搜尋景點</h4><p class="hint">先查旅冊地點庫（OpenStreetMap 整理的京都、大阪、奈良、神戶景點與店家，在你的瀏覽器裡查），再查維基百科：寺廟、神社、公園、車站這類有條目的地點，會帶入名稱、日文名和座標（也能帶入介紹）。店家、餐廳多半查不到，再按「查 OpenStreetMap」（開放地圖，會帶入座標、地區、地址）。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><div id="wsRes" class="wsres">${wsResHTML()}</div><div class="row" style="margin-top:6px"><button class="mini" data-act="osmSearch">查 OpenStreetMap（店家、餐廳）</button></div><div id="osmRes" class="wsres">${osmResHTML()}</div></div>
   <div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址和手機分享的短網址（maps.app.goo.gl）都會自動帶出名稱；短網址要連網經過旅冊的讀取服務展開，讀不到時請自己填，地圖連結和 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
   <div class="card"><h4>從 Google 地圖一次匯入多個地點</h4><p class="hint">會列出地點讓你勾選，已經在景點裡的預設不勾。三種方法都只在你的瀏覽器裡處理，不經過旅冊的伺服器：</p>
   ${(b=>b?`<p class="hint"><b>書籤小工具（電腦，儲存清單用）</b>：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著名稱、地址、座標和備註回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}
@@ -2528,6 +2551,7 @@ function onAct(e){
     case'planPlace':{const sel=$(`[data-plan="${i}"]`);if(!sel||sel.value===''){toast('先選要排進哪一天');return}const k=+sel.value;T.days[k].items.push({id:uid(),time:'',text:'',placeId:T.places[i].id,transport:'',note:'',secret:false,reserve:'',resNo:''});openSet.add(T.days[k].id);toast(`已排進 DAY.${k+1}`);break}
     case'wsSearch':wsSearch();return;
     case'osmSearch':osmSearch();return;
+    case'poiAdd':poiAdd(+b.dataset.a);return;
     case'osmAdd':osmAdd(+b.dataset.a);return;
     case'wsAdd':wsAdd(+b.dataset.a);return;
     case'addFromMap':{const u=okUrl($('#mapPaste').value);if(!u){toast('請貼上 https 開頭的 Google 地圖連結');return}const r=parseMapsUrl(u);const p=normalize({places:[{name:r.name||'',mapUrl:u,lat:r.lat,lng:r.lng}]}).places[0];T.places.push(p);openSet.add(p.id);
