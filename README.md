@@ -34,6 +34,14 @@
 
 已知限制：一次最多讀 500 個（`!4i500`）。Google 對 Cloudflare 機房 IP 會回 429（實測 2026-11 如此），Worker 會依序換 `www.google.com`、`maps.google.com`、`www.google.com.tw`、`www.google.co.jp` 再試；全被擋時 app 會提示改用方法三或方法二。`/api/gmaps-list?u=…&debug=1` 會多回 `via`（成功的主機）與 `tried`。
 
+## 景點介紹：維基百科導言（文字 CC BY-SA 4.0）
+
+景點分頁每個景點有「從維基百科找導言」，批次整理也有「缺介紹的找維基百科」。瀏覽器直接呼叫 Wikipedia API（`origin=*`，帶 `Api-User-Agent`），不經伺服器：先用座標 `list=geosearch`（400 m）找附近條目，再用 `list=search&srwhat=nearmatch` 以名稱核對；名稱對得上（`wpScore` ≥ 0.8）才算確定，座標附近但名稱不符的只列為「不確定」候選，批次模式不採用。語言順序依名稱字元決定（中文→日文→英文、假名→日文優先、拉丁字母→英文優先）；中文版用 `variant=zh-tw` 取繁體。導言取前幾句、去掉讀音括號，約 120–190 字。
+
+來源記在 `places[].descSrc`（site、title、url、license、at）。景點頁介紹下方印一行來源，小冊最後自動加「圖文來源」頁（`credits`，有來源才出現、不可關閉），數位閱讀版也有同名區塊。把介紹清空會一併清掉來源；範本匯出保留 `descSrc`。介紹留白的景點，頁面改印「現場筆記」橫線區。
+
+Wikimedia 2026 年起對匿名瀏覽器請求限流：所有請求序列進行，批次每筆間隔 250 ms，遇 429 依 `Retry-After` 停止並提示。店家、小景點通常沒有條目，這是預期中的限制。
+
 ## 授權與致謝
 
 - QR code 產生：[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)（Kazuhiko Arase，MIT License）。"QR Code" 是 DENSO WAVE INCORPORATED 的註冊商標。
