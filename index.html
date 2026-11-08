@@ -191,7 +191,7 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .memthumbs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.memthumbs .thumb{position:relative;width:64px;height:48px}.memthumbs .thumb .mini{position:absolute;top:-6px;right:-6px;padding:0 5px;font-size:10px}
 .used{font-size:12px;color:var(--ui-acc);margin:-4px 0 10px}
 .used.no{color:var(--ui-mute)}
-.gchip.auto{border-style:dashed;opacity:.8}
+.filebtn{display:inline-block;cursor:pointer;margin-top:8px}.gchip.auto{border-style:dashed;opacity:.8}
 .gchip{font-style:normal;font-size:11px;color:var(--ui-acc);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
 .noprint{font-style:normal;font-size:11px;color:var(--ui-mute);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
 .bulkbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;padding:8px 10px;background:#f7f5f1;border-radius:8px}.bulkbar .brow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bulkbar select{min-width:140px}.bcnt{font-size:12px;color:#666}
@@ -1163,8 +1163,8 @@ function gmHave(p){const lc=x=>(x||'').toLowerCase().replace(/\s+/g,'');const ci
   return T.places.find(q=>{if(c&&cid(q.mapUrl)===c)return true;if(lc(q.name)!==lc(p.name)||!p.name)return false;if(p.lat==null||q.lat==null)return true;return distKm(p.lat,p.lng,q.lat,q.lng)<0.3})}
 function gmPicker(res){const lc=x=>(x||'').toLowerCase().replace(/\s+/g,'');const haveOf=res.places.map(p=>gmHave(p));
   const bg=document.createElement('div');bg.className='modal-bg gm';
-  bg.innerHTML=`<div class="modal" role="dialog"><h3>匯入 Google ${res.src==='mymaps'?'我的地圖':'儲存清單'}${res.title?'「'+esc(res.title)+'」':''}</h3>
-  <p style="margin-bottom:8px">共 ${res.places.length} 個地點${res.total>res.places.length?`（清單有 ${res.total} 個，只讀到前 ${res.places.length} 個）`:''}。${res.src==='mymaps'?`來自 Google「我的地圖」，會帶入名稱、座標和地標說明（說明放進「小提醒」）${res.skipped?`；另有 ${res.skipped} 個是線、區域或沒有名稱，略過`:''}。`:res.textOnly?'這是從頁面文字認出來的，<b>只有名稱和類別</b>，沒有座標與地址；之後可以在景點裡貼上該地點的地圖連結補齊。':'會帶入名稱、地址、座標與你在清單裡寫的備註。'}已經在景點裡的地點預設不勾。匯進來的先當「收藏」，<b>排進某一天才會印</b>進小冊。</p>
+  bg.innerHTML=`<div class="modal" role="dialog"><h3>匯入 ${res.src==='file'?'檔案':res.src==='mymaps'?'Google 我的地圖':'Google 儲存清單'}${res.title?'「'+esc(res.title)+'」':''}</h3>
+  <p style="margin-bottom:8px">共 ${res.places.length} 個地點${res.total>res.places.length?`（清單有 ${res.total} 個，只讀到前 ${res.places.length} 個）`:''}。${res.src==='file'?`從你選的檔案讀出，檔案只在這台裝置的瀏覽器裡讀，沒有上傳${res.places.some(p=>p.lat==null)?'；<b>部分地點沒有座標</b>（Takeout 的清單 CSV 只有名稱和連結），地圖連結和 QR code 仍可用':''}${res.skipped?`；另有 ${res.skipped} 個是線、區域或沒有名稱，略過`:''}。`:res.src==='mymaps'?`來自 Google「我的地圖」，會帶入名稱、座標和地標說明（說明放進「小提醒」）${res.skipped?`；另有 ${res.skipped} 個是線、區域或沒有名稱，略過`:''}。`:res.textOnly?'這是從頁面文字認出來的，<b>只有名稱和類別</b>，沒有座標與地址；之後可以在景點裡貼上該地點的地圖連結補齊。':'會帶入名稱、地址、座標與你在清單裡寫的備註。'}已經在景點裡的地點預設不勾。匯進來的先當「收藏」，<b>排進某一天才會印</b>進小冊。</p>
   <div class="gm-top"><input id="gmFilter" placeholder="篩選：輸入名稱或地址的一部分"><button class="mini" data-gm="all">全選</button><button class="mini" data-gm="none">全不選</button><button class="mini" data-gm="only">只選篩選結果</button></div>
   <div class="gm-cnt" id="gmCnt"></div>
   <div class="gm-list">${res.places.map((p,i)=>`<label data-q="${esc(lc(p.name+p.address+p.note))}"><input type="checkbox" data-gi="${i}" ${haveOf[i]?'':'checked'}><span><b>${esc(p.name)}</b>${haveOf[i]?' <span class="have">（已在景點裡）</span>':''}${p.layer?`<small>圖層：${esc(p.layer)}</small>`:''}${p.address?`<small>${esc(p.address)}</small>`:''}${p.note?`<small>${esc(p.note)}</small>`:''}</span></label>`).join('')}</div>
@@ -1196,14 +1196,41 @@ function gmFromHash(){const h=location.hash||'';if(!h.startsWith('#gm='))return 
    而且回應帶 Access-Control-Allow-Origin: *，瀏覽器直接讀，不經過 Worker。地圖要設成「知道連結的任何人都能查看」。 */
 const myMapsId=u=>((String(u||'').match(/\/maps\/d\/(?:u\/\d+\/)?[a-z]*\?(?:[^#\s]*&)?mid=([A-Za-z0-9_-]{10,})/)||[])[1]||'');
 function parseKml(xml){const doc=new DOMParser().parseFromString(xml,'text/xml');if(doc.querySelector('parsererror')||!doc.querySelector('kml,Document,Placemark'))return null;
-  const txt=h=>new DOMParser().parseFromString('<body>'+String(h||'').replace(/<br\s*\/?>/gi,'\n')+'</body>','text/html').body.textContent.replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim();
+  const txt=h=>new DOMParser().parseFromString('<body>'+String(h||'').replace(/<br\b[^>]*>/gi,'\n')+'</body>','text/html').body.textContent.replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim();
   const kid=(el,n)=>[...el.children].find(c=>c.localName===n);
   const places=[];let skipped=0;doc.querySelectorAll('Placemark').forEach(pm=>{const pt=pm.querySelector('Point coordinates');if(!pt){skipped++;return}const c=pt.textContent.trim().split(',').map(Number);if(!isFinite(c[0])||!isFinite(c[1])){skipped++;return}
     const name=(kid(pm,'name')?.textContent||'').trim();if(!name){skipped++;return}const extra=[...pm.querySelectorAll('ExtendedData Data')].filter(d=>!/^gx_/.test(d.getAttribute('name')||'')).map(d=>(d.getAttribute('name')||'')+'：'+(d.querySelector('value')?.textContent||'').trim()).filter(x=>!/：$/.test(x));
     const folder=pm.parentElement&&pm.parentElement.localName==='Folder'?(kid(pm.parentElement,'name')?.textContent||'').trim():'';
-    const note=[txt(kid(pm,'description')?.textContent),...extra].filter(Boolean).join('\n').slice(0,400);
+    const de=kid(pm,'description'),dh=de?[...de.childNodes].map(n=>n.nodeType===1?new XMLSerializer().serializeToString(n):n.textContent).join(''):'';/* 沒包 CDATA 的 <br/> 會被當成 XML 元素 */
+    const note=[txt(dh),...extra].filter(Boolean).join('\n').slice(0,400);
     places.push({name,address:(kid(pm,'address')?.textContent||'').trim(),lat:+c[1].toFixed(7),lng:+c[0].toFixed(7),note,layer:folder,mapUrl:`https://www.google.com/maps/search/?api=1&query=${c[1]},${c[0]}`})});
   const title=(doc.querySelector('Document > name')?.textContent||'').trim();return {title,total:places.length,places,skipped,src:'mymaps'}}
+/* 檔案匯入：我的地圖匯出的 .kml／.kmz、Google Takeout 的 Saved/*.csv（或整包 .zip）、Saved Places.json（GeoJSON）。全部在瀏覽器裡讀，不上傳 */
+async function unzipAll(buf,re){const d=new DataView(buf),out=[];let e=buf.byteLength-22;while(e>=0&&d.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('zip');
+  const n=d.getUint16(e+10,true);let p=d.getUint32(e+16,true);
+  for(let i=0;i<n;i++){if(d.getUint32(p,true)!==0x02014b50)break;const meth=d.getUint16(p+10,true),csz=d.getUint32(p+20,true),fl=d.getUint16(p+28,true),el=d.getUint16(p+30,true),cl=d.getUint16(p+32,true),off=d.getUint32(p+42,true);
+    const name=new TextDecoder().decode(new Uint8Array(buf,p+46,fl));p+=46+fl+el+cl;if(!re.test(name))continue;
+    const data=new Uint8Array(buf,off+30+d.getUint16(off+26,true)+d.getUint16(off+28,true),csz);
+    if(meth===0)out.push({name,text:new TextDecoder().decode(data)});else if(meth===8)out.push({name,text:await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()})}
+  return out}
+function parseCsv(t){const rows=[];let row=[],f='',q=false;t=t.replace(/^\ufeff/,'');for(let i=0;i<t.length;i++){const c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}else f+=c}
+  if(f||row.length){row.push(f);rows.push(row)}return rows.filter(r=>r.some(x=>x.trim()))}
+function parseTakeoutCsv(t,list){const R=parseCsv(t);if(!R.length)return [];const h=R[0].map(x=>x.trim().toLowerCase()),ix=k=>h.indexOf(k);const iT=ix('title'),iN=ix('note'),iU=ix('url'),iC=ix('comment');if(iT<0)return [];
+  return R.slice(1).map(r=>{if(iU>=0&&r.length>h.length)r=[...r.slice(0,iU),r.slice(iU,iU+1+r.length-h.length).join(','),...r.slice(iU+1+r.length-h.length)];/* 網址含逗號卻沒加引號時，把多出來的欄位併回網址 */const u=(r[iU]||'').trim(),m=parseMapsUrl(u);return {name:(r[iT]||'').trim(),address:'',lat:m.lat??null,lng:m.lng??null,note:[r[iN],r[iC]].map(x=>(x||'').trim()).filter(Boolean).join('\n'),layer:list,mapUrl:okUrl(u)||''}}).filter(p=>p.name)}
+function parseGeoJson(t){let j;try{j=JSON.parse(t)}catch(e){return []}return (j.features||[]).map(f=>{const pr=f.properties||{},loc=pr.location||pr.Location||{},c=(f.geometry||{}).coordinates||[];
+  const lat=+(c[1]??loc.latitude??loc.Latitude),lng=+(c[0]??loc.longitude??loc.Longitude),ok=isFinite(lat)&&isFinite(lng)&&(lat||lng);
+  return {name:String(pr.Title||loc.name||loc['Business Name']||'').trim(),address:String(loc.address||loc.Address||'').trim(),lat:ok?lat:null,lng:ok?lng:null,note:String(pr.Comment||'').trim(),layer:'',mapUrl:okUrl(pr.google_maps_url||pr['Google Maps URL']||'')||''}}).filter(p=>p.name)}
+async function gmFiles(files){const places=[];let skipped=0,title='',bad=[];
+  for(const f of files){const nm=f.name,base=nm.replace(/\.[^.]+$/,'');try{
+    if(/\.kmz$/i.test(nm)){const [k]=await unzipAll(await f.arrayBuffer(),/\.kml$/i);const r=k&&parseKml(k.text);if(!r)throw 0;r.places.forEach(p=>places.push(p));skipped+=r.skipped;title=title||r.title}
+    else if(/\.kml$/i.test(nm)){const r=parseKml(await f.text());if(!r)throw 0;r.places.forEach(p=>places.push(p));skipped+=r.skipped;title=title||r.title}
+    else if(/\.zip$/i.test(nm)){const L=await unzipAll(await f.arrayBuffer(),/(^|\/)(Saved|已儲存|儲存)\/[^/]+\.csv$|\.csv$/i);if(!L.length)throw 0;L.forEach(x=>parseTakeoutCsv(x.text,x.name.split('/').pop().replace(/\.csv$/i,'')).forEach(p=>places.push(p)));title=title||'Google Takeout'}
+    else if(/\.csv$/i.test(nm)){const L=parseTakeoutCsv(await f.text(),base);if(!L.length)throw 0;L.forEach(p=>places.push(p));title=title||base}
+    else if(/\.(geo)?json$/i.test(nm)){const L=parseGeoJson(await f.text());if(!L.length)throw 0;L.forEach(p=>places.push(p));title=title||base}
+    else throw 0}catch(e){bad.push(nm)}}
+  if(bad.length)toast('讀不懂：'+bad.join('、')+'（支援 .kml、.kmz、Takeout 的 .csv／.zip、Saved Places.json）');
+  if(places.length)gmPicker({title:files.length>1?'':title,total:places.length,places,skipped,src:'file'})}
 async function myMapsImport(mid){const btn=$('[data-act=gmList]');if(btn){btn.disabled=true;btn.textContent='讀取中…'}
   try{const r=await fetch(`https://www.google.com/maps/d/kml?mid=${encodeURIComponent(mid)}&forcekml=1`);if(!r.ok)throw new Error('http'+r.status);const res=parseKml(await r.text());if(!res)throw new Error('private');if(!res.places.length)throw new Error('nopoint');gmPicker(res)}
   catch(e){const w=String(e.message||e);if(w==='nopoint')toast('這張地圖裡沒有地標（只有線或區域），沒有可以匯入的地點');
@@ -1729,7 +1756,7 @@ function edPlaces(){
   const C=buildPages(T);
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
   return `<div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址和手機分享的短網址（maps.app.goo.gl）都會自動帶出名稱；短網址要連網經過旅冊的讀取服務展開，讀不到時請自己填，地圖連結和 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
-  <div class="card"><h4>從 Google 地圖「儲存清單」一次匯入</h4><p class="hint">在 Google 地圖打開你的清單（想去的地點、收藏…）→ 分享 → 複製連結，貼在這裡；會列出清單裡的地點讓你勾選，帶入名稱、地址、座標和備註。這一步需要網路：分享連結會經過旅冊的讀取服務向 Google 取清單，不會送出你的行程。<br>方法二（不用連線服務）：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼在這裡，但只會有名稱。<br>也可以貼 Google「<b>我的地圖</b>」（My Maps）的分享連結：地圖設成「知道連結的任何人都能查看」，會帶入名稱、座標和說明，由你的瀏覽器直接向 Google 讀取，不經過旅冊的服務。</p><textarea id="gmPaste" rows="2" placeholder="https://maps.app.goo.gl/…  或貼上清單頁複製的文字"></textarea><div class="row" style="margin-top:8px"><button class="mini" data-act="gmList">讀取清單</button></div>${(b=>b?`<p class="hint" style="margin-top:10px">方法三（電腦、最穩）：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著整份清單回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}</div>
+  <div class="card"><h4>從 Google 地圖「儲存清單」一次匯入</h4><p class="hint">在 Google 地圖打開你的清單（想去的地點、收藏…）→ 分享 → 複製連結，貼在這裡；會列出清單裡的地點讓你勾選，帶入名稱、地址、座標和備註。這一步需要網路：分享連結會經過旅冊的讀取服務向 Google 取清單，不會送出你的行程。<br>方法二（不用連線服務）：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼在這裡，但只會有名稱。<br>也可以貼 Google「<b>我的地圖</b>」（My Maps）的分享連結：地圖設成「知道連結的任何人都能查看」，會帶入名稱、座標和說明，由你的瀏覽器直接向 Google 讀取，不經過旅冊的服務。<br>不想公開地圖：用檔案匯入——我的地圖「匯出成 KML/KMZ」的檔案，或 Google 匯出工具（takeout.google.com，勾「已儲存」）下載的 .zip／清單 .csv。檔案只在瀏覽器裡讀，不會上傳。</p><label class="mini filebtn">選擇檔案（.kml／.kmz／.csv／.zip）<input type="file" id="gmFile" accept=".kml,.kmz,.csv,.zip,.json,.geojson" multiple hidden></label><textarea id="gmPaste" rows="2" placeholder="https://maps.app.goo.gl/…  或貼上清單頁複製的文字"></textarea><div class="row" style="margin-top:8px"><button class="mini" data-act="gmList">讀取清單</button></div>${(b=>b?`<p class="hint" style="margin-top:10px">方法三（電腦、最穩）：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著整份清單回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}</div>
   <datalist id="grpList">${[...new Set(T.places.map(p=>p.group).filter(g=>g&&g!=='-'))].map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
   <p class="hint">同一「分組」的景點（例：毛線店、吃吃喝喝）會排成合集頁（一頁最多 4 間）。排進某一天的景點會印成一整頁介紹；還沒排進行程的先當「收藏」，<b>預設不印</b>，想印可以在該景點改成「一律印」。${unplanned?`目前有 <b>${unplanned}</b> 個景點還沒排進行程。`:''}</p>${T.places.length>1?`<div class="bulkbar" id="bulkbar"><button class="mini" data-act="bulkTog">${BULK?'結束批次整理':'批次整理'}</button>${BULK?`<span class="bcnt" id="bcnt">已選 0</span><button class="mini" data-act="bulkAll">全選</button><button class="mini" data-act="bulkNone">全不選</button><button class="mini" data-act="bulkUnplanned">只選沒排進行程的</button><div class="brow"><select id="bulkDay"><option value="">排進哪一天…</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(d.title)}</option>`).join('')}</select><button class="mini" data-act="bulkPlan">排進去</button></div><div class="brow"><button class="mini" data-act="bulkWp">缺介紹的找維基百科</button><input id="bulkGrp" list="grpList" placeholder="分組名稱" style="width:130px;flex:0 0 auto"><button class="mini" data-act="bulkGrp">設成這一組</button><button class="mini" data-act="bulkBook" data-a="yes">一律印</button><button class="mini" data-act="bulkBook" data-a="">自動</button><button class="mini" data-act="bulkBook" data-a="no">不印</button><button class="mini danger" data-act="bulkDel">刪除</button></div>`:''}</div>`:''}`+
   (T.places.length?'':emptyIll('02-no-places','還沒有景點','貼上 Google 地圖連結，或按下面的「新增景點」。<br>想去但還沒決定哪天的地方，也可以先收在這裡。'))+
@@ -2386,6 +2413,7 @@ ${open}<div class="a4wrap">${im.html}</div></div>
 /* ---------- events ---------- */
 function onField(e){
   const el=e.target,edEl=el.closest&&el.closest('#editor');if(!edEl||edEl.dataset.tid!==T.id)return;if(el.dataset.bsel!=null)return;/* a change event fired while the editor is being re-rendered for another trip must not write into it */
+  if(el.id==='gmFile'){if(e.type==='change'&&el.files.length){gmFiles([...el.files]);el.value=''}return}
   if(el.dataset.photos){if(e.type==='change'&&el.files.length){const arr=getPath(T,el.dataset.photos);Promise.all([...el.files].slice(0,12).map(f=>compress(f).catch(()=>null))).then(vs=>{vs.filter(Boolean).forEach(v=>arr.push(v));commit()})}return}
   if(el.dataset.photo){if(e.type==='change'&&el.files[0]){compress(el.files[0],/^custom\./.test(el.dataset.photo)?2000:1400).then(v=>{setPath(T,el.dataset.photo,v);if(/^places\.\d+\.photo$/.test(el.dataset.photo))setPath(T,el.dataset.photo+'Src',null);commit()}).catch(()=>toast('無法讀取這張圖片，請換成 JPG 或 PNG'))}return}
   if(el.dataset.sec){const k=el.dataset.sec;T.opts.hide=el.checked?T.opts.hide.filter(x=>x!==k):[...new Set([...T.opts.hide,k])];touch(true);return}

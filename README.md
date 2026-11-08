@@ -18,6 +18,10 @@
 
 在「儲存清單」同一個框貼上我的地圖的分享連結（網址含 `mid=`），或直接貼 KML 文字。瀏覽器直接讀 `https://www.google.com/maps/d/kml?mid=…&forcekml=1`：2026-11-08 實測 google.com/robots.txt 對 `User-agent: *` 有 `Allow: /maps/d/`，回應帶 `Access-Control-Allow-Origin: *`，所以不經過旅冊的 Worker。只匯入點狀地標（線、區域略過），帶入名稱、座標、說明與 ExtendedData（放進「小提醒」），地圖連結用官方 Maps URLs 格式 `maps/search/?api=1&query=緯,經`。地圖要設成「知道連結的任何人都能查看」。
 
+## 檔案匯入（不需要網路、不上傳）
+
+景點分頁「選擇檔案」可一次選多個：我的地圖匯出的 `.kml`／`.kmz`（`.kmz` 用瀏覽器內建的 `DecompressionStream('deflate-raw')` 解壓，`unzipAll`）、Google Takeout「已儲存」的清單 `.csv`（欄位 Title, Note, URL, Comment，每個檔案名＝清單名，顯示成圖層）或整包 `.zip`（讀裡面所有 `.csv`）、`Saved Places.json`（GeoJSON）。Takeout 清單 CSV 多半沒有座標，只帶名稱、備註與地圖連結；網址含逗號卻沒加引號的列會自動併回網址欄。KML 說明裡沒包 CDATA 的 `<br/>` 也會轉成換行。
+
 ## 單一地點短網址（需要 Worker）
 
 「從 Google 地圖新增」貼完整網址時在瀏覽器裡直接解析名稱與座標；貼手機分享的 `maps.app.goo.gl` 短網址時，先新增景點，再呼叫 `GET /api/gmaps-place?u=…`。Worker 只讀轉址的 Location 標頭（最多 5 跳、每一跳都必須是 Google 地圖網域，不下載頁面），展開後從 `/maps/place/名稱/@緯,經` 或 `?q=名稱` 取名稱與座標回傳。讀不到就保留空白名稱讓使用者自己填。展開後網址的實際格式未在本機驗證（開發環境連不到 Google），部署後需要用真的短網址測一次。
