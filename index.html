@@ -247,7 +247,7 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .drv{position:fixed;inset:0;z-index:58;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:24px}.drv.on{display:flex}
 .drvin{max-width:640px}.dlab{font-size:22px;color:var(--ui-acc);font-weight:700}.dja{font-size:44px;font-weight:900;line-height:1.25;margin:14px 0;word-break:break-all}.dad{font-size:24px;line-height:1.5;word-break:break-all}.dzh{font-size:14px;color:var(--ui-mute);margin-top:14px}
 .iosbar{position:fixed;left:10px;right:10px;bottom:76px;z-index:45;background:#1f2a27;color:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;font-size:13px;line-height:1.6;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.iosbar[hidden]{display:none}.iosbar b{display:block;font-size:14px;color:#e9c46a}
+.iosbar[hidden]{display:none}.iosbar b{display:block;font-size:14px;color:#e9c46a}.iosbar .tbtn{flex:0 0 auto;background:#e9c46a;color:#1f2a27;border-color:#e9c46a;font-weight:700}
 #installBtn[hidden]{display:none}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
@@ -727,7 +727,7 @@ html.dark .thumb{background-color:#333}
   <div class="hm-foot">旅冊 Travel Book</div>
 </div>
 <div class="toast" id="toast"></div>
-<div class="iosbar" id="iosbar" hidden><div><b>加到主畫面，用起來就像 App</b>點下方的「分享」按鈕 → 選「加入主畫面」。加到主畫面後可以離線使用，資料也比較不會被瀏覽器自動清除。</div><button class="tbtn" id="iosclose">知道了</button></div>
+<div class="iosbar" id="iosbar" hidden><div><b>請把旅冊加到主畫面，行程才不會消失</b>iPhone 的 Safari 若 7 天沒打開旅冊，可能自動清掉存在這裡的行程。點下方「分享」→「加入主畫面」，之後從主畫面的圖示打開就不會被清除；也記得偶爾從「匯出」下載備份檔。</div><button class="tbtn" id="iosclose">知道了</button></div>
 
 <script>
 /* QR Code Generator for JavaScript — Copyright (c) 2009 Kazuhiko Arase — MIT license — https://github.com/kazuhikoarase/qrcode-generator */
@@ -1244,7 +1244,7 @@ let WSDAY='';
 function planNew(p){const k=WSDAY;if(k===''||!T.days[+k]||+k>=dayCount(T))return '';const d=T.days[+k];d.items.push(mk.item({time:nextTime(d),placeId:p.id}));openSet.add(d.id);return `，排進 DAY.${+k+1}`}
 function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=poiName(a),ja=nm!==a[0]?a[0]:(a[1]||'');
   const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg,address:a[9]||'',hours:ohZh(a[10]),phone:fmtJpPhone(a[13]),web:a[14]||'',cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
-  T.places.push(p);openSet.add(p.id);const pl=planNew(p);commit();toast('已加入「'+nm+'」'+pl+(a[10]||a[13]?`（${[a[10]&&'營業時間',a[13]&&'電話'].filter(Boolean).join('、')}來自 OpenStreetMap，可能過時，出發前再確認）`:''));
+  T.places.push(p);openSet.add(p.id);const pl=planNew(p);commit();autoPhoto(p.id);toast('已加入「'+nm+'」'+pl+(a[10]||a[13]?`（${[a[10]&&'營業時間',a[13]&&'電話'].filter(Boolean).join('、')}來自 OpenStreetMap，可能過時，出發前再確認）`:''));
   if(/^Q\d+$/.test(a[11]||''))wdIntro(p.id,a[11])}
 /* 日本電話：OSM 的寫法很亂（81753518000、+81-75-351-8000、075 351 8000…），統一成國內撥號格式。
    只有已知區碼（東京 03、大阪 06、手機、0120 與主要城市的 3 位數區碼）才加連字號；其他區碼長度不一，只轉成 0 開頭、不亂斷 */
@@ -1303,7 +1303,7 @@ function osmAdd(k){const x=OSM&&OSM[k];if(!x)return;const a=x.address||{},ja=x.n
   T.places.push(p);openSet.add(p.id);const pl=planNew(p);commit();toast('已加入「'+x.name+'」'+pl+'，地點資料來自 OpenStreetMap（會印在圖文來源頁）')}
 async function wsAdd(k){const x=WS[k];if(!x)return;const nm=x.lang==='zh'?wsClean(x.title):wsClean(x.other||x.title),ja=x.lang==='ja'?x.title:x.other;
   const p=mk.place({name:nm,jaName:ja&&ja!==nm?wsClean(ja):'',lat:x.lat,lng:x.lng,mapUrl:x.lat!=null?`https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}`:''});T.places.push(p);openSet.add(p.id);const pl=planNew(p);
-  const withDesc=$('#wsDesc')?.checked;commit();toast('已加入「'+nm+'」'+pl+(withDesc?'，正在帶入介紹…':''));
+  const withDesc=$('#wsDesc')?.checked;commit();autoPhoto(p.id);toast('已加入「'+nm+'」'+pl+(withDesc?'，正在帶入介紹…':''));
   if(withDesc){try{const e=await wpExtract(x.lang,x.title);const q=T.places.find(z=>z.id===p.id);if(e&&q&&!q.desc.trim()){q.desc=e.text;q.descSrc=wpSrc(e);commit();toast('已帶入「'+nm+'」的維基介紹，來源會印在圖文來源頁')}}catch(err){toast('介紹沒帶到，可以之後在景點裡按「從維基百科找介紹」')}}}
 async function wpFillMany(ids){const list=T.places.filter(p=>ids.has(p.id)&&!p.desc.trim()&&(p.name||p.lat!=null));if(!list.length){toast('勾選的景點都已經有介紹');return}
   let ok=0,none=0,unsure=0;const btn=$('[data-act=bulkWp]');if(btn){btn.disabled=true}
@@ -1339,6 +1339,19 @@ async function cmSearch(p){const out=new Map();const add=(pg,dist)=>{const c=cmC
   for(const q of [p.name,p.jaName&&p.jaName!==p.name?p.jaName:''].filter(Boolean)){if([...out.values()].filter(c=>c.hit).length>=6)break;
     const j=await mwApi(CM,{action:'query',generator:'search',gsrnamespace:6,gsrsearch:`"${q.replace(/"/g,'')}" filetype:bitmap`,gsrlimit:20,...CM_II});(j.query?.pages||[]).forEach(pg=>add(pg,null))}
   return [...out.values()].sort((a,b)=>b.score-a.score).slice(0,6)}
+/* 加入景點時自動找 Commons 照片：只對地標類（寺社、博物館、自然、城市景點），而且名稱要對得上、橫幅、在 1 公里內；
+   店家、餐廳、住宿、車站不自動找（連鎖店會抓到別家分店的照片）。一次查一個，避免被 Wikimedia 限流 */
+const AUTOPH={q:[],busy:false};const autoPhotoOn=()=>LS.get('tabisatsu.autoPhoto')!=='0';
+function autoPhoto(pid){if(!autoPhotoOn()||location.protocol==='file:')return;AUTOPH.q.push([T,pid]);if(!AUTOPH.busy)autoPhotoRun()}
+async function autoPhotoRun(){AUTOPH.busy=true;while(AUTOPH.q.length){const [t,pid]=AUTOPH.q.shift();const p=t.places.find(x=>x.id===pid);
+    if(!p||p.photo||!['temple','shrine','museum','nature','city','beach'].includes(placeCat(p)))continue;
+    try{const list=await cmSearch(p);const c=list.find(c=>c.hit&&c.w>=c.h&&(c.dist==null||c.dist<1000));if(!c)continue;
+      const r=await fetch(c.full);if(!r.ok)continue;const v=await compress(await r.blob(),1400);const q=t.places.find(x=>x.id===pid);if(!q||q.photo)continue;
+      q.photo=v;q.photoSrc={site:CM,title:c.title,url:c.url,author:c.author,license:c.license,licenseUrl:c.licenseUrl,at:iso(new Date())};
+      if(t===T){commit();toast(`已幫「${q.name}」找到照片（Wikimedia Commons，${c.license}），不喜歡可以在景點裡換掉`)}else save(t)}
+    catch(e){if(e.message==='ratelimit')await new Promise(r=>setTimeout(r,(e.retry||20)*1000))}
+    await new Promise(r=>setTimeout(r,1200))}
+  AUTOPH.busy=false}
 async function cmFind(i){const p=T.places[i];if(!p||(!p.name&&p.lat==null)){toast('先填景點名稱');return}toast('正在 Wikimedia Commons 找照片…');
   let list;try{list=await cmSearch(p)}catch(e){toast(e.message==='ratelimit'?`Wikimedia 暫時限制查詢，請等 ${e.retry} 秒再試`:'查詢失敗（'+e.message+'）');return}
   if(!list.length){toast('找不到可以合法使用的照片——店家、小景點通常沒有；可以自己上傳，或用插畫');return}
@@ -1997,7 +2010,7 @@ function edDays(){
 function edPlaces(){
   const C=buildPages(T);
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
-  return `<div class="card"><h4>搜尋景點</h4><p class="hint">先查旅冊地點庫（OpenStreetMap 整理的日本各地景點與店家，依「基本」選的目的地載入，在你的瀏覽器裡查），再查維基百科：寺廟、神社、公園、車站這類有條目的地點，會帶入名稱、日文名和座標（也能帶入介紹）。店家、餐廳多半查不到，再按「查 OpenStreetMap」（開放地圖，會帶入座標、地區、地址）。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><div class="row" style="margin-top:6px;align-items:center"><label class="chk" style="margin:0;flex:1"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><select id="wsDay" onchange="WSDAY=this.value" title="按「加入」時順便排進這一天" style="flex:0 0 auto;width:auto"><option value="">加入後先不排</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}"${String(WSDAY)===String(k)?' selected':''}>加入後排進 DAY.${k+1}</option>`).join('')}</select></div><div id="wsRes" class="wsres">${wsResHTML()}</div><div class="row" style="margin-top:6px"><button class="mini" data-act="osmSearch">查 OpenStreetMap（店家、餐廳）</button></div><div id="osmRes" class="wsres">${osmResHTML()}</div></div>
+  return `<div class="card"><h4>搜尋景點</h4><p class="hint">先查旅冊地點庫（OpenStreetMap 整理的日本各地景點與店家，依「基本」選的目的地載入，在你的瀏覽器裡查），再查維基百科：寺廟、神社、公園、車站這類有條目的地點，會帶入名稱、日文名和座標（也能帶入介紹）。店家、餐廳多半查不到，再按「查 OpenStreetMap」（開放地圖，會帶入座標、地區、地址）。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><div class="row" style="margin-top:6px;align-items:center"><span style="flex:1"><label class="chk" style="margin:0"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><label class="chk" style="margin:0"><input type="checkbox" ${autoPhotoOn()?'checked':''} onchange="LS.set('tabisatsu.autoPhoto',this.checked?'1':'0')"> 景點（寺社、博物館、自然景觀）自動找 Commons 照片</label></span><select id="wsDay" onchange="WSDAY=this.value" title="按「加入」時順便排進這一天" style="flex:0 0 auto;width:auto"><option value="">加入後先不排</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}"${String(WSDAY)===String(k)?' selected':''}>加入後排進 DAY.${k+1}</option>`).join('')}</select></div><div id="wsRes" class="wsres">${wsResHTML()}</div><div class="row" style="margin-top:6px"><button class="mini" data-act="osmSearch">查 OpenStreetMap（店家、餐廳）</button></div><div id="osmRes" class="wsres">${osmResHTML()}</div></div>
   <div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址和手機分享的短網址（maps.app.goo.gl）都會自動帶出名稱；短網址要連網經過旅冊的讀取服務展開，讀不到時請自己填，地圖連結和 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
   <div class="card"><h4>從 Google 地圖一次匯入多個地點</h4><p class="hint">會列出地點讓你勾選，已經在景點裡的預設不勾。三種方法都只在你的瀏覽器裡處理，不經過旅冊的伺服器：</p>
   ${(b=>b?`<p class="hint"><b>書籤小工具（電腦，儲存清單用）</b>：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著名稱、地址、座標和備註回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}
@@ -2458,10 +2471,12 @@ function exportTemplate(){
 async function backup(){if(await saveFile(safeName(T.title)+'_備份.json',JSON.stringify({app:'tabisatsu',v:1,trip:T}),'application/json')){T.backupAt=Date.now();save();toast('已下載備份檔');renderBackupBar()}}
 function tripBytes(t){try{return new Blob([JSON.stringify(t)]).size}catch(e){return 0}}
 const fmtMB=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const IOS_WEB=(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))&&!(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true);
 function renderBackupBar(){const el=$('#bkbar');if(!el||!T)return;
   const has=T.days.some(d=>d.items.length)||T.places.length>0,base=T.backupAt||T.created||0,days=Math.floor((Date.now()-base)/864e5),changed=T.updated>(T.backupAt||0);
-  const show=has&&changed&&(!T.backupAt?(Date.now()-(T.created||Date.now())>2*864e5):days>=7);
-  el.hidden=!show;if(show)$('#bkmsg').textContent=T.backupAt?`已經 ${days} 天沒備份這份行程了`:'這份行程還沒備份過';}
+  /* iPhone Safari（沒加到主畫面）資料可能被清除：有內容就提醒、3 天提醒一次；其他瀏覽器：建立 2 天後、或 7 天沒備份才提醒 */
+  const show=has&&changed&&(IOS_WEB?(!T.backupAt||days>=3):(!T.backupAt?(Date.now()-(T.created||Date.now())>2*864e5):days>=7));
+  el.hidden=!show;if(show)$('#bkmsg').textContent=(T.backupAt?`已經 ${days} 天沒備份這份行程了`:'這份行程還沒備份過')+(IOS_WEB?'（iPhone 的 Safari 可能自動清除資料，建議加到主畫面並備份）':'');}
 async function storageInfo(){const el=$('#stinfo');if(!el)return;let txt=`這份行程約 ${fmtMB(tripBytes(T))}（含照片）`;
   try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();if(e.quota){const r=e.usage/e.quota;txt+=`；這個瀏覽器已用 ${fmtMB(e.usage)}，約 ${(r*100).toFixed(r<.01?1:0)}%`;if(r>.8)txt+='，空間快滿了，建議先備份並刪掉不用的照片'}}}catch(e){}
   try{if(navigator.storage&&navigator.storage.persisted){const ok=await navigator.storage.persisted();txt+=ok?'。瀏覽器已同意長期保存這個網站的資料（仍建議出發前備份一次）':'。瀏覽器目前沒有承諾長期保存，空間不足時可能被清除，請記得定期備份'}}catch(e){}
@@ -2910,8 +2925,8 @@ function setupPWA(){
   addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.hidden=false});
   btn.addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();try{await deferred.userChoice}catch(e){}deferred=null;btn.hidden=true});
   addEventListener('appinstalled',()=>{btn.hidden=true;toast('已安裝旅冊')});
-  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  if(ios&&!LS.get('tabisatsu.iosHint')){$('#iosbar').hidden=false;$('#iosclose').addEventListener('click',()=>{$('#iosbar').hidden=true;LS.set('tabisatsu.iosHint','1')})}
+  /* iPhone／iPad 沒加到主畫面：Safari 7 天沒打開這個網站會清掉資料。按「知道了」後 7 天，如果還有行程，再提醒一次 */
+  if(IOS_WEB){const last=+LS.get('tabisatsu.iosHint')||0;if(Date.now()-last>7*864e5){$('#iosbar').hidden=false;$('#iosclose').addEventListener('click',()=>{$('#iosbar').hidden=true;LS.set('tabisatsu.iosHint',String(Date.now()))})}}
 }
 (async function init(){
   if(innerWidth<=900)$$('.show-m').forEach(x=>x.style.display='block');else $$('.show-m').forEach(x=>x.style.display='none');
