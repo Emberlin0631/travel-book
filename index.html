@@ -1084,17 +1084,30 @@ function pkey(s,N){s=String(s||'').normalize('NFKC').toLowerCase();let o='';for(
 function poiPick(t,idx){const pts=[...t.places,...t.stays].filter(p=>p.lat!=null);const inB=(r,p)=>r.bbox&&p.lat>=r.bbox[0]-.05&&p.lat<=r.bbox[2]+.05&&p.lng>=r.bbox[1]-.05&&p.lng<=r.bbox[3]+.05;
   const text=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.area+' '+p.address),...t.stays.map(x=>x.name+' '+x.address)].join(' ');
   let L=idx.filter(r=>pts.some(p=>inB(r,p))||text.includes(r.name.replace(/市$/,'')));if(!L.length)L=idx.filter(r=>!t.country||r.country===t.country);return L}
-function poiRegion(r,N){if(POI.reg[r.id])return Promise.resolve(POI.reg[r.id]);if(!POI.load[r.id])POI.load[r.id]=fetch(r.file).then(x=>x.json()).then(j=>{const rows=j.rows.map(a=>({a,reg:j.name,k:[a[0],a[1],a[2],a[3],...String(a[12]||'').split(';')].filter(Boolean).map(x=>pkey(x,N))}));POI.reg[r.id]=rows;return rows}).catch(e=>{delete POI.load[r.id];throw e});return POI.load[r.id]}
+function poiRegion(r,N){if(POI.reg[r.id])return Promise.resolve(POI.reg[r.id]);if(!POI.load[r.id])POI.load[r.id]=fetch(r.file).then(x=>x.json()).then(j=>{const rows=j.rows.map(a=>({a,reg:j.name,t:String(a[7]||'').replace(/^shop:/,''),k:[a[0],a[1],a[2],a[3]].filter(Boolean).map(x=>pkey(x,N)),k2:String(a[12]||'').split(';').filter(Boolean).map(x=>pkey(x,N))}));POI.reg[r.id]=rows;return rows}).catch(e=>{delete POI.load[r.id];throw e});return POI.load[r.id]}
 async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return null;const N=await poiNorm(),k=pkey(q,N);if(!k)return [];
   const all=(await Promise.all(poiPick(T,idx).map(r=>poiRegion(r,N).catch(()=>[])))).flat(),tok=String(q).trim().split(/\s+/).map(x=>pkey(x,N)).filter(Boolean);
-  const res=[];for(const x of all){let best=0;for(const s of x.k){let sc=s===k?100:s.startsWith(k)?80:s.includes(k)?60:tok.length>1&&tok.every(t=>s.includes(t))?50:0;if(sc){sc-=Math.min(15,(s.length-k.length)*.5);if(sc>best)best=sc}}
-    if(best){if(/temple|shrine|museum|nature/.test(x.a[6])||x.a[11])best+=4;res.push({x,sc:best})}}
+  /* 輸入的是類型（毛線、咖啡、拉麵…）就列出那一類，也用日文常見寫法再比一次（毛線→毛糸） */const ty=[...Object.entries(OSM_TYPE).filter(([t,l])=>pkey(l,N)===k).map(([t])=>t),...(POI_TY[q.trim()]||[])];
+  const syn=(POI_SYN[q.trim()]||[]).map(x=>pkey(x,N));
+  const sc1=(s,k)=>s===k?100:s.startsWith(k)?80:s.includes(k)?60:tok.length>1&&tok.every(t=>s.includes(t))?50:0;
+  const res=[];for(const x of all){let best=0;for(const s of x.k){let sc=sc1(s,k);if(sc){sc-=Math.min(15,(s.length-k.length)*.5);if(sc>best)best=sc}}
+    for(const s of x.k2){let sc=sc1(s,k);if(sc){sc-=12+Math.min(15,(s.length-k.length)*.5);if(sc>best)best=sc}}/* 別名、讀音比對到的排後面 */
+    if(!best&&syn.length&&x.k.some(s=>syn.some(y=>s.includes(y))))best=55;
+    if(!best&&ty.includes(x.t))best=40;
+    if(best){if(/temple|shrine|museum|nature/.test(x.a[6])||x.a[11])best+=4;if(/^(attraction|theme_park|zoo|aquarium|museum|castle|viewpoint|place_of_worship|gallery|garden|park|marketplace)$/.test(x.t))best+=20;if(x.t==='station'||x.a[6]==='hotel')best-=4;if(/memorial|monument/.test(x.t))best-=10;res.push({x,sc:best})}}
   return res.sort((a,b)=>b.sc-a.sc).slice(0,8).map(r=>r.x)}
+/* 顯示名稱：日文原名有假名（京都タワー、サクラテラス）才用繁中名；純漢字的（金閣寺、伏見稲荷大社）用原名轉繁體字形，
+   避免 Wikidata 的正式名（鹿苑寺）蓋掉大家熟悉的叫法 */
+const hasKana=s=>/[\u3040-\u30ff]/.test(s||'');
+const poiName=a=>{if(hasKana(a[0]))return a[2]||a[0];const N=POI.norm;if(!N)return a[0];let o='';for(const ch of a[0])o+=N.jp.get(ch)??ch;return o};
+/* 台灣常用中文 → 日文店名常見寫法（找店名用）；類型 → OSM 類別 */
+const POI_SYN={'毛線':['毛糸','yarn'],'拉麵':['ラーメン','らーめん','拉麺'],'咖啡':['カフェ','珈琲','coffee'],'甜點':['スイーツ','菓子'],'藥妝':['ドラッグ','薬局'],'百貨':['百貨店'],'壽司':['寿司','鮨','すし'],'燒肉':['焼肉'],'居酒屋':['居酒屋'],'抹茶':['抹茶'],'和菓子':['和菓子'],'烏龍麵':['うどん'],'蕎麥麵':['そば','蕎麦'],'丼飯':['丼'],'章魚燒':['たこ焼'],'大阪燒':['お好み焼'],'書店':['書店','本屋'],'二手':['古着','リサイクル']};
+const POI_TY={'毛線':['wool','sewing','fabric','haberdashery','craft','handicraft'],'手藝':['sewing','fabric','haberdashery','craft','handicraft'],'藥妝':['chemist','cosmetics'],'百貨':['department_store','mall'],'二手':['second_hand'],'伴手禮':['gift','confectionery']};
 const OH_D={Mo:'一',Tu:'二',We:'三',Th:'四',Fr:'五',Sa:'六',Su:'日'};
 const ohZh=s=>String(s||'').replace(/\bMo-Su\b/g,'每天').replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,(m,a,b)=>'週'+OH_D[a]+'至'+OH_D[b]).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,m=>'週'+OH_D[m]).replace(/\bPH\b/g,'國定假日').replace(/\boff\b/g,'休').replace(/;\s*/g,'；');
-function poiHTML(){if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=a[2]||a[0],sub=[a[2]?a[0]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
+function poiHTML(){if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=poiName(a),sub=[nm!==a[0]?a[0]:'',a[2]&&a[2]!==nm?a[2]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
   return `<div class="wsr"><div><b>${esc(nm)}</b><div class="s">${esc(sub)}${a[10]?'・有營業時間':''}${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="poiAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join('')}
-function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=a[2]||a[0],ja=a[2]?a[0]:(a[1]||'');
+function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=poiName(a),ja=nm!==a[0]?a[0]:(a[1]||'');
   const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg.replace(/市$/,''),address:a[9]||'',hours:ohZh(a[10]),cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
   T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]?'（營業時間來自 OpenStreetMap，可能過時，出發前再確認）':''))}
 const wsClean=t=>String(t||'').replace(/\s*[(（][^()（）]*[)）]\s*$/,'').trim();
@@ -1115,7 +1128,7 @@ async function wsSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('�
 /* 維基查不到時（多半是店家、餐廳），使用者按了才查 OpenStreetMap 的 Nominatim：
    規範是全部使用者合計每秒最多 1 次、不得自動完成，所以只在按鈕觸發、並在本機排隊至少隔 1.1 秒。結果要使用者自己確認，資料標示 © OpenStreetMap contributors（ODbL） */
 let OSM=null,OSM_T=0,OSM_Q='';
-const OSM_TYPE={restaurant:'餐廳',fast_food:'速食',cafe:'咖啡',bar:'酒吧',pub:'酒吧',ice_cream:'冰淇淋',bakery:'麵包店',confectionery:'甜點',pastry:'甜點',hotel:'住宿',hostel:'住宿',guest_house:'住宿',attraction:'景點',museum:'博物館',viewpoint:'展望點',place_of_worship:'寺社',shrine:'神社',temple:'寺院',park:'公園',garden:'庭園',station:'車站',department_store:'百貨',mall:'商場',supermarket:'超市',convenience:'便利商店',gift:'伴手禮',craft:'手作',fabric:'布料',wool:'毛線',books:'書店',clothes:'服飾'};
+const OSM_TYPE={restaurant:'餐廳',fast_food:'速食',cafe:'咖啡',bar:'酒吧',pub:'酒吧',ice_cream:'冰淇淋',bakery:'麵包店',confectionery:'甜點',pastry:'甜點',hotel:'住宿',hostel:'住宿',guest_house:'住宿',attraction:'景點',museum:'博物館',viewpoint:'展望點',place_of_worship:'寺社',shrine:'神社',temple:'寺院',park:'公園',garden:'庭園',station:'車站',department_store:'百貨',mall:'商場',supermarket:'超市',convenience:'便利商店',gift:'伴手禮',craft:'手作',fabric:'布料',wool:'毛線',books:'書店',clothes:'服飾',sewing:'手藝',haberdashery:'手藝材料',second_hand:'二手',variety_store:'雜貨',chemist:'藥妝',cosmetics:'美妝',tea:'茶',coffee:'咖啡豆',alcohol:'酒',marketplace:'市場',castle:'城',ruins:'遺跡',archaeological_site:'遺址',monument:'紀念碑',memorial:'紀念碑',gallery:'美術館',zoo:'動物園',aquarium:'水族館',theme_park:'主題樂園',food_court:'美食街',deli:'熟食',seafood:'海鮮',stationery:'文具',toys:'玩具',anime:'動漫',music:'音樂',jewelry:'飾品',shoes:'鞋',bag:'包包',antiques:'古董'};
 const osmCat=x=>{const t=x.type||'',c=x.category||'';if(/restaurant|fast_food|food_court/.test(t))return 'food';if(/cafe|ice_cream|bakery|confectionery|pastry|tea/.test(t))return 'cafe';if(c==='shop'||/department_store|mall|marketplace/.test(t))return 'shop';if(/hotel|hostel|guest_house|motel/.test(t))return 'hotel';if(/museum|gallery/.test(t))return 'museum';if(/station|halt/.test(t))return 'train';if(/park|garden/.test(t))return 'nature';return ''};
 async function osmSearch(){const q=($('#wsQ')?.value||'').trim();if(!q){toast('先輸入名稱');return}const box=$('#osmRes');const wait=OSM_T+1100-Date.now();OSM_T=Math.max(Date.now(),OSM_T+1100);if(wait>0)await new Promise(r=>setTimeout(r,wait));
   if(box)box.innerHTML='<p class="hint">查詢 OpenStreetMap 中…</p>';

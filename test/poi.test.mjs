@@ -33,3 +33,12 @@ test('compact：過濾美髮店與路邊石碑、簡體轉繁體、Wikidata 名�
   assert.equal(shop[7], 'shop:confectionery');
   assert.match(out.license, /ODbL/);
 });
+
+test('compact：離城市太遠的長條路線不收、範圍不被撐大', async () => {
+  const pts = Array.from({ length: 5 }, (_, i) => E({ name: '店' + i, amenity: 'restaurant' }, 34.69 + i * 0.001, 135.50));
+  const out = await compact({ id: 'o', name: '大阪市', country: 'jp' }, [...pts,
+    { type: 'relation', center: { lat: 34.2, lon: 132.96 }, tags: { name: '山陽新幹線', railway: 'station' } },
+    E({ name: '遠方', amenity: 'cafe' }, 34.2, 132.96)]);
+  assert.equal(out.n, 5);
+  assert.ok(out.bbox[1] > 135);
+});

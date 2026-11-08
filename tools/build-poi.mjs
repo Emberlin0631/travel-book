@@ -103,6 +103,7 @@ export async function compact(region, elements, wd = {}) {
     const t = e.tags || {}; const lat = e.lat ?? e.center?.lat, lng = e.lon ?? e.center?.lon;
     if (!t.name || lat == null) continue;
     if (t.shop && SHOP_SKIP.has(t.shop)) continue;
+    if (e.type === 'relation' && (t.railway || t.route)) continue; // 鐵路路線不是地點
     if (/^(memorial|monument)$/.test(t.historic || '') && !t.wikidata && !t.tourism) continue; // 路邊石碑太多，只留有名的
     const w = t.wikidata && wd[t.wikidata];
     const zhRaw = t['name:zh-Hant'] || t['name:zh-TW'] || '';
@@ -117,6 +118,10 @@ export async function compact(region, elements, wd = {}) {
     while (row.length && row[row.length - 1] === '') row.pop();
     rows.push(row);
   }
+  // 長條形的路線（例：山陽新幹線被標成車站）中心點會落在幾百公里外，離城市中位數太遠的丟掉，免得範圍被撐大
+  const med = a => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
+  const mLa = med(rows.map(r => r[4])), mLo = med(rows.map(r => r[5]));
+  for (let i = rows.length - 1; i >= 0; i--) if (km(rows[i][4], rows[i][5], mLa, mLo) > 60) rows.splice(i, 1);
   const la = rows.map(r => r[4]), lo = rows.map(r => r[5]);
   return { v: 1, id: region.id, name: region.name, country: region.country, built: new Date().toISOString().slice(0, 10),
     src: '© OpenStreetMap contributors', license: 'ODbL 1.0 — https://opendatacommons.org/licenses/odbl/ ・ https://www.openstreetmap.org/copyright',
