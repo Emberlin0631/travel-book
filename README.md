@@ -42,7 +42,15 @@
 
 Wikimedia 2026 年起對匿名瀏覽器請求限流：所有請求序列進行，批次每筆間隔 250 ms，遇 429 依 `Retry-After` 停止並提示。店家、小景點通常沒有條目，這是預期中的限制。
 
-## 授權與致謝
+## 景點照片：Wikimedia Commons
+
+景點分頁每個景點的照片欄有「從 Wikimedia Commons 找照片」。瀏覽器直接呼叫 Commons API（同樣序列請求、遵守 429 Retry-After）：座標 `list=geosearch`（400 m）＋名稱搜尋 `"名稱" filetype:bitmap`（有日文名再搜一次），用 `imageinfo/extmetadata` 讀授權。
+
+只收 CC0、公有領域、CC BY、CC BY-SA；NC、ND、GFDL-only、授權不明、作者不明（非 CC0/PD）、標記 personality 限制、寬度 < 800、非點陣圖一律排除。照片座標多半是相機位置，所以距離只當加分；標題／描述含景點名稱才算確定，其餘標「不確定」。最多列 6 張讓使用者選，不做自動批次。
+
+選用後下載 1280px 縮圖走 `compress()` 存成 data URL（和自己上傳的一樣），授權記在 `places[].photoSrc`（title、url、author、license、licenseUrl）。景點頁頁底印「照片：作者／Wikimedia Commons，授權」（照片在第一頁、文字來源在最後一頁），「圖文來源」頁分「照片」「文字」兩區並列出授權條款網址，註明照片經裁切；數位閱讀版同。自己上傳或移除照片會清掉 `photoSrc`。
+
+
 
 - QR code 產生：[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)（Kazuhiko Arase，MIT License）。"QR Code" 是 DENSO WAVE INCORPORATED 的註冊商標。
 - 匯出圖片時才會從 cdnjs 載入：[html2canvas](https://github.com/niklasvh/html2canvas)（MIT License）、[JSZip](https://github.com/Stuk/jszip)（MIT 或 GPLv3 雙授權，這裡採 MIT）。

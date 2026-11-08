@@ -178,6 +178,7 @@ html.dark .empty.ill img{opacity:.88}
 .gm-list label{display:flex;gap:8px;align-items:flex-start;padding:7px 10px;font-size:13px;line-height:1.4;cursor:pointer;border-bottom:1px solid #f1ede6}.gm-list label:last-child{border-bottom:0}
 .gm-list input{width:auto;margin-top:3px;flex:0 0 auto}.gm-list small{display:block;color:#777;font-size:11px;word-break:break-all}.gm-list .have{color:#a66}.gm-list label.hide{display:none}
 .gm-cnt{font-size:12px;color:#666;margin:0 0 8px}
+.cmw .modal{max-width:680px;max-height:calc(100vh - 40px);overflow:auto}.cmg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:0 0 12px}.cmc{border:1px solid #e6e1d8;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}.cmi{aspect-ratio:4/3;background:#eee}.cmi img{width:100%;height:100%;object-fit:cover;display:block}.cmt{font-size:12px;line-height:1.4;padding:6px 8px;flex:1;word-break:break-word}.cmt small{color:#777}.cmc .row{padding:0 8px 8px;justify-content:flex-end}.cmc a.mini{text-decoration:none;display:inline-flex;align-items:center}
 .wp .modal{max-width:560px;max-height:calc(100vh - 40px);overflow:auto}.wpc{border:1px solid #e6e1d8;border-radius:8px;padding:10px 12px;margin:0 0 10px}.wpc .wph{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:4px}.wpc .wph small{color:#777;font-size:11px;white-space:nowrap}.wpc p{font-size:13px;line-height:1.6;margin:0 0 8px;color:#333}.wpc .row{justify-content:flex-end}.wpc a.mini{text-decoration:none;display:inline-flex;align-items:center}
 a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px;padding:3px 10px;text-decoration:none;font-weight:600;cursor:grab;vertical-align:middle;margin-left:4px}
 .secr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed var(--ui-line)}.secr span{display:flex;gap:4px}
@@ -499,7 +500,7 @@ html.dark .thumb{background-color:#333}
 .pdesc p{margin:0 0 .7em;text-align:justify}
 .psrc{position:absolute;left:0;right:0;bottom:0;font-size:.72em;color:var(--mute);line-height:1.4;border-top:1px solid var(--line);padding-top:.35em}.place .body.hassrc{padding-bottom:2em}
 .place .body.hasnotes{display:flex;flex-direction:column}.pnotes{flex:1;min-height:90px;display:flex;flex-direction:column;margin:.4em 0 .6em}.pnh{font-size:.8em;color:var(--c);font-weight:700;letter-spacing:.1em}.plines{flex:1;background:repeating-linear-gradient(to bottom,transparent 0 27px,var(--line) 27px 28px)}
-.credits .chint{font-size:.85em;color:var(--mute);margin:0 0 1em}.crl{list-style:none;padding:0;margin:0;font-size:.82em;line-height:1.55}.crl li{margin:0 0 .7em}.cru{font-size:.9em;color:var(--mute);word-break:break-all}
+.credits .chint{font-size:.85em;color:var(--mute);margin:0 0 1em}.crh{font-size:.85em;color:var(--c);margin:.6em 0 .4em;letter-spacing:.1em}.crlic{font-size:.72em;color:var(--mute);margin-top:1em;word-break:break-all}.crl{list-style:none;padding:0;margin:0;font-size:.82em;line-height:1.55}.crl li{margin:0 0 .7em}.cru{font-size:.9em;color:var(--mute);word-break:break-all}
 .pinfo{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:.6em 0;font-size:.9em;border-top:1px solid var(--line);padding-top:.6em}
 .pinfo dt{color:var(--c);font-weight:700;white-space:nowrap}
 .pinfo dd{margin:0}
@@ -776,7 +777,7 @@ function normalize(t){
     gift:{to:str(t.gift?.to),from:str(t.gift?.from),letter:str(t.gift?.letter)},
     days:(Array.isArray(t.days)?t.days:[]).map(d=>({id:str(d?.id)||uid(),title:str(d?.title),area:str(d?.area),photo:okImg(d?.photo),photoPos:okPos(d?.photoPos),planB:str(d?.planB),planBOn:!!d?.planBOn,done:(Array.isArray(d?.done)?d.done:[]).map(String).slice(0,200),memText:str(d?.memText),memPhotos:(Array.isArray(d?.memPhotos)?d.memPhotos:[]).map(okImg).filter(Boolean),
       items:(Array.isArray(d?.items)?d.items:[]).map(i=>({id:str(i?.id)||uid(),time:str(i?.time),text:str(i?.text),placeId:str(i?.placeId),stayId:str(i?.stayId),transport:str(i?.transport),note:str(i?.note),secret:!!i?.secret,reserve:['need','done'].includes(i?.reserve)?i.reserve:'',resNo:str(i?.resNo)}))})),
-    places:(Array.isArray(t.places)?t.places:[]).map(p=>({id:str(p?.id)||uid(),name:str(p?.name),area:str(p?.area),cat:CATS.some(c=>c[0]===p?.cat)?p.cat:'',photo:okImg(p?.photo),photoPos:okPos(p?.photoPos),mapUrl:okUrl(p?.mapUrl),book:p?.book==='yes'||p?.book==='no'?p.book:'',descSrc:(o=>o&&typeof o==='object'&&okUrl(o.url)?{site:str(o.site),title:str(o.title),url:okUrl(o.url),license:str(o.license)||'CC BY-SA 4.0',at:str(o.at)}:null)(p?.descSrc),lat:isFinite(+p?.lat)&&p?.lat!==''&&p?.lat!=null?+p.lat:null,lng:isFinite(+p?.lng)&&p?.lng!==''&&p?.lng!=null?+p.lng:null,desc:str(p?.desc),hours:str(p?.hours),price:str(p?.price),address:str(p?.address),tips:str(p?.tips),jaName:str(p?.jaName),jaAddress:str(p?.jaAddress),closed:(Array.isArray(p?.closed)?p.closed:[]).map(Number).filter(n=>n>=0&&n<=6)})),
+    places:(Array.isArray(t.places)?t.places:[]).map(p=>({id:str(p?.id)||uid(),name:str(p?.name),area:str(p?.area),cat:CATS.some(c=>c[0]===p?.cat)?p.cat:'',photo:okImg(p?.photo),photoPos:okPos(p?.photoPos),mapUrl:okUrl(p?.mapUrl),book:p?.book==='yes'||p?.book==='no'?p.book:'',descSrc:(o=>o&&typeof o==='object'&&okUrl(o.url)?{site:str(o.site),title:str(o.title),url:okUrl(o.url),license:str(o.license)||'CC BY-SA 4.0',at:str(o.at)}:null)(p?.descSrc),photoSrc:(o=>okImg(p?.photo)&&o&&typeof o==='object'&&okUrl(o.url)&&str(o.license)?{site:str(o.site)||'commons.wikimedia.org',title:str(o.title),url:okUrl(o.url),author:str(o.author),license:str(o.license),licenseUrl:okUrl(o.licenseUrl),at:str(o.at)}:null)(p?.photoSrc),lat:isFinite(+p?.lat)&&p?.lat!==''&&p?.lat!=null?+p.lat:null,lng:isFinite(+p?.lng)&&p?.lng!==''&&p?.lng!=null?+p.lng:null,desc:str(p?.desc),hours:str(p?.hours),price:str(p?.price),address:str(p?.address),tips:str(p?.tips),jaName:str(p?.jaName),jaAddress:str(p?.jaAddress),closed:(Array.isArray(p?.closed)?p.closed:[]).map(Number).filter(n=>n>=0&&n<=6)})),
     shops:(Array.isArray(t.shops)?t.shops:[]).map(s=>({id:str(s?.id)||uid(),name:str(s?.name),store:str(s?.store),price:str(s?.price),dayId:str(s?.dayId),photo:okImg(s?.photo),note:str(s?.note),bought:!!s?.bought})),
     stays:(Array.isArray(t.stays)?t.stays:[]).map(s=>({id:str(s?.id)||uid(),name:str(s?.name),photo:okImg(s?.photo),photoPos:okPos(s?.photoPos),address:str(s?.address),station:str(s?.station),phone:str(s?.phone),room:str(s?.room),booking:str(s?.booking),
       checkin:str(s?.checkin),cinTime:s?.cinTime==null?'15:00':str(s.cinTime),checkout:str(s?.checkout),coutTime:s?.coutTime==null?'11:00':str(s.coutTime),auto:s?.auto!==false,desc:str(s?.desc),note:str(s?.note),jaName:str(s?.jaName),jaAddress:str(s?.jaAddress),mapUrl:okUrl(s?.mapUrl),bookUrl:okUrl(s?.bookUrl),lat:isFinite(+s?.lat)&&s?.lat!==''&&s?.lat!=null?+s.lat:null,lng:isFinite(+s?.lng)&&s?.lng!==''&&s?.lng!=null?+s.lng:null})),
@@ -905,7 +906,8 @@ const placeLink=p=>p.mapUrl||mapsURL(placeQuery(p));
 const WP_UA='TravelBook/1.0 (https://github.com/Emberlin0631/travel-book)';
 const safeDecode=u=>{try{return decodeURI(u)}catch(e){return u}};
 const srcName=s=>/^zh\./.test(s.site)?'維基百科':/^ja\./.test(s.site)?'ウィキペディア':/^en\./.test(s.site)?'Wikipedia':(s.site||'來源');
-async function wpApi(lang,params){const u=`https://${lang}.wikipedia.org/w/api.php?origin=*&format=json&formatversion=2&`+new URLSearchParams(params);
+async function wpApi(lang,params){return mwApi(lang+'.wikipedia.org',params)}
+async function mwApi(host,params){const u=`https://${host}/w/api.php?origin=*&format=json&formatversion=2&`+new URLSearchParams(params);
   const r=await fetch(u,{headers:{'Api-User-Agent':WP_UA}});if(r.status===429)throw Object.assign(new Error('ratelimit'),{retry:Math.min(60,+r.headers.get('retry-after')||20)});if(!r.ok)throw new Error('http '+r.status);return r.json()}
 const wpNorm=s=>(s||'').toLowerCase().replace(/[\s・·‧\-–—()（）「」『』,，、.．]/g,'').replace(/臺/g,'台');
 function wpScore(name,title){const a=wpNorm(name),b=wpNorm(title.replace(/\s*[(（][^()（）]*[)）]\s*$/,''));if(!a||!b)return 0;if(a===b)return 1;if(a.includes(b)||b.includes(a))return .8;return 0}
@@ -940,6 +942,52 @@ async function wpFillMany(ids){const list=T.places.filter(p=>ids.has(p.id)&&!p.d
     catch(e){if(e.message==='ratelimit'){toast(`維基百科暫時限制查詢，已填 ${ok} 個；請等 ${e.retry} 秒後再按一次`);break}none++}
     await new Promise(r=>setTimeout(r,250))}
   unsure=list.length-ok-none;commit();toast(`維基百科：填了 ${ok} 個介紹${none?'，'+none+' 個找不到（多半是店家）':''}。只採用名稱完全對得上的條目；想看附近候選請到該景點按「找導言」`)}
+/* ---- Wikimedia Commons 景點照片 ----
+   座標附近（list=geosearch，照片座標多半是相機位置，所以只當加分）＋名稱搜尋（filetype:bitmap），
+   只收 CC0／公有領域／CC BY／CC BY-SA；NC、ND、GFDL-only、作者不明（非 CC0/PD）、標記肖像權限制的一律排除。
+   照片下載 1280px 縮圖後走 compress()，和自己上傳的照片一樣存進 IndexedDB；授權記在 places[].photoSrc。 */
+const CM='commons.wikimedia.org';
+const stripHtml=h=>{const d=document.createElement('div');d.innerHTML=String(h||'');return (d.textContent||'').replace(/\s+/g,' ').trim()};
+function cmLicense(m){const code=String(m.License?.value||'').toLowerCase(),short=String(m.LicenseShortName?.value||'');
+  if(/nc|nd/.test(code)||/\b(NC|ND)\b|NonCommercial|NoDerivs/i.test(short))return null;
+  if(/^cc0|^cc-zero/.test(code)||/^CC0/i.test(short))return {kind:'cc0',name:'CC0'};
+  if(/^pd|public.?domain/i.test(code)||/^(Public domain|PD)/i.test(short))return {kind:'pd',name:'公有領域'};
+  const m2=code.match(/^cc-by(-sa)?-([\d.]+)/)||short.match(/^CC BY(-SA)? ([\d.]+)/i);if(m2)return {kind:m2[1]?'by-sa':'by',name:`CC BY${m2[1]?'-SA':''} ${m2[2]}`};
+  return null}
+function cmCand(pg,name,ja,dist){const ii=(pg.imageinfo||[])[0];if(!ii||!ii.thumburl)return null;if(!/^image\/(jpeg|png|webp)$/.test(ii.mime||''))return null;if((ii.width||0)<800)return null;
+  const m=ii.extmetadata||{};const lic=cmLicense(m);if(!lic)return null;if(/personality/i.test(m.Restrictions?.value||''))return null;
+  const author=stripHtml(m.Artist?.value).slice(0,90);if(!author&&lic.kind!=='cc0'&&lic.kind!=='pd')return null;
+  const hay=wpNorm(pg.title+' '+stripHtml(m.ObjectName?.value)+' '+stripHtml(m.ImageDescription?.value).slice(0,400));
+  const hit=[name,ja].filter(Boolean).some(x=>{const n=wpNorm(x);return n.length>=2&&hay.includes(n)});
+  let score=(hit?1:0)+(dist!=null?(dist<150?.5:dist<400?.2:0):0)+(ii.width>=ii.height?.2:0);
+  return {title:pg.title,url:ii.descriptionurl||`https://${CM}/wiki/${encodeURIComponent(pg.title)}`,full:ii.thumburl,prev:/\/1280px-/.test(ii.thumburl)?ii.thumburl.replace('/1280px-','/330px-'):ii.thumburl,
+    w:ii.width,h:ii.height,author:author||'（作者不需標示）',license:lic.name,licenseUrl:okUrl(m.LicenseUrl?.value)||'',hit,dist,score}}
+const CM_II={prop:'imageinfo',iiprop:'url|size|mime|extmetadata',iiurlwidth:1280,iiextmetadatafilter:'License|LicenseShortName|LicenseUrl|Artist|ObjectName|ImageDescription|Restrictions'};
+async function cmSearch(p){const out=new Map();const add=(pg,dist)=>{const c=cmCand(pg,p.name,p.jaName,dist);if(!c)return;const o=out.get(c.title);if(!o||o.score<c.score)out.set(c.title,c)};
+  if(p.lat!=null&&p.lng!=null){const g=await mwApi(CM,{action:'query',list:'geosearch',gsnamespace:6,gscoord:`${p.lat}|${p.lng}`,gsradius:400,gslimit:30});const hits=(g.query?.geosearch||[]);
+    if(hits.length){const dist=Object.fromEntries(hits.map(h=>[h.title,h.dist]));const j=await mwApi(CM,{action:'query',titles:hits.map(h=>h.title).join('|'),...CM_II});(j.query?.pages||[]).forEach(pg=>add(pg,dist[pg.title]))}}
+  for(const q of [p.name,p.jaName&&p.jaName!==p.name?p.jaName:''].filter(Boolean)){if([...out.values()].filter(c=>c.hit).length>=6)break;
+    const j=await mwApi(CM,{action:'query',generator:'search',gsrnamespace:6,gsrsearch:`"${q.replace(/"/g,'')}" filetype:bitmap`,gsrlimit:20,...CM_II});(j.query?.pages||[]).forEach(pg=>add(pg,null))}
+  return [...out.values()].sort((a,b)=>b.score-a.score).slice(0,6)}
+async function cmFind(i){const p=T.places[i];if(!p||(!p.name&&p.lat==null)){toast('先填景點名稱');return}toast('正在 Wikimedia Commons 找照片…');
+  let list;try{list=await cmSearch(p)}catch(e){toast(e.message==='ratelimit'?`Wikimedia 暫時限制查詢，請等 ${e.retry} 秒再試`:'查詢失敗（'+e.message+'）');return}
+  if(!list.length){toast('找不到可以合法使用的照片——店家、小景點通常沒有；可以自己上傳，或用插畫');return}
+  const bg=document.createElement('div');bg.className='modal-bg cmw';
+  bg.innerHTML=`<div class="modal"><h3>Commons 照片：${esc(p.name)}</h3><p style="margin-bottom:8px">只列出可以印刷、分享的授權（CC0、公有領域、CC BY、CC BY-SA）。選用後作者與授權會印在景點頁底部和「圖文來源」頁。<b>標「不確定」的只是附近拍的</b>，請確認拍的是不是這個地方。</p>
+  <div class="cmg">${list.map((c,k)=>`<div class="cmc"><div class="cmi"><img src="${esc(c.prev)}" alt="" loading="lazy" referrerpolicy="no-referrer"></div><div class="cmt">${c.hit?'':'<span class="have">不確定</span> '}${esc(c.author)}<br><small>${esc(c.license)}${c.dist!=null?'・約 '+Math.round(c.dist)+' m':''}${c.w<c.h?'・直幅（會裁成橫的）':''}</small></div><div class="row"><a class="mini" href="${esc(c.url)}" target="_blank" rel="noopener">原頁</a><button class="mini" data-cm="${k}">用這張</button></div></div>`).join('')}</div>
+  <div class="row"><button class="btn" data-cm="x">取消</button></div></div>`;
+  bg.addEventListener('click',async e=>{const b=e.target.closest('[data-cm]');if(!b){if(e.target===bg)bg.remove();return}if(b.dataset.cm==='x'){bg.remove();return}
+    const c=list[+b.dataset.cm];b.disabled=true;b.textContent='下載中…';
+    try{const r=await fetch(c.full);if(!r.ok)throw new Error('http '+r.status);const v=await compress(await r.blob(),1400);
+      const q=T.places.find(x=>x.id===p.id);if(!q){bg.remove();return}q.photo=v;q.photoSrc={site:CM,title:c.title,url:c.url,author:c.author,license:c.license,licenseUrl:c.licenseUrl,at:iso(new Date())};bg.remove();commit();toast('已放上照片；作者與授權會自動印在頁底和圖文來源頁')}
+    catch(err){b.disabled=false;b.textContent='用這張';toast('下載失敗（'+(err&&err.message||'無法讀取')+'），換一張試試')}});
+  document.body.appendChild(bg)}
+/* 頁底來源行：照片印在第一頁、文字印在最後一頁（只有一頁就兩個都印） */
+function srcLine(p,first,end){const a=[];
+  if(first&&p.photo&&p.photoSrc)a.push(`照片：${esc(p.photoSrc.author)}／Wikimedia Commons，${esc(p.photoSrc.license)}`);
+  if(end&&p.descSrc&&p.desc.trim())a.push(`文字：${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉，${esc(p.descSrc.license)}`);
+  return a.length?`<div class="psrc">${a.join('　')}（詳見圖文來源頁）</div>`:''}
+function creditList(t,hidden){const L=[];t.places.forEach(p=>{if(hidden&&hidden.has(p.id))return;if(p.photo&&p.photoSrc)L.push({name:p.name,kind:'photo',src:p.photoSrc});if(p.descSrc&&p.desc.trim())L.push({name:p.name,kind:'text',src:p.descSrc})});return L}
 /* ---- Google 地圖「儲存清單」匯入 ----
    清單頁本身是 JS 動態載入，且 Google 的清單 API 沒有 CORS，所以瀏覽器裡抓不到；
    由 worker.js（Cloudflare Worker）代為讀取並回傳精簡 JSON。沒有 Worker 時，退而求其次解析使用者從清單頁全選複製的文字（只有名稱與類別）。 */
@@ -1198,7 +1246,7 @@ function buildPages(t,splits={},mode={}){
     notes(){if(!mem&&t.opts.notesPage)pages.push({k:'notes'})}};
   pages.push({k:'cover'});pushC('cover');
   for(const k of secOrder(t)){if(off.has(k)){if(k==='overview')pushC('overview');else if(k==='info')pushC('info');else if(k==='places')pushC('places');else if(k==='days')days.forEach(d=>pushC('day:'+d.id));continue}S[k]()}
-  {const L=t.places.filter(p=>p.descSrc&&p.desc.trim()&&!hidden.has(p.id)).map(p=>({name:p.name,src:p.descSrc}));if(L.length)pages.push({k:'credits',list:L})}
+  {const L=creditList(t,hidden);if(L.length)pages.push({k:'credits',list:L})}
   pushC('end');
   for(let ix=pages.length-1;ix>=0;ix--){const pg=pages[ix],key=txKey(pg);let sp=key&&splits[key];if(!sp)continue;
     {const N=textChunks(txText(t,key)).length,sum=sp.reduce((a,b)=>a+b,0);if(sum!==N){sp=sp.slice();sp[sp.length-1]+=N-sum;if(sp[sp.length-1]<1)sp=[N]}}let from=0;
@@ -1279,9 +1327,10 @@ function renderPages0(t,splits,mode={}){
     const info=[['營業時間',p.hours],['公休',p.closed.length?p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'):''],['費用',p.price],['地址',p.address],['日文地址',p.jaAddress]].filter(x=>x[1]).map(x=>`<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join('');
     const pq=t.opts.qr&&p.name?qrSVG(placeLink(p)):'';
     const pil=!p.photo&&useIll,tx=pg.tx,cont=tx&&!tx.first,end=!tx||tx.last,txa=tx?` data-tx="p:${p.id}" data-from="${tx.from}"`:` data-tx="p:${p.id}"`;
-    if(cont)return `<section class="pg place txc"${txa}><div class="body fit${end&&p.descSrc?' hassrc':''}"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}<span class="cont">（續）</span></h2><div class="pdesc">${txBody(pg,p.desc)}</div>${end&&(info||pq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}${end&&p.descSrc?`<div class="psrc">文字：${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉，${esc(p.descSrc.license)}（詳見圖文來源頁）</div>`:''}</div>${pn(no)}</section>`;
-    return `<section class="pg place ${p.photo?'has-img':pil?'has-ill':''}"${txa}>${p.photo?`<div class="pimg"${bg(p.photo,p.photoPos)}></div>`:pil?`<div class="pill">${scene(placeCat(p),season,559,230,p.name.length*7+5)}</div>`:''}<div class="body fit${p.desc.trim()?'':' hasnotes'}${end&&p.descSrc?' hassrc':''}"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}</h2>${p.jaName&&p.jaName!==p.name?`<div class="pja">${esc(p.jaName)}</div>`:''}${v?`<div class="pvisit">安排在 ${v}</div>`:''}${p.desc.trim()?`<div class="pdesc">${txBody(pg,p.desc)}</div>`:`<div class="pnotes"><div class="pnh">現場筆記</div><div class="plines"></div></div>`}${end&&(info||pq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}${end&&p.descSrc?`<div class="psrc">文字：${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉，${esc(p.descSrc.license)}（詳見圖文來源頁）</div>`:''}</div>${pn(no)}</section>`}
-  case'credits':return `<section class="pg credits"><div class="body"><div class="ph"><span class="ph-en">CREDITS</span><h2>圖文來源</h2></div><p class="chint">以下文字取自維基百科，依 CC BY-SA 4.0 授權使用，部分經節錄。</p><ul class="crl">${pg.list.map(x=>`<li><b>${esc(x.name)}</b>：${esc(srcName(x.src))}〈${esc(x.src.title)}〉，${esc(x.src.license)}<br><span class="cru">${esc(safeDecode(x.src.url))}</span></li>`).join('')}</ul></div>${pn(no)}</section>`;
+    if(cont)return `<section class="pg place txc"${txa}><div class="body fit${srcLine(p,false,end)?' hassrc':''}"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}<span class="cont">（續）</span></h2><div class="pdesc">${txBody(pg,p.desc)}</div>${end&&(info||pq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}${srcLine(p,!cont,end)}</div>${pn(no)}</section>`;
+    return `<section class="pg place ${p.photo?'has-img':pil?'has-ill':''}"${txa}>${p.photo?`<div class="pimg"${bg(p.photo,p.photoPos)}></div>`:pil?`<div class="pill">${scene(placeCat(p),season,559,230,p.name.length*7+5)}</div>`:''}<div class="body fit${p.desc.trim()?'':' hasnotes'}${srcLine(p,true,end)?' hassrc':''}"><div class="ptag">SPOT${p.area?' · '+esc(p.area):''}</div><h2>${esc(p.name||'未命名景點')}</h2>${p.jaName&&p.jaName!==p.name?`<div class="pja">${esc(p.jaName)}</div>`:''}${v?`<div class="pvisit">安排在 ${v}</div>`:''}${p.desc.trim()?`<div class="pdesc">${txBody(pg,p.desc)}</div>`:`<div class="pnotes"><div class="pnh">現場筆記</div><div class="plines"></div></div>`}${end&&(info||pq)?`<div class="pqrrow">${info?`<dl class="pinfo">${info}</dl>`:'<div style="flex:1"></div>'}${pq?`<div class="pqr">${pq}<span>掃描開地圖</span></div>`:''}</div>`:''}${end&&p.tips?`<div class="ptips"><b>小提醒</b>${nl(p.tips)}</div>`:''}${srcLine(p,!cont,end)}</div>${pn(no)}</section>`}
+  case'credits':{const ph=pg.list.filter(x=>x.kind==='photo'),tx=pg.list.filter(x=>x.kind==='text');const lics=[...new Map(ph.filter(x=>x.src.licenseUrl).map(x=>[x.src.license,x.src.licenseUrl])).entries()];if(tx.length)lics.push(['CC BY-SA 4.0','https://creativecommons.org/licenses/by-sa/4.0/']);
+    return `<section class="pg credits"><div class="body fit"><div class="ph"><span class="ph-en">CREDITS</span><h2>圖文來源</h2></div><p class="chint">${[ph.length?'照片取自 Wikimedia Commons，為配合版面經過裁切':'',tx.length?'文字取自維基百科，部分經過節錄':''].filter(Boolean).join('；')}。各項依所標示的授權使用。</p>${ph.length?`<h4 class="crh">照片</h4><ul class="crl">${ph.map(x=>`<li><b>${esc(x.name)}</b>：${esc(x.src.author)}，〈${esc(x.src.title.replace(/^File:/,''))}〉，${esc(x.src.license)}<br><span class="cru">${esc(safeDecode(x.src.url))}</span></li>`).join('')}</ul>`:''}${tx.length?`<h4 class="crh">文字</h4><ul class="crl">${tx.map(x=>`<li><b>${esc(x.name)}</b>：${esc(srcName(x.src))}〈${esc(x.src.title)}〉，${esc(x.src.license)}<br><span class="cru">${esc(safeDecode(x.src.url))}</span></li>`).join('')}</ul>`:''}${lics.length?`<p class="crlic">授權條款：${[...new Map(lics).entries()].map(([n,u])=>`${esc(n)} ${esc(u)}`).join('　')}</p>`:''}</div>${pn(no)}</section>`}
   case'plist':{const rows=pg.list.map(p=>{const v=(visits[p.id]||[]).map(i=>'DAY.'+(i+1)).join('、');const pq=t.opts.qr&&p.name?qrSVG(placeLink(p)):'';
       const info=[p.hours&&'營業 '+p.hours,p.closed.length&&'公休 '+p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'),p.price].filter(Boolean).join('｜');
       return `<div class="pl1"><div class="pl1t"><b>${esc(p.name||'未命名景點')}</b>${p.area?`<small>${esc(p.area)}</small>`:''}${v?`<span class="pl1v">${v}</span>`:''}${info?`<div class="pl1i">${esc(info)}</div>`:''}${p.jaAddress||p.address?`<div class="pl1a">${esc(p.jaAddress||p.address)}</div>`:''}</div>${pq?`<div class="pl1q">${pq}</div>`:''}</div>`}).join('');
@@ -1470,7 +1519,7 @@ function edPlaces(){
     <div class="row">${fld('名稱','places.'+i+'.name','例：伏見稻荷大社')}${fld('地區','places.'+i+'.area','例：東山')}</div>
     <label class="f"><span>插圖分類</span><select data-k="places.${i}.cat"><option value="">自動判斷（目前：${CATS.find(c=>c[0]===detectCat(p.name+' '+p.area))[1]}）</option>${CATS.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('')}</select></label>
     <div class="row" style="margin-bottom:10px"><select data-plan="${i}" style="flex:1"><option value="">排進哪一天…</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(d.title)}</option>`).join('')}</select><button class="mini" data-act="planPlace" data-a="${i}">加入行程</button></div>
-    <div class="f"><span>照片</span>${photoIn('places.'+i+'.photo',p.photo)}${p.photo?posSel('places.'+i+'.photoPos',p.photoPos):''}</div>
+    <div class="f"><span>照片</span>${photoIn('places.'+i+'.photo',p.photo)}${p.photo?posSel('places.'+i+'.photoPos',p.photoPos):''}<div class="row" style="margin-top:6px;align-items:center;gap:8px"><button class="mini" data-act="cmFind" data-a="${i}">從 Wikimedia Commons 找照片</button><span class="hint" style="margin:0">${p.photoSrc?`目前：${esc(p.photoSrc.author)}／${esc(p.photoSrc.license)}，會自動標示`:'只列可印刷分享的授權；地標較找得到'}</span></div></div>
     ${fld('Google 地圖連結（選填，QR code 會直接用這個）','places.'+i+'.mapUrl','貼上 Google 地圖的分享連結')}
     ${area('介紹','places.'+i+'.desc','空一行就是新段落；留白的話，印出來會變成可以手寫的「現場筆記」',5)}<div class="row" style="margin:-6px 0 10px;align-items:center;gap:8px"><button class="mini" data-act="wpFind" data-a="${i}">從維基百科找導言</button><span class="hint" style="margin:0">地標較找得到，店家多半沒有；文字 CC BY-SA 4.0，會自動標示來源${p.descSrc?`。目前來源：${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉`:''}</span></div>
     <div class="row">${fld('營業時間','places.'+i+'.hours')}${fld('費用','places.'+i+'.price')}</div>
@@ -1714,7 +1763,7 @@ function digitalHTML(t){
   const mapA=(x,label='開地圖')=>`<a class="btn p" href="${esc(x.mapUrl||mapsURL(placeQuery(x)))}" target="_blank" rel="noopener">${label}</a>`;
   const drvB=x=>x.jaName||x.jaAddress||x.address?`<button class="btn" data-drv="${esc(JSON.stringify([x.jaName||x.name,x.jaAddress||x.address||'',x.name]))}">給司機看</button>`:'';
   const dl=rows=>{const r=rows.filter(x=>x[1]).map(x=>`<dt>${x[0]}</dt><dd>${x[2]?x[1]:esc(x[1])}</dd>`).join('');return r?`<dl>${r}</dl>`:''};
-  const placeBox=p=>`${p.photo?`<img class="ph" src="${p.photo}" alt="">`:''}${p.desc?`<div class="pd">${paras(p.desc)}${p.descSrc?`<div class="sub">文字：<a href="${esc(p.descSrc.url)}" target="_blank" rel="noopener">${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉</a>，${esc(p.descSrc.license)}</div>`:''}</div>`:''}${dl([['營業時間',p.hours],['公休',p.closed.length?p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'):''],['費用',p.price],['地址',p.address],['日文地址',p.jaAddress]])}${p.tips?`<div class="pd"><b>小提醒</b> ${nl(p.tips)}</div>`:''}<div class="acts">${mapA(p)}${drvB(p)}</div>`;
+  const placeBox=p=>`${p.photo?`<img class="ph" src="${p.photo}" alt="">${p.photoSrc?`<div class="sub" style="margin:-4px 0 8px">照片：${esc(p.photoSrc.author)}／<a href="${esc(p.photoSrc.url)}" target="_blank" rel="noopener">Wikimedia Commons</a>，${esc(p.photoSrc.license)}</div>`:''}`:''}${p.desc?`<div class="pd">${paras(p.desc)}${p.descSrc?`<div class="sub">文字：<a href="${esc(p.descSrc.url)}" target="_blank" rel="noopener">${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉</a>，${esc(p.descSrc.license)}</div>`:''}</div>`:''}${dl([['營業時間',p.hours],['公休',p.closed.length?p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'):''],['費用',p.price],['地址',p.address],['日文地址',p.jaAddress]])}${p.tips?`<div class="pd"><b>小提醒</b> ${nl(p.tips)}</div>`:''}<div class="acts">${mapA(p)}${drvB(p)}</div>`;
   const stayBox=s=>`${s.photo?`<img class="ph" src="${s.photo}" alt="">`:''}${dl([['入住',s.checkin?md(s.checkin)+'（'+wk(s.checkin)+'）'+(s.cinTime?' '+s.cinTime:''):''],['退房',s.checkout?md(s.checkout)+'（'+wk(s.checkout)+'）'+(s.coutTime?' '+s.coutTime:''):''],['地址',s.address],['日文地址',s.jaAddress],['最近車站',s.station],['電話',s.phone?`<a href="tel:${esc(s.phone.replace(/[^\d+]/g,''))}">${esc(s.phone)}</a>`:'',1],['房型',s.room],['訂房代號',s.booking]])}${s.desc?`<div class="pd">${paras(s.desc)}</div>`:''}${s.note?`<div class="pd"><b>小提醒</b> ${nl(s.note)}</div>`:''}<div class="acts">${mapA(s)}${drvB(s)}</div>`;
   const days=Array.from({length:n},(_,i)=>{const d=t.days[i],date=dayDate(t,i),st=stayFor(t,date),sh=t.shops.filter(x=>x.dayId===d.id&&x.name);
     const its=dayEntries(t,i).map(e=>{if(e.auto){const s=t.stays.find(x=>x.id===e.stayId);return `<div class="it"><div class="tm">${esc(e.time)||'—'}</div><div><div class="nm">${esc(e.text)}</div><details><summary>住宿資訊</summary>${stayBox(s)}</details></div></div>`}
@@ -1746,7 +1795,7 @@ ${places?`<section id="places"><div class="dh"><h2>景點</h2></div>${places}</s
 ${shops?`<section id="shops"><div class="dh"><h2>購物清單</h2></div><div class="card">${shops}</div><p class="foot cknote"></p></section>`:''}
 ${pack?`<section id="pack"><div class="dh"><h2>打包清單</h2></div><div class="card">${pack}</div><p class="foot cknote"></p></section>`:''}
 ${emg?`<section id="emg"><div class="dh"><h2>緊急資訊</h2></div>${emg}</section>`:''}
-${(L=>L.length?`<section id="credits"><div class="dh"><h2>圖文來源</h2></div><div class="card"><p class="sub" style="margin:0 0 8px">以下文字取自維基百科，依 CC BY-SA 4.0 授權使用，部分經節錄。</p>${L.map(p=>`<div class="it"><div></div><div><b>${esc(p.name)}</b>：<a href="${esc(p.descSrc.url)}" target="_blank" rel="noopener">${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉</a>，${esc(p.descSrc.license)}</div></div>`).join('')}</div></section>`:'')(places0.filter(p=>p.descSrc&&p.desc.trim()))}
+${(L=>L.length?`<section id="credits"><div class="dh"><h2>圖文來源</h2></div><div class="card"><p class="sub" style="margin:0 0 8px">照片取自 Wikimedia Commons（經裁切）、文字取自維基百科（經節錄），各依所標示的授權使用。</p>${L.map(x=>`<div class="it"><div class="tm">${x.kind==='photo'?'照片':'文字'}</div><div><b>${esc(x.name)}</b>：${x.kind==='photo'?`${esc(x.src.author)}，<a href="${esc(x.src.url)}" target="_blank" rel="noopener">${esc(x.src.title.replace(/^File:/,''))}</a>`:`<a href="${esc(x.src.url)}" target="_blank" rel="noopener">${esc(srcName(x.src))}〈${esc(x.src.title)}〉</a>`}，${x.src.licenseUrl?`<a href="${esc(x.src.licenseUrl)}" target="_blank" rel="noopener">${esc(x.src.license)}</a>`:esc(x.src.license)}</div></div>`).join('')}</div></section>`:'')(creditList({places:places0}))}
 <p class="foot" style="text-align:center">用旅冊製作・沒有網路也能看</p></main>
 <div class="drv" id="drv"><button class="btn" id="drvx">關閉</button><div class="l">${esc(ctyOf(t).taxi[0])}</div><div class="j" id="drvj"></div><div class="a" id="drva"></div><div class="z" id="drvz"></div></div>
 <script>(function(){var G=${data};
@@ -2100,7 +2149,7 @@ ${open}<div class="a4wrap">${im.html}</div></div>
 function onField(e){
   const el=e.target,edEl=el.closest&&el.closest('#editor');if(!edEl||edEl.dataset.tid!==T.id)return;if(el.dataset.bsel!=null)return;/* a change event fired while the editor is being re-rendered for another trip must not write into it */
   if(el.dataset.photos){if(e.type==='change'&&el.files.length){const arr=getPath(T,el.dataset.photos);Promise.all([...el.files].slice(0,12).map(f=>compress(f).catch(()=>null))).then(vs=>{vs.filter(Boolean).forEach(v=>arr.push(v));commit()})}return}
-  if(el.dataset.photo){if(e.type==='change'&&el.files[0]){compress(el.files[0],/^custom\./.test(el.dataset.photo)?2000:1400).then(v=>{setPath(T,el.dataset.photo,v);commit()}).catch(()=>toast('無法讀取這張圖片，請換成 JPG 或 PNG'))}return}
+  if(el.dataset.photo){if(e.type==='change'&&el.files[0]){compress(el.files[0],/^custom\./.test(el.dataset.photo)?2000:1400).then(v=>{setPath(T,el.dataset.photo,v);if(/^places\.\d+\.photo$/.test(el.dataset.photo))setPath(T,el.dataset.photo+'Src',null);commit()}).catch(()=>toast('無法讀取這張圖片，請換成 JPG 或 PNG'))}return}
   if(el.dataset.sec){const k=el.dataset.sec;T.opts.hide=el.checked?T.opts.hide.filter(x=>x!==k):[...new Set([...T.opts.hide,k])];touch(true);return}
   if(el.dataset.pcat){const k=el.dataset.pcat;T.opts.phraseCats=el.checked?[...new Set([...T.opts.phraseCats,k])]:T.opts.phraseCats.filter(x=>x!==k);touch(true);return}
   if(el.dataset.closed!=null){const p=T.places[+el.dataset.closed],w=+el.dataset.w;p.closed=el.checked?[...new Set([...p.closed,w])]:p.closed.filter(x=>x!==w);touch(true);return}
@@ -2140,7 +2189,7 @@ function onAct(e){
     case'tab':tab=a;renderEditor();$('#editor').scrollTop=0;{const tf=TAB_FOLLOW[a];if(tf)wantFollow(tf[0],tf[1]);else followOpen()};return;
     case'tpl':T.theme.template=a;{const tp=tplOf(T);tp.onSelect&&tp.onSelect(T)}break;
     case'color':T.theme.color=a;break;
-    case'rmPhoto':setPath(T,a,null);break;
+    case'rmPhoto':setPath(T,a,null);if(/^places\.\d+\.photo$/.test(a))setPath(T,a+'Src',null);break;
     case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);wantFollow('day',T.days[i].id);break;
     case'delItem':T.days[i].items.splice(j,1);break;
     case'up':move(T.days[i].items,j,-1);break;
@@ -2156,6 +2205,7 @@ function onAct(e){
     case'rmMem':T.days[i].memPhotos.splice(j,1);break;
     case'bulkTog':BULK=!BULK;BULKSEL.clear();renderEditor();return;
     case'wpFind':wpFindOne(i);return;
+    case'cmFind':cmFind(i);return;
     case'bulkWp':{if(!BULKSEL.size){toast('先勾選景點');return}wpFillMany(new Set(BULKSEL));return}
     case'bulkAll':T.places.forEach(p=>BULKSEL.add(p.id));renderEditor();return;
     case'bulkNone':BULKSEL.clear();renderEditor();return;
