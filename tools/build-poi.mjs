@@ -31,10 +31,13 @@ const JP = [['hokkaido','北海道','北海道'],['aomori','青森県','青森�
   ['kumamoto','熊本県','熊本縣'],['oita','大分県','大分縣'],['miyazaki','宮崎県','宮崎縣'],['kagoshima','鹿児島県','鹿兒島縣'],['okinawa','沖縄県','沖繩縣']];
 export const REGIONS = JP.map(([id, ja, zh]) => ({ id, name: ja, zh, country: 'jp', area: `["name"="${ja}"]["boundary"="administrative"]["admin_level"="4"]` }));
 
-// 一個縣分三次查（餐飲／店家／其他）。查不動（伺服器忙、逾時、記憶體不夠）時自動把範圍切成四塊再查，最多切 4 層
+// 一個縣分四次查（餐飲／店家／景點住宿車站／自然）。查不動（伺服器忙、逾時、記憶體不夠）時自動把範圍切成四塊再查，最多切 4 層
 const F = [['nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"]["name"]'], ['nwr["shop"]["name"]'],
   ['nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park|hotel|hostel|guest_house)$"]["name"]', 'nwr["amenity"~"^(place_of_worship|marketplace)$"]["name"]',
-   'nwr["leisure"~"^(park|garden)$"]["name"]', 'nwr["railway"="station"]["name"]', 'nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"]']];
+   'nwr["leisure"~"^(park|garden)$"]["name"]', 'nwr["railway"="station"]["name"]', 'nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"]'],
+  // 自然景點（湖、瀑布、山、溪谷、海灘、島、國立公園…）只收有 Wikidata 的，避免一堆沒名氣的池塘、小山
+  ['nwr["natural"~"^(water|waterfall|peak|volcano|mountain_range|valley|gorge|beach|bay|cape|cliff|rock|hot_spring|spring|wetland)$"]["name"]["wikidata"]', 'nwr["waterway"="waterfall"]["name"]["wikidata"]',
+   'nwr["place"~"^(island|islet|archipelago)$"]["name"]["wikidata"]', 'nwr["boundary"~"^(national_park|protected_area)$"]["name"]["wikidata"]']];
 // 宣告的 timeout 越大，伺服器越晚排到；180 秒以內優先權比較高
 export const query = (area, f, bb) => `[out:json][timeout:180];area${area}->.a;(${f.map(x => `${x}(area.a)${bb ? `(${bb.map(n => n.toFixed(4)).join(',')})` : ''};`).join('')});out center tags;`;
 export const queries = area => F.map(f => query(area, f));
@@ -54,10 +57,10 @@ export function catOf(t) {
   if (/^(restaurant|fast_food|food_court|bar|pub)$/.test(t.amenity || '')) return 'food';
   if (/^(cafe|ice_cream)$/.test(t.amenity || '') || /^(confectionery|bakery|pastry|tea|coffee|chocolate)$/.test(t.shop || '')) return 'cafe';
   if (t.shop || t.amenity === 'marketplace') return 'shop';
-  if (t.leisure || t.tourism === 'viewpoint') return 'nature';
+  if (t.leisure || t.tourism === 'viewpoint' || t.natural || t.waterway || t.place || t.boundary) return 'nature';
   return 'city';
 }
-const typeOf = t => t.railway ? 'station' : t.tourism || t.amenity || (t.shop ? 'shop:' + t.shop : '') || t.leisure || t.historic || '';
+const typeOf = t => t.railway ? 'station' : t.tourism || t.amenity || (t.shop ? 'shop:' + t.shop : '') || t.leisure || t.historic || t.natural || t.waterway || t.place || t.boundary || '';
 
 let MAP = null;
 async function cjk() { if (!MAP) MAP = JSON.parse(await fs.readFile(path.join(ROOT, 'tools', 'cjk-map.json'), 'utf8')); return MAP; }
@@ -172,7 +175,7 @@ export async function compact(region, elements, wd = {}) {
 }
 
 async function buildOne(region) {
-  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 3 次，大縣可能要 10 分鐘以上）…`);
+  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 4 次，大縣可能要 10 分鐘以上）…`);
   const bb = await bboxOf(region.area);
   const seen = new Set(), els = [];
   for (const e of await fetchRegion(region.area, bb)) { const k = e.type + e.id; if (!seen.has(k)) { seen.add(k); els.push(e); } } // 切塊時邊界上的會重複

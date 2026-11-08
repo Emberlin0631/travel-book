@@ -68,3 +68,15 @@ test('Overpass：伺服器逾時就換台，整塊太大就切四塊，結果不
   // 三類 × 四塊（被回不完整的那幾塊會再切小）——每類至少覆蓋四個象限
   for (const [la, lo] of [[0, 0], [0, 1], [1, 0], [1, 1]]) assert.ok(els.some(e => Math.floor(e.lat) === la && Math.floor(e.lon) === lo));
 });
+
+test('自然景點：湖、瀑布、島、國立公園歸「自然」，細類保留', async () => {
+  const { compact, queries } = await import('../tools/build-poi.mjs');
+  assert.equal(catOf({ natural: 'water', water: 'lake' }), 'nature');
+  assert.equal(catOf({ waterway: 'waterfall' }), 'nature');
+  assert.equal(catOf({ place: 'island' }), 'nature');
+  const q = queries('["name"="青森県"]');
+  assert.equal(q.length, 4);
+  assert.match(q[3], /natural"~"\^\(water\|waterfall\|peak.*\["wikidata"\]\(area\.a\)/);
+  const out = await compact({ id: 't', name: 'T', country: 'jp' }, [E({ name: '十和田湖', natural: 'water', wikidata: 'Q1' }, 40.46, 140.88, 'relation')]);
+  assert.equal(out.rows[0][6], 'nature'); assert.equal(out.rows[0][7], 'water');
+});
