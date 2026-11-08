@@ -793,8 +793,8 @@ function artOptions(id){return [['auto','自動（依目的地）'],['photo','�
 const ART={img:{},failed:new Set(),busy:{}};
 /* 粉彩插畫的底色：封面字用同色系深色，換主題色也不會出現藍底紅字 */
 /* 物件太低會壓到下方中文標題：往上移幾 px（頁面高 794），空出來的地方用底色補 */
-const ARTUP={'pastel-kyoto':110};
-const ARTBG={'pastel-nagoya':'#f3d0d9','pastel-kyoto':'#f6d0c6','pastel-osaka':'#fce4ab','pastel-tokyo':'#bcd8ee','pastel-hokkaido':'#ded1ec','pastel-okinawa':'#bee5de','pastel-nara':'#dae4c6','pastel-fukuoka':'#f2d6b7','pastel-japan':'#cfdfec'};
+const ARTUP={};
+const ARTBG={'pastel-nagoya':'#f3d0d9','pastel-kyoto':'#f6d1c7','pastel-osaka':'#fce4ab','pastel-tokyo':'#bcd8ee','pastel-hokkaido':'#ded1ec','pastel-okinawa':'#bee5de','pastel-nara':'#dae4c6','pastel-fukuoka':'#f2d6b7','pastel-japan':'#cfdfec'};
 /* 依行程猜城市：建立行程時選的熱門城市 → 都道府縣 → 標題文字；都沒有但在日本 → 日本通用 */
 function artCity(t){const ks=Object.keys(CVART_ZH).filter(k=>k!=='japan');
   for(const c of t.cities||[]){const k=ks.find(k=>CVART_ZH[k]===c);if(k)return k}
