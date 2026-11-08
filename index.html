@@ -191,6 +191,7 @@ a.bmk{display:inline-block;background:var(--ui-acc);color:#fff;border-radius:6px
 .memthumbs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.memthumbs .thumb{position:relative;width:64px;height:48px}.memthumbs .thumb .mini{position:absolute;top:-6px;right:-6px;padding:0 5px;font-size:10px}
 .used{font-size:12px;color:var(--ui-acc);margin:-4px 0 10px}
 .used.no{color:var(--ui-mute)}
+.rgw{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}.rgc{border:1px solid var(--ui-line);background:#fff;border-radius:16px;padding:5px 12px;font-size:13px;cursor:pointer}.rgc.on{background:var(--ui-acc);border-color:var(--ui-acc);color:#fff;font-weight:700}.rgh{font-size:12px;font-weight:700;color:var(--ui-acc);margin-top:4px}.rgall summary{cursor:pointer;font-size:13px;color:var(--ui-acc);margin:4px 0}.rgsum{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rgp .modal{max-width:560px}
 .wsres{margin-top:6px}.wsh{font-size:12px;font-weight:700;color:var(--ui-acc);margin:8px 0 2px}.wsr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--ui-line)}.wsr small{color:var(--ui-mute,#888);margin-left:4px}.wsr .s{font-size:12px;color:var(--ui-mute,#888)}
 .filebtn{display:inline-block;cursor:pointer;margin-top:8px}.gchip.auto{border-style:dashed;opacity:.8}
 .gchip{font-style:normal;font-size:11px;color:var(--ui-acc);border:1px solid var(--ui-line);border-radius:4px;padding:0 4px}
@@ -858,7 +859,7 @@ function normalize(t){
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
       coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,placeSort:t.opts?.placeSort==='list'?'list':'visit',autoGroup:t.opts?.autoGroup!==false,flightCard:t.opts?.flightCard!==false,detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
-    packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
+    packing:str(t.packing),rate:str(t.rate),cities:(Array.isArray(t.cities)?t.cities:[]).filter(c=>HOT.some(h=>h[0]===c)).slice(0,12),regions:(Array.isArray(t.regions)?t.regions:[]).filter(x=>REGS.some(r=>r[0]===x)).slice(0,12),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
     pos:(o=>{const r={};if(o&&typeof o==='object')Object.entries(o).slice(0,300).forEach(([k,v])=>{if(Array.isArray(v)&&v.length===2&&v.every(n=>isFinite(+n))){const x=Math.max(-900,Math.min(900,Math.round(+v[0]))),y=Math.max(-900,Math.min(900,Math.round(+v[1])));if(x||y)r[String(k).slice(0,120)]=[x,y]}});return r})(t.pos),
@@ -1081,13 +1082,17 @@ async function poiIndex(){if(POI.idx)return POI.idx;try{const r=await fetch('poi
 async function poiNorm(){if(POI.norm)return POI.norm;const j=await (await fetch('poi/norm.json')).json();const mp=p=>{const A=[...p[0]],B=[...p[1]];return new Map(A.map((c,i)=>[c,B[i]]))};POI.norm={jp:mp(j.jp2t),ts:mp(j.t2s)};return POI.norm}
 const kata2hira=s=>s.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
 function pkey(s,N){s=String(s||'').normalize('NFKC').toLowerCase();let o='';for(const ch of s){const a=N.jp.get(ch)??ch;o+=N.ts.get(a)??a}return kata2hira(o).replace(/[\s・·･\-_'"’.,，、。()（）「」『』【】\[\]&＆!！?？~〜]/g,'')}
-function poiPick(t,idx){const pts=[...t.places,...t.stays].filter(p=>p.lat!=null);const inB=(r,p)=>r.bbox&&p.lat>=r.bbox[0]-.05&&p.lat<=r.bbox[2]+.05&&p.lng>=r.bbox[1]-.05&&p.lng<=r.bbox[3]+.05;
-  const text=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.area+' '+p.address),...t.stays.map(x=>x.name+' '+x.address)].join(' ');
-  /* 行程點 60 公里內的城市也載入：住京都、大阪的人常當天來回奈良、神戶 */const near=(r,p)=>r.bbox&&distKm(p.lat,p.lng,(r.bbox[0]+r.bbox[2])/2,(r.bbox[1]+r.bbox[3])/2)<60;
-  let L=idx.filter(r=>pts.some(p=>inB(r,p)||near(r,p))||text.includes(r.name.replace(/市$/,'')));if(!L.length)L=idx.filter(r=>!t.country||r.country===t.country);return L}
-function poiRegion(r,N){if(POI.reg[r.id])return Promise.resolve(POI.reg[r.id]);if(!POI.load[r.id])POI.load[r.id]=fetch(r.file).then(x=>x.json()).then(j=>{const rows=j.rows.map(a=>({a,reg:j.name,t:String(a[7]||'').replace(/^shop:/,''),k:[a[0],a[1],a[2],a[3]].filter(Boolean).map(x=>pkey(x,N)),k2:String(a[12]||'').split(';').filter(Boolean).map(x=>pkey(x,N))}));POI.reg[r.id]=rows;return rows}).catch(e=>{delete POI.load[r.id];throw e});return POI.load[r.id]}
+/* 要載入哪些地區：行程選的目的地＋行程地點所在的地區；兩者都沒有就不載入（全日本太大），請使用者先選目的地。
+   第二層 poiNear：選定地區旁邊、或行程地點 30 公里內的地區，只在第一層找不到好結果時才載入（住京都也能搜到奈良東大寺） */
+function poiPick(t,idx){const pts=[...t.places,...t.stays].filter(p=>p.lat!=null);const inB=(r,p,m=0)=>r.bbox&&p.lat>=r.bbox[0]-m&&p.lat<=r.bbox[2]+m&&p.lng>=r.bbox[1]-m&&p.lng<=r.bbox[3]+m;
+  const want=new Set(t.regions||[]);return idx.filter(r=>want.has(r.id)||pts.some(p=>inB(r,p)))}
+function poiNear(t,idx,base){const pts=[...t.places,...t.stays].filter(p=>p.lat!=null),ids=new Set(base.map(r=>r.id)),m=.3;
+  const ov=(a,b)=>a.bbox&&b.bbox&&a.bbox[0]-m<=b.bbox[2]&&b.bbox[0]-m<=a.bbox[2]&&a.bbox[1]-m<=b.bbox[3]&&b.bbox[1]-m<=a.bbox[3];
+  return idx.filter(r=>!ids.has(r.id)&&(base.some(b=>ov(r,b))||pts.some(p=>r.bbox&&p.lat>=r.bbox[0]-m&&p.lat<=r.bbox[2]+m&&p.lng>=r.bbox[1]-m&&p.lng<=r.bbox[3]+m)))}
+function poiRegion(r,N){if(POI.reg[r.id])return Promise.resolve(POI.reg[r.id]);if(!POI.load[r.id])POI.load[r.id]=fetch(r.file).then(x=>x.json()).then(j=>{const rg=String(r.zh||j.name||'').replace(/(?<=..)[都府縣県市]$/,'');const rows=j.rows.map(a=>({a,reg:rg,t:String(a[7]||'').replace(/^shop:/,''),k:[a[0],a[1],a[2],a[3]].filter(Boolean).map(x=>pkey(x,N)),k2:String(a[12]||'').split(';').filter(Boolean).map(x=>pkey(x,N))}));POI.reg[r.id]=rows;return rows}).catch(e=>{delete POI.load[r.id];throw e});return POI.load[r.id]}
 async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return null;const N=await poiNorm(),k=pkey(q,N);if(!k)return [];
-  const all=(await Promise.all(poiPick(T,idx).map(r=>poiRegion(r,N).catch(()=>[])))).flat(),tok=String(q).trim().split(/\s+/).map(x=>pkey(x,N)).filter(Boolean);
+  const base=poiPick(T,idx);if(!base.length){POI.none=true;return []}POI.none=false;const tok=String(q).trim().split(/\s+/).map(x=>pkey(x,N)).filter(Boolean);
+  const run=async regs=>{const all=(await Promise.all(regs.map(r=>poiRegion(r,N).catch(()=>[])))).flat();
   /* 輸入的是類型（毛線、咖啡、拉麵…）就列出那一類，也用日文常見寫法再比一次（毛線→毛糸） */const ty=[...Object.entries(OSM_TYPE).filter(([t,l])=>pkey(l,N)===k).map(([t])=>t),...(POI_TY[q.trim()]||[])];
   const syn=(POI_SYN[q.trim()]||[]).map(x=>pkey(x,N));
   const sc1=(s,k)=>s===k?100:s.startsWith(k)?80:s.includes(k)?60:tok.length>1&&tok.every(t=>s.includes(t))?50:0;
@@ -1096,7 +1101,9 @@ async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return nul
     if(!best&&syn.length&&x.k.some(s=>syn.some(y=>s.includes(y))))best=55;
     if(!best&&ty.includes(x.t))best=40;
     if(best){if(/temple|shrine|museum|nature/.test(x.a[6])||x.a[11])best+=4;if(/^(attraction|theme_park|zoo|aquarium|museum|castle|viewpoint|place_of_worship|gallery|garden|park|marketplace)$/.test(x.t))best+=20;if(x.t==='station'||x.a[6]==='hotel')best-=4;if(/memorial|monument/.test(x.t))best-=10;res.push({x,sc:best})}}
-  return res.sort((a,b)=>b.sc-a.sc).slice(0,8).map(r=>r.x)}
+  return res.sort((a,b)=>b.sc-a.sc)};
+  let R=await run(base);if(!R.length||R[0].sc<80){const more=poiNear(T,idx,base);if(more.length){const R2=await run(more);R=[...R,...R2].sort((a,b)=>b.sc-a.sc)}}
+  return R.slice(0,8).map(r=>r.x)}
 /* 顯示名稱：日文原名有假名（京都タワー、サクラテラス）才用繁中名；純漢字的（金閣寺、伏見稲荷大社）用原名轉繁體字形，
    避免 Wikidata 的正式名（鹿苑寺）蓋掉大家熟悉的叫法 */
 const hasKana=s=>/[\u3040-\u30ff]/.test(s||'');
@@ -1106,10 +1113,10 @@ const POI_SYN={'毛線':['毛糸','yarn'],'拉麵':['ラーメン','らーめん
 const POI_TY={'毛線':['wool','sewing','fabric','haberdashery','craft','handicraft'],'手藝':['sewing','fabric','haberdashery','craft','handicraft'],'藥妝':['chemist','cosmetics'],'百貨':['department_store','mall'],'二手':['second_hand'],'伴手禮':['gift','confectionery']};
 const OH_D={Mo:'一',Tu:'二',We:'三',Th:'四',Fr:'五',Sa:'六',Su:'日'};
 const ohZh=s=>String(s||'').replace(/\bMo-Su\b/g,'每天').replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,(m,a,b)=>'週'+OH_D[a]+'至'+OH_D[b]).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,m=>'週'+OH_D[m]).replace(/\bPH\b/g,'國定假日').replace(/\boff\b/g,'休').replace(/;\s*/g,'；');
-function poiHTML(){if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=poiName(a),sub=[nm!==a[0]?a[0]:'',a[2]&&a[2]!==nm?a[2]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
+function poiHTML(){if(POI.none&&POI.idx&&POI.idx.length)return `<p class="hint">要用旅冊地點庫，先<button class="linkbtn" data-act="regPick">選這趟的目的地</button>（例如京都、大阪）。</p>`;if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=poiName(a),sub=[nm!==a[0]?a[0]:'',a[2]&&a[2]!==nm?a[2]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
   return `<div class="wsr"><div><b>${esc(nm)}</b><div class="s">${esc(sub)}${a[10]?'・有營業時間':''}${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="poiAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join('')}
 function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=poiName(a),ja=nm!==a[0]?a[0]:(a[1]||'');
-  const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg.replace(/市$/,''),address:a[9]||'',hours:ohZh(a[10]),cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
+  const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg,address:a[9]||'',hours:ohZh(a[10]),cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
   T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]?'（營業時間來自 OpenStreetMap，可能過時，出發前再確認）':''))}
 const wsClean=t=>String(t||'').replace(/\s*[(（][^()（）]*[)）]\s*$/,'').trim();
 async function wsQuery(lang,q){const p={action:'query',generator:'search',gsrsearch:q,gsrlimit:8,gsrnamespace:0,prop:'coordinates|description|langlinks|pageprops',colimit:'max',lllimit:'max',ppprop:'disambiguation',redirects:1};
@@ -1420,10 +1427,14 @@ const COUNTRIES=[
  {id:'nz',name:'紐西蘭',re:/紐西蘭|奧克蘭|皇后鎮|基督城|威靈頓/,tz:12,police:'111',fire:'111',amb:'111',mofa:'00-800-0885-0885',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']},
  {id:'xx',name:'其他／不確定',re:/$^/,police:'',fire:'',amb:'',taxi:['Please take me here.','請帶我到這裡'],sos:['Please call an ambulance.','請叫救護車']}];
 const CTY=Object.fromEntries(COUNTRIES.map(c=>[c.id,c]));
+/* 目的地（地點庫的地區代號）：[代號, 繁中名, 日文名, 國家]。跟 tools/build-poi.mjs 的 REGIONS 對應 */
+const REGS=[['hokkaido','北海道','北海道'],['aomori','青森縣','青森県'],['iwate','岩手縣','岩手県'],['miyagi','宮城縣','宮城県'],['akita','秋田縣','秋田県'],['yamagata','山形縣','山形県'],['fukushima','福島縣','福島県'],['ibaraki','茨城縣','茨城県'],['tochigi','栃木縣','栃木県'],['gunma','群馬縣','群馬県'],['saitama','埼玉縣','埼玉県'],['chiba','千葉縣','千葉県'],['tokyo','東京都','東京都'],['kanagawa','神奈川縣','神奈川県'],['niigata','新潟縣','新潟県'],['toyama','富山縣','富山県'],['ishikawa','石川縣','石川県'],['fukui','福井縣','福井県'],['yamanashi','山梨縣','山梨県'],['nagano','長野縣','長野県'],['gifu','岐阜縣','岐阜県'],['shizuoka','靜岡縣','静岡県'],['aichi','愛知縣','愛知県'],['mie','三重縣','三重県'],['shiga','滋賀縣','滋賀県'],['kyoto','京都府','京都府'],['osaka','大阪府','大阪府'],['hyogo','兵庫縣','兵庫県'],['nara','奈良縣','奈良県'],['wakayama','和歌山縣','和歌山県'],['tottori','鳥取縣','鳥取県'],['shimane','島根縣','島根県'],['okayama','岡山縣','岡山県'],['hiroshima','廣島縣','広島県'],['yamaguchi','山口縣','山口県'],['tokushima','德島縣','徳島県'],['kagawa','香川縣','香川県'],['ehime','愛媛縣','愛媛県'],['kochi','高知縣','高知県'],['fukuoka','福岡縣','福岡県'],['saga','佐賀縣','佐賀県'],['nagasaki','長崎縣','長崎県'],['kumamoto','熊本縣','熊本県'],['oita','大分縣','大分県'],['miyazaki','宮崎縣','宮崎県'],['kagoshima','鹿兒島縣','鹿児島県'],['okinawa','沖繩縣','沖縄県']].map(r=>[...r,'jp']);
+/* 熱門城市 → 所在縣（城市名也會拿來當封面英文字） */
+const HOT=[['東京','tokyo','TOKYO'],['大阪','osaka','OSAKA'],['京都','kyoto','KYOTO'],['奈良','nara','NARA'],['神戶','hyogo','KOBE'],['北海道','hokkaido','HOKKAIDO'],['札幌','hokkaido','SAPPORO'],['沖繩','okinawa','OKINAWA'],['福岡','fukuoka','FUKUOKA'],['名古屋','aichi','NAGOYA'],['橫濱','kanagawa','YOKOHAMA'],['箱根','kanagawa','HAKONE'],['鎌倉','kanagawa','KAMAKURA'],['富士山・河口湖','yamanashi','MT. FUJI'],['輕井澤','nagano','KARUIZAWA'],['金澤','ishikawa','KANAZAWA'],['高山・白川鄉','gifu','TAKAYAMA'],['廣島・宮島','hiroshima','HIROSHIMA'],['仙台','miyagi','SENDAI'],['日光','tochigi','NIKKO'],['和歌山・白濱','wakayama','WAKAYAMA'],['伊勢','mie','ISE'],['姬路','hyogo','HIMEJI'],['長崎','nagasaki','NAGASAKI'],['鹿兒島','kagoshima','KAGOSHIMA'],['由布院・別府','oita','BEPPU']];
 function guessCountry(t){const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area),...t.stays.map(s=>s.name+' '+s.address)].join(' ');for(const c of COUNTRIES)if(c.re.test(txt))return c.id;return null}
 const ctyOf=t=>CTY[t.country]||CTY.xx;
 const CTY_EN={jp:'JAPAN',kr:'KOREA',tw:'TAIWAN',hk:'HONG KONG',mo:'MACAU',sg:'SINGAPORE',my:'MALAYSIA',th:'THAILAND',vn:'VIETNAM',id:'INDONESIA',ph:'PHILIPPINES',cn:'CHINA',us:'U.S.A.',ca:'CANADA',gb:'U.K.',fr:'FRANCE',it:'ITALY',es:'SPAIN',de:'GERMANY',eu:'EUROPE',au:'AUSTRALIA',nz:'NEW ZEALAND'};
-const coverEn=t=>(t.coverEn||'').trim()||CTY_EN[t.country]||'JOURNEY';
+const coverEn=t=>(t.coverEn||'').trim()||(t.regions&&t.regions.length&&t.regions.length<=2&&t.cities&&t.cities.length&&t.cities.length<=2?t.cities.map(c=>(HOT.find(h=>h[0]===c)||[])[2]).filter(Boolean).join(' & '):'')||CTY_EN[t.country]||'JOURNEY';
 const TZ_GUESS=[[9,/東京|京都|大阪|奈良|神戶|神戸|名古屋|橫濱|横浜|福岡|札幌|函館|小樽|那霸|沖繩|廣島|金澤|仙台|箱根|鎌倉|日光|高山|宇治|姬路|富士|輕井澤|北海道|九州|四國|日本|首爾|釜山|濟州|韓國/],[8,/台北|臺北|台灣|台中|高雄|香港|澳門|新加坡|上海|北京|吉隆坡|峇里|巴里島|馬尼拉/],[7,/曼谷|清邁|普吉|河內|胡志明|雅加達|金邊/],[0,/倫敦|里斯本|冰島/],[1,/巴黎|柏林|羅馬|巴塞隆納|馬德里|阿姆斯特丹|布拉格|維也納|蘇黎世|米蘭/],[-5,/紐約|波士頓|多倫多|邁阿密/],[-8,/洛杉磯|舊金山|西雅圖|溫哥華/],[10,/雪梨|墨爾本/],[12,/奧克蘭|紐西蘭/],[-10,/夏威夷|檀香山/]];
 function guessTz(t){const c=guessCountry(t);if(c&&CTY[c].tz!=null)return CTY[c].tz;const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area)].join(' ');for(const[tz,re]of TZ_GUESS)if(re.test(txt))return tz;return null}
 const TZS=[[-12,'國際換日線西側（無人島）'],[-11,'美屬薩摩亞'],[-10,'夏威夷'],[-9,'阿拉斯加（冬季）'],[-8,'洛杉磯、溫哥華（冬季）'],[-7,'鳳凰城、丹佛（冬季）'],[-6,'墨西哥城、芝加哥（冬季）'],[-5,'紐約、多倫多（冬季）'],[-4,'波多黎各、委內瑞拉'],[-3.5,'紐芬蘭（冬季）'],[-3,'聖保羅、布宜諾斯艾利斯'],[-2,'南喬治亞島'],[-1,'亞速群島（冬季）'],[0,'倫敦、里斯本（冬季）'],[1,'巴黎、柏林、羅馬（冬季）'],[2,'雅典、開羅（冬季）'],[3,'伊斯坦堡、莫斯科'],[3.5,'德黑蘭'],[4,'杜拜'],[4.5,'喀布爾'],[5,'喀拉蚩、馬爾地夫'],[5.5,'印度、斯里蘭卡'],[5.75,'尼泊爾'],[6,'達卡'],[6.5,'仰光'],[7,'曼谷、河內、雅加達'],[8,'台灣、香港、新加坡、峇里島'],[9,'日本、韓國'],[9.5,'阿德萊德（冬季）'],[10,'布里斯本、關島'],[11,'雪梨（夏季）、索羅門群島'],[12,'紐西蘭（冬季）、斐濟'],[13,'東加、紐西蘭（夏季）'],[14,'吉里巴斯線群島']];
@@ -1733,6 +1744,7 @@ function edBasic(){
   const n=dayCount(T);
   return `<div class="card"><h4>旅行資訊</h4>
   ${fld('標題','title','例：京都賞楓五日遊')}${fld('副標題','subtitle','例：2026 秋天的小旅行')}
+  <div class="f"><span>目的地（地點庫會先查這些地方）</span><div class="rgsum">${(T.regions||[]).length?[...(T.cities||[]),...(T.regions||[]).filter(k=>!(T.cities||[]).some(c=>(HOT.find(h=>h[0]===c)||[])[1]===k)).map(k=>(REGS.find(r=>r[0]===k)||[])[1])].map(x=>`<span class="gchip">${esc(x)}</span>`).join(' '):'<span class="hint" style="margin:0">還沒選</span>'} <button class="mini" data-act="regPick">${(T.regions||[]).length?'修改':'選擇'}</button></div></div>
   <div class="row">${fld('出發日','start','','date')}${fld('回程日','end','','date')}</div>
   <p class="hint" id="dateHint">${dateHint()}</p>
   ${fld('同行者','travelers','例：小明＆小美')}
@@ -2565,6 +2577,7 @@ function onAct(e){
     case'planPlace':{const sel=$(`[data-plan="${i}"]`);if(!sel||sel.value===''){toast('先選要排進哪一天');return}const k=+sel.value;T.days[k].items.push({id:uid(),time:'',text:'',placeId:T.places[i].id,transport:'',note:'',secret:false,reserve:'',resNo:''});openSet.add(T.days[k].id);toast(`已排進 DAY.${k+1}`);break}
     case'wsSearch':wsSearch();return;
     case'osmSearch':osmSearch();return;
+    case'regPick':regionPicker(false);return;
     case'poiAdd':poiAdd(+b.dataset.a);return;
     case'osmAdd':osmAdd(+b.dataset.a);return;
     case'wsAdd':wsAdd(+b.dataset.a);return;
@@ -2612,6 +2625,25 @@ function onAct(e){
   commit();
 }
 async function switchTrip(id){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#editor'))ae.blur();/* commit a focused field to the trip it belongs to before T changes */if(histTimer)histPush();flushSave();T=trips.find(t=>t.id===id)||trips[0];histReset();LS.set('tabisatsu.cur',T.id);openSet.clear();renderTripSel();renderEditor();renderPreview();$('#preview').scrollTop=0}
+/* 建立行程後先問「這趟要去哪裡？」：決定國家、時區、封面英文字，以及地點庫要載入哪些縣。可多選、可跳過，之後在「基本」分頁改 */
+function regionPicker(first){const sel=new Set(T.regions||[]),cs=new Set(T.cities||[]);const bg=document.createElement('div');bg.className='modal-bg gm rgp';
+  const chip=(k,lab,on,attr)=>`<button class="rgc${on?' on':''}" ${attr}="${esc(k)}">${esc(lab)}</button>`;
+  const draw=()=>{bg.innerHTML=`<div class="modal" role="dialog"><h3>${first?'這趟要去哪裡？':'目的地'}</h3><p style="margin-bottom:8px">可以選好幾個。旅冊會依此設定國家、時區、封面英文字，「搜尋景點」也會先查這些地方。${first?'不確定可以先跳過，之後在「基本」分頁改。':''}</p>
+    <div class="rgh">熱門</div><div class="rgw">${HOT.map(h=>chip(h[0],h[0],cs.has(h[0]),'data-city')).join('')}</div>
+    <details class="rgall"${[...sel].some(r=>!HOT.some(h=>cs.has(h[0])&&h[1]===r))?' open':''}><summary>日本全部 47 都道府縣</summary><div class="rgw">${REGS.map(r=>chip(r[0],r[1],sel.has(r[0]),'data-reg')).join('')}</div></details>
+    <p class="hint" style="margin-top:8px">其他國家的地點庫還沒做；選不到的直接跳過，國家可以在「基本」分頁選。</p>
+    <div class="row"><button class="btn" data-rg="skip">${first?'先跳過':'取消'}</button><button class="btn primary" data-rg="ok">完成${sel.size?`（${sel.size} 個地區）`:''}</button></div></div>`};
+  draw();
+  bg.addEventListener('click',e=>{const c=e.target.closest('[data-city]'),r=e.target.closest('[data-reg]'),b=e.target.closest('[data-rg]');
+    if(c){const h=HOT.find(x=>x[0]===c.dataset.city);if(cs.has(h[0])){cs.delete(h[0]);if(!HOT.some(x=>cs.has(x[0])&&x[1]===h[1]))sel.delete(h[1])}else{cs.add(h[0]);sel.add(h[1])}const open=bg.querySelector('.rgall')?.open;draw();if(open)bg.querySelector('.rgall').open=true;return}
+    if(r){const k=r.dataset.reg;if(sel.has(k)){sel.delete(k);HOT.filter(x=>x[1]===k).forEach(x=>cs.delete(x[0]))}else sel.add(k);draw();bg.querySelector('.rgall').open=true;return}
+    if(!b){if(e.target===bg)bg.remove();return}bg.remove();if(b.dataset.rg!=='ok')return;
+    T.regions=[...sel];T.cities=[...cs];if(sel.size){T.country='jp';T.countrySet=true;if(!T.tzSet){T.tz=9;T.tzSet=true}
+      if(!T.title.trim()||/^未命名|^新的旅行/.test(T.title)){const names=(cs.size?[...cs]:[...sel].map(k=>REGS.find(r=>r[0]===k)[1].replace(/(?<=..)[都府縣]$/,''))).slice(0,3);if(names.length)T.title=names.join('・')+'之旅'}}
+    POI.idx=null;commit();toast(sel.size?'已設定目的地：'+[...cs,...[...sel].filter(k=>!HOT.some(h=>cs.has(h[0])&&h[1]===k)).map(k=>REGS.find(r=>r[0]===k)[1])].join('、'):'沒有選目的地')});
+  document.body.appendChild(bg)}
+let PICK_AFTER_GUIDE=false;/* 第一次使用會先跳使用說明，目的地等說明看完再問，免得兩個視窗疊在一起 */
+async function newBlankTrip(){await newTrip();if(!LS.get('tabisatsu.guided'))PICK_AFTER_GUIDE=true;else regionPicker(true)}
 async function newTrip(t){t=t||blankTrip();trips.push(t);tab='basic';switchTrip(t.id);/* 先切換再存檔：存檔要等 IndexedDB，等的期間編輯器若還指著來源行程，輸入會寫進來源 */try{await DB.put(t)}catch(e){saveState('bad')}}
 
 function followOpen(){const d=$$('#editor details[data-id][open]').pop();if(!d)return;const id=d.dataset.id;
@@ -2632,7 +2664,7 @@ function bind(){
   $('#exportBtn').addEventListener('click',()=>{$('#mnote').textContent='目前版本：'+MODE_NAME[PMODE]+(MONO?'．黑白省墨':'')+'（在預覽上方切換）'});
   $('#prevbar').addEventListener('click',e=>{const a=e.target.closest('[data-goto]');if(!a)return;e.preventDefault();tab=a.dataset.goto;renderEditor();$('#editor').scrollTop=0;if(innerWidth<=900)$('.mswitch [data-v="edit"]').click()});
   $('#tripSel').addEventListener('change',e=>switchTrip(e.target.value));
-  $('#newTrip').addEventListener('click',()=>newTrip());
+  $('#newTrip').addEventListener('click',()=>newBlankTrip());
   $('#readBtn').addEventListener('click',openReader);
   $('#gclose').addEventListener('click',()=>{$('#giftprev').classList.remove('on');$('#gframe').srcdoc=''});
   $('#rclose').addEventListener('click',()=>{$('#reader').classList.remove('on');$('#rpages').innerHTML=''});
@@ -2685,7 +2717,7 @@ function closeHome(){if($('#home').hidden)return;$('#home').hidden=true;LS.set('
 async function homeAct(a){
   if(a==='cont'){const id=$('#hmCta').dataset.own;if(id&&id!==T.id)switchTrip(id)}
   else if(a==='sample'){let sm=sampleOf();if(!sm){sm=sampleTrip();trips.push(sm);await DB.put(sm)}if(sm.id!==T.id)switchTrip(sm.id)}
-  else if(a==='new'){tab='basic';await newTrip()}
+  else if(a==='new'){tab='basic';await newBlankTrip()}
   else if(a==='import'){closeHome();$('#importIn').click();return}
   closeHome()}
 function bindHome(){$('#homeBtn').addEventListener('click',openHome);$('#homeClose').addEventListener('click',closeHome);
@@ -2694,7 +2726,7 @@ function bindHome(){$('#homeBtn').addEventListener('click',openHome);$('#homeClo
 function openGuide(k){const old=$('.guide');if(old)old.remove();const g=document.createElement('div');g.className='modal-bg guide';
   g.innerHTML=`<div class="modal"><div class="gdots">${GUIDE.map((_,i)=>`<span class="${i===k?'on':''}"></span>`).join('')}</div><h3>${GUIDE[k][0]}</h3><p>${GUIDE[k][1]}</p><div class="row">${k?'<button class="btn" data-g="prev">上一步</button>':'<button class="btn" data-g="skip">略過</button>'}<button class="btn pri" data-g="next">${k<GUIDE.length-1?'下一步':'開始使用'}</button></div></div>`;
   g.addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;g.remove();const a=b.dataset.g;
-    if(a==='next'&&k<GUIDE.length-1)openGuide(k+1);else if(a==='prev')openGuide(k-1);else LS.set('tabisatsu.guided','1')});
+    if(a==='next'&&k<GUIDE.length-1)openGuide(k+1);else if(a==='prev')openGuide(k-1);else{LS.set('tabisatsu.guided','1');if(PICK_AFTER_GUIDE){PICK_AFTER_GUIDE=false;setTimeout(()=>regionPicker(true),200)}}});
   document.body.appendChild(g)}
 
 /* ---------- PWA: offline + install ---------- */

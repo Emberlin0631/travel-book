@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /* 旅冊地點庫產生器
- * 從 OpenStreetMap（Overpass API）抓指定城市的景點、寺社、餐廳、咖啡、店家、住宿、車站，
+ * 從 OpenStreetMap（Overpass API）抓日本各都道府縣的景點、寺社、餐廳、咖啡、店家、住宿、車站，
  * 用 Wikidata 補繁體中文名稱，輸出到 poi/ 給網站當靜態檔案（瀏覽器端搜尋，不經過伺服器）。
  *
  * 用法（在網站資料夾裡，需要 Node.js 18 以上）：
- *   node tools/build-poi.mjs            → 建立全部城市
- *   node tools/build-poi.mjs kyoto      → 只更新京都
+ *   node tools/build-poi.mjs            → 建立還沒做過的縣（第一次全日本約 1～2 小時；中斷後再跑會接著做）
+ *   node tools/build-poi.mjs tokyo      → 只重做東京
+ *   node tools/build-poi.mjs --all      → 全部重新抓最新資料
  * 跑完再 npx wrangler deploy。建議每 1～3 個月更新一次。
  *
  * 授權：資料 © OpenStreetMap contributors，以 ODbL 1.0 授權；輸出的 poi/*.json 是衍生資料庫，同樣以 ODbL 公開。
@@ -20,22 +21,26 @@ const OUT = path.join(ROOT, 'poi');
 const CACHE = path.join(ROOT, 'tools', 'cache');
 const UA = 'TravelBook-POI-builder/1.0 (https://github.com/Emberlin0631/travel-book)';
 
-// 要收錄的城市。area 是 Overpass 的行政區條件；日本的市町村是 admin_level=7。新增城市照格式加一行即可。
-export const REGIONS = [
-  { id: 'kyoto', name: '京都市', country: 'jp', area: '["name"="京都市"]["boundary"="administrative"]["admin_level"="7"]' },
-  { id: 'osaka', name: '大阪市', country: 'jp', area: '["name"="大阪市"]["boundary"="administrative"]["admin_level"="7"]' },
-  { id: 'nara', name: '奈良市', country: 'jp', area: '["name"="奈良市"]["boundary"="administrative"]["admin_level"="7"]' },
-  { id: 'kobe', name: '神戸市', country: 'jp', area: '["name"="神戸市"]["boundary"="administrative"]["admin_level"="7"]' },
-];
+// 收錄範圍：日本 47 都道府縣（admin_level=4）。id 也是網站上用的代號；新增其他國家時照格式加。
+const JP = [['hokkaido','北海道','北海道'],['aomori','青森県','青森縣'],['iwate','岩手県','岩手縣'],['miyagi','宮城県','宮城縣'],['akita','秋田県','秋田縣'],['yamagata','山形県','山形縣'],['fukushima','福島県','福島縣'],
+  ['ibaraki','茨城県','茨城縣'],['tochigi','栃木県','栃木縣'],['gunma','群馬県','群馬縣'],['saitama','埼玉県','埼玉縣'],['chiba','千葉県','千葉縣'],['tokyo','東京都','東京都'],['kanagawa','神奈川県','神奈川縣'],
+  ['niigata','新潟県','新潟縣'],['toyama','富山県','富山縣'],['ishikawa','石川県','石川縣'],['fukui','福井県','福井縣'],['yamanashi','山梨県','山梨縣'],['nagano','長野県','長野縣'],['gifu','岐阜県','岐阜縣'],
+  ['shizuoka','静岡県','靜岡縣'],['aichi','愛知県','愛知縣'],['mie','三重県','三重縣'],['shiga','滋賀県','滋賀縣'],['kyoto','京都府','京都府'],['osaka','大阪府','大阪府'],['hyogo','兵庫県','兵庫縣'],
+  ['nara','奈良県','奈良縣'],['wakayama','和歌山県','和歌山縣'],['tottori','鳥取県','鳥取縣'],['shimane','島根県','島根縣'],['okayama','岡山県','岡山縣'],['hiroshima','広島県','廣島縣'],['yamaguchi','山口県','山口縣'],
+  ['tokushima','徳島県','德島縣'],['kagawa','香川県','香川縣'],['ehime','愛媛県','愛媛縣'],['kochi','高知県','高知縣'],['fukuoka','福岡県','福岡縣'],['saga','佐賀県','佐賀縣'],['nagasaki','長崎県','長崎縣'],
+  ['kumamoto','熊本県','熊本縣'],['oita','大分県','大分縣'],['miyazaki','宮崎県','宮崎縣'],['kagoshima','鹿児島県','鹿兒島縣'],['okinawa','沖縄県','沖繩縣']];
+export const REGIONS = JP.map(([id, ja, zh]) => ({ id, name: ja, zh, country: 'jp', area: `["name"="${ja}"]["boundary"="administrative"]["admin_level"="4"]` }));
 
-export const query = area => `[out:json][timeout:240];area${area}->.a;(
-nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park|hotel|hostel|guest_house)$"]["name"](area.a);
-nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream|place_of_worship|marketplace)$"]["name"](area.a);
-nwr["shop"]["name"](area.a);
+// 一個縣分三次查（餐飲／店家／其他），大縣（東京、大阪）一次查全部容易逾時
+const HEAD = area => `[out:json][timeout:600][maxsize:1073741824];area${area}->.a;`;
+export const queries = area => [
+  HEAD(area) + `(nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"]["name"](area.a););out center tags;`,
+  HEAD(area) + `(nwr["shop"]["name"](area.a););out center tags;`,
+  HEAD(area) + `(nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park|hotel|hostel|guest_house)$"]["name"](area.a);
+nwr["amenity"~"^(place_of_worship|marketplace)$"]["name"](area.a);
 nwr["leisure"~"^(park|garden)$"]["name"](area.a);
 nwr["railway"="station"]["name"](area.a);
-nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"](area.a););
-out center tags;`;
+nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"](area.a););out center tags;`];
 
 // 觀光客幾乎不會去的店家類型（美髮、修車、洗衣…），不收
 const SHOP_SKIP = new Set(['hairdresser', 'beauty', 'massage', 'car', 'car_repair', 'car_parts', 'tyres', 'motorcycle', 'motorcycle_repair', 'bicycle', 'dry_cleaning', 'laundry',
@@ -98,7 +103,7 @@ const km = (a, b, c, d) => Math.hypot((a - c) * 111, (b - d) * 111 * Math.cos(a 
 /* 一筆 = [名稱, 日文名, 繁中名, 英文名, 緯度, 經度, 類別, 細類, 區, 地址, 營業時間, Wikidata, 平假名/別名]（尾端空白欄位省略） */
 export async function compact(region, elements, wd = {}) {
   const M = await cjk();
-  const rows = [], seen = [];
+  const rows = [], seen = new Map();
   for (const e of elements) {
     const t = e.tags || {}; const lat = e.lat ?? e.center?.lat, lng = e.lon ?? e.center?.lon;
     if (!t.name || lat == null) continue;
@@ -108,30 +113,31 @@ export async function compact(region, elements, wd = {}) {
     const w = t.wikidata && wd[t.wikidata];
     const zhRaw = t['name:zh-Hant'] || t['name:zh-TW'] || '';
     const zh = w?.t || (zhRaw ? conv(zhRaw, M.s2tw) : '') || (w?.s ? conv(w.s, M.s2tw) : '') || (t['name:zh'] ? conv(t['name:zh'], M.s2tw) : '');
-    const area = t['addr:suburb'] || t['addr:city_district'] || '';
+    const area = t['addr:suburb'] || t['addr:city_district'] || t['addr:city'] || t['addr:town'] || '';
     const addr = [t['addr:province'], t['addr:city'], t['addr:suburb'], t['addr:quarter'], t['addr:neighbourhood'], t['addr:block_number'] || t['addr:housenumber']].filter(Boolean).join(' ');
     const extra = [t['name:ja-Hira'], t.alt_name].filter(Boolean).join(';');
     const row = [t.name, t['name:ja'] && t['name:ja'] !== t.name ? t['name:ja'] : '', zh && zh !== t.name ? zh : '', t['name:en'] || '', r5(lat), r5(lng), catOf(t), typeOf(t), area, addr, t.opening_hours || '', t.wikidata || '', extra];
     // 同名、相距 60 公尺內視為同一地點（同一間店常同時有點和面）
-    if (seen.some(s => s[0] === row[0] && km(s[4], s[5], row[4], row[5]) < 0.06)) continue;
-    seen.push(row);
+    const same = seen.get(row[0]) || [];
+    if (same.some(s => km(s[4], s[5], row[4], row[5]) < 0.06)) continue;
+    same.push(row); seen.set(row[0], same);
     while (row.length && row[row.length - 1] === '') row.pop();
     rows.push(row);
   }
-  // 長條形的路線（例：山陽新幹線被標成車站）中心點會落在幾百公里外，離城市中位數太遠的丟掉，免得範圍被撐大
-  const med = a => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
-  const mLa = med(rows.map(r => r[4])), mLo = med(rows.map(r => r[5]));
-  for (let i = rows.length - 1; i >= 0; i--) if (km(rows[i][4], rows[i][5], mLa, mLo) > 60) rows.splice(i, 1);
+  // 範圍取 0.5%～99.5% 的點：縣有離島（東京的小笠原、沖繩的石垣），用全部點會讓範圍大到沒意義；離島的點仍然收錄
+  const pct = (a, q) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.max(0, Math.round((b.length - 1) * q)))]; };
   const la = rows.map(r => r[4]), lo = rows.map(r => r[5]);
   return { v: 1, id: region.id, name: region.name, country: region.country, built: new Date().toISOString().slice(0, 10),
     src: '© OpenStreetMap contributors', license: 'ODbL 1.0 — https://opendatacommons.org/licenses/odbl/ ・ https://www.openstreetmap.org/copyright',
-    bbox: rows.length ? [Math.min(...la), Math.min(...lo), Math.max(...la), Math.max(...lo)] : null, n: rows.length,
+    bbox: rows.length ? [pct(la, .005), pct(lo, .005), pct(la, .995), pct(lo, .995)] : null, n: rows.length,
     cols: ['name', 'ja', 'zh', 'en', 'lat', 'lng', 'cat', 'type', 'area', 'addr', 'hours', 'wikidata', 'alt'], rows };
 }
 
 async function buildOne(region) {
-  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（可能要 1～3 分鐘）…`);
-  const j = await overpass(query(region.area));
+  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 3 次，大縣可能要 5 分鐘以上）…`);
+  const seen = new Set(), els = [];
+  for (const q of queries(region.area)) { const r = await overpass(q); for (const e of r.elements) { const k = e.type + e.id; if (!seen.has(k)) { seen.add(k); els.push(e); } } await sleep(3000); }
+  const j = { elements: els };
   await fs.mkdir(CACHE, { recursive: true });
   await fs.writeFile(path.join(CACHE, region.id + '.osm.json'), JSON.stringify(j));
   const ids = [...new Set(j.elements.map(e => e.tags?.wikidata).filter(x => /^Q\d+$/.test(x || '')))];
@@ -141,19 +147,30 @@ async function buildOne(region) {
   const s = JSON.stringify(out);
   await fs.writeFile(path.join(OUT, region.id + '.json'), s);
   console.log(`  完成：收錄 ${out.n} 筆，檔案 ${(s.length / 1e6).toFixed(1)} MB`);
-  return { id: region.id, name: region.name, country: region.country, bbox: out.bbox, n: out.n, built: out.built, file: `poi/${region.id}.json` };
+  if (s.length > 24e6) console.log('  ⚠ 檔案超過 24 MB，Cloudflare 單檔上限 25 MiB，要再拆小');
+  return { id: region.id, name: region.name, zh: region.zh, country: region.country, bbox: out.bbox, n: out.n, built: out.built, file: `poi/${region.id}.json` };
 }
 
 async function main() {
-  const want = process.argv.slice(2);
-  const list = want.length ? REGIONS.filter(r => want.includes(r.id)) : REGIONS;
-  if (!list.length) { console.log('沒有這個城市代號。可用：' + REGIONS.map(r => r.id).join(', ')); process.exit(1); }
+  const args = process.argv.slice(2), all = args.includes('--all'), want = args.filter(a => !a.startsWith('--'));
   await fs.mkdir(OUT, { recursive: true });
   let index = { v: 1, regions: [] };
   try { index = JSON.parse(await fs.readFile(path.join(OUT, 'index.json'), 'utf8')); } catch (e) {}
+  // 舊版是以「市」為單位（kobe…），不在清單裡的一律清掉
+  index.regions = (index.regions || []).filter(r => REGIONS.some(x => x.id === r.id && x.name === r.name));
+  for (const f of await fs.readdir(OUT)) if (/\.json$/.test(f) && !['index.json', 'norm.json'].includes(f) && !index.regions.some(r => r.id + '.json' === f) && !REGIONS.some(r => r.id + '.json' === f)) await fs.unlink(path.join(OUT, f));
+  // 不指定時只做還沒做過的（中斷後再跑一次會接著做）；--all 全部重做；指定代號只做那幾個
+  const list = want.length ? REGIONS.filter(r => want.includes(r.id)) : all ? REGIONS : REGIONS.filter(r => !index.regions.some(x => x.id === r.id));
+  if (want.length && !list.length) { console.log('沒有這個代號。可用：' + REGIONS.map(r => r.id).join(', ')); process.exit(1); }
+  if (!list.length) console.log('全部都已經建好了。要重新抓最新資料請加 --all，或指定代號，例如：node tools/build-poi.mjs tokyo');
+  let k = 0;
   for (const r of list) {
-    try { const info = await buildOne(r); index.regions = index.regions.filter(x => x.id !== r.id).concat(info); }
-    catch (e) { console.log(`✖ ${r.name} 失敗：${e.message}`); }
+    console.log(`\n[${++k}/${list.length}]`);
+    try {
+      const info = await buildOne(r); index.regions = index.regions.filter(x => x.id !== r.id).concat(info);
+      index.regions.sort((a, b) => REGIONS.findIndex(x => x.id === a.id) - REGIONS.findIndex(x => x.id === b.id));
+      await fs.writeFile(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1)); // 每做完一個就存，中斷也不會白做
+    } catch (e) { console.log(`✖ ${r.name} 失敗：${e.message}（之後再跑一次同樣的指令會補做）`); }
     await sleep(5000); // Overpass 的使用禮節：別連續猛打
   }
   index.regions.sort((a, b) => REGIONS.findIndex(x => x.id === a.id) - REGIONS.findIndex(x => x.id === b.id));
@@ -162,6 +179,7 @@ async function main() {
   const M = await cjk();
   await fs.writeFile(path.join(OUT, 'norm.json'), JSON.stringify({ jp2t: M.jp2t, t2s: M.t2s }));
   await fs.writeFile(path.join(OUT, 'LICENSE.txt'), '旅冊地點庫（poi/*.json）由 OpenStreetMap 資料產生。\nData © OpenStreetMap contributors, available under the Open Database License (ODbL) 1.0.\nhttps://www.openstreetmap.org/copyright\nhttps://opendatacommons.org/licenses/odbl/\n本資料庫同樣以 ODbL 1.0 提供。繁體中文名稱部分來自 Wikidata（CC0）。\n');
-  console.log(`\n全部完成。poi/ 裡有 ${index.regions.length} 個城市。接著執行：npx wrangler deploy`);
+  const miss = REGIONS.filter(r => !index.regions.some(x => x.id === r.id));
+  console.log(`\n完成。poi/ 裡有 ${index.regions.length} 個地區${miss.length ? `，還缺 ${miss.map(r => r.name).join('、')}（再跑一次同樣的指令會補做）` : ''}。接著執行：npx wrangler deploy`);
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

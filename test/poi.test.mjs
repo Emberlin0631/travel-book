@@ -34,11 +34,12 @@ test('compact：過濾美髮店與路邊石碑、簡體轉繁體、Wikidata 名�
   assert.match(out.license, /ODbL/);
 });
 
-test('compact：離城市太遠的長條路線不收、範圍不被撐大', async () => {
-  const pts = Array.from({ length: 5 }, (_, i) => E({ name: '店' + i, amenity: 'restaurant' }, 34.69 + i * 0.001, 135.50));
-  const out = await compact({ id: 'o', name: '大阪市', country: 'jp' }, [...pts,
+test('compact：鐵路路線不收；範圍用 0.5%～99.5% 的點，離島仍收錄', async () => {
+  const pts = Array.from({ length: 400 }, (_, i) => E({ name: '店' + i, amenity: 'restaurant' }, 34.6 + (i % 20) * 0.01, 135.4 + Math.floor(i / 20) * 0.01));
+  const out = await compact({ id: 'o', name: '東京都', country: 'jp' }, [...pts,
     { type: 'relation', center: { lat: 34.2, lon: 132.96 }, tags: { name: '山陽新幹線', railway: 'station' } },
-    E({ name: '遠方', amenity: 'cafe' }, 34.2, 132.96)]);
-  assert.equal(out.n, 5);
-  assert.ok(out.bbox[1] > 135);
+    E({ name: '小笠原的店', amenity: 'cafe' }, 27.09, 142.19)]);
+  assert.equal(out.n, 401);
+  assert.ok(out.bbox[0] > 34 && out.bbox[1] > 135);
+  assert.ok(out.rows.some(r => r[0] === '小笠原的店'));
 });
