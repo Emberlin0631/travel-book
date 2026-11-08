@@ -99,6 +99,7 @@ details.card>.inner{padding:0 12px 6px}
 .item .main-f{display:grid;gap:5px}
 .autoitem{background:#f3f7f5;border-radius:6px;padding:8px 6px;border-top:0;margin:3px 0}
 .ro-t{font-weight:700;color:var(--ui-acc);padding:2px 4px}
+.autoitem .ro-tin{font-weight:700;color:var(--ui-acc);background:transparent;border:1px dashed transparent}.autoitem .ro-tin:hover,.autoitem .ro-tin:focus{border-color:var(--ui-line,#cfc8bb);background:#fff}
 .ro{line-height:1.5}.ro small{display:block;color:var(--ui-mute);font-size:11px}.ro a{color:var(--ui-acc)}
 .ro-chip{font-size:11px;border:1px solid var(--ui-acc);color:var(--ui-acc);border-radius:3px;padding:0 5px;margin-right:6px;font-weight:700}
 .item .acts{display:grid;grid-template-columns:1fr 1fr;gap:3px}.item .acts .drag{display:inline-flex;align-items:center;justify-content:center}
@@ -641,6 +642,7 @@ html.dark .thumb{background-color:#333}
 .gx{flex:1;min-width:0}.gh b{font-size:1.15em;line-height:1.3}.gh small{margin-left:.5em;color:var(--mute);font-size:.78em}.gv{font-size:.72em;color:var(--mute);margin:.1em 0}
 .gd{margin:.2em 0 .35em;font-size:.88em;line-height:1.6;text-align:justify;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .gm{font-size:.76em;color:var(--mute);line-height:1.5}.gt{font-size:.76em;margin-top:.25em;padding-left:.6em;border-left:2px solid var(--c);line-height:1.5}.gcr{font-size:.62em;color:var(--mute);margin-top:.35em}
+.coll .gi.noimg .gd{-webkit-line-clamp:3}.coll.c6 .gi{padding:.5em 0}.coll.c6 .gd{-webkit-line-clamp:2}.coll.c6 .gh b{font-size:1.05em}
 .coll.c4 .gimg{flex-basis:31%}.coll.c4 .gd{-webkit-line-clamp:3}.coll.c4 .gi{padding:.6em 0}
 .gq{float:right;margin:0 0 4px 8px;width:50px;text-align:center}.gq svg{width:50px;height:50px;display:block}
 .sd{position:absolute;top:6px;left:6px;background:var(--c);color:#fff;font-size:.68em;padding:0 6px;border-radius:3px;font-weight:700;letter-spacing:.05em}
@@ -1625,7 +1627,7 @@ function buildPages(t,splits={},mode={}){
   const byVisit=t.opts.placeSort==='list'?null:visitOrder(t,days,vis);
   const groups={};t.places.forEach(p=>{const g=grpOf(t,p);if(g&&!hidden.has(p.id))(groups[g]=groups[g]||[]).push(p)});if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
   const pushPlace=p=>{if(placed.has(p.id))return;const g=grpOf(t,p),G=g&&groups[g];
-    if(G&&G.length>1){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const parts=Math.ceil(L.length/4);for(let k=0;k<parts;k++)pages.push({k:'coll',g,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
+    if(G&&G.length>1){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const cap=!t.opts.illus&&L.every(x=>!x.photo)?6:4/* 沒照片也沒插圖時改純文字緊湊排，一頁放 6 個 */,parts=Math.ceil(L.length/cap);for(let k=0;k<parts;k++)pages.push({k:'coll',g,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
     placed.add(p.id);pages.push({k:'place',p})};
   const mem=!!mode.memory,off=new Set(t.opts.hide||[]);
   const pushC=key=>{for(const c of t.custom){if(c.after!==key)continue;
@@ -1666,12 +1668,16 @@ function buildPages(t,splits={},mode={}){
   const visits={};days.forEach((d,i)=>d.items.forEach(it=>{if(it.placeId&&vis(it)){(visits[it.placeId]=visits[it.placeId]||[]);if(!visits[it.placeId].includes(i))visits[it.placeId].push(i)}}));
   return {pages,ref,days,dIdx,visits,placeById,entries,vis};
 }
+const RE_CI=/入住|check[\s-]?in|チェックイン/i,RE_CO=/退房|check[\s-]?out|チェックアウト/i;
 function dayEntries(t,i){
   const d=t.days[i],date=dayDate(t,i),out=d.items.map((it,j)=>({...it,_j:j}));
   const autos=[];
+  /* 使用者自己在當天寫了這間住宿的入住／退房（連結到這間住宿，或文字有「入住／退房／check-in/out」加上住宿名稱），就不再自動加，免得出現兩筆 */
+  const only=k=>t.stays.filter(x=>x.auto&&x[k]===date).length===1;/* 當天只有一間在入住（退房）時，沒寫飯店名的「入住」也算 */
+  const mine=(s,re)=>d.items.some(it=>re.test(it.text||'')&&(it.stayId===s.id||(s.name&&(it.text||'').includes(s.name))||only(re===RE_CI?'checkin':'checkout')));
   for(const s of t.stays){if(!s.auto||!s.name)continue;
-    if(s.checkout&&s.checkout===date)autos.push({id:'co-'+s.id,time:s.coutTime,text:'退房：'+s.name,stayId:s.id,auto:'out'});
-    if(s.checkin&&s.checkin===date)autos.push({id:'ci-'+s.id,time:s.cinTime,text:'入住：'+s.name,stayId:s.id,auto:'in'});}
+    if(s.checkout&&s.checkout===date&&!mine(s,RE_CO))autos.push({id:'co-'+s.id,time:s.coutTime,text:'退房：'+s.name,stayId:s.id,auto:'out'});
+    if(s.checkin&&s.checkin===date&&!mine(s,RE_CI))autos.push({id:'ci-'+s.id,time:s.cinTime,text:'入住：'+s.name,stayId:s.id,auto:'in'});}
   for(const a of autos){const k=tkey(a.time);const ix=k==='99:99'?-1:out.findIndex(x=>tkey(x.time)!=='99:99'&&tkey(x.time)>k);if(ix<0)out.push(a);else out.splice(ix,0,a)}
   return out;
 }
@@ -1754,11 +1760,11 @@ function renderPages0(t,splits,mode={}){
   case'coll':{const items=pg.list.map((p,k)=>{const v=(visits[p.id]||[]).map(i=>'DAY.'+(i+1)).join('、');
       const meta=[p.hours&&'營業 '+p.hours,p.closed.length&&'公休 '+p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'),p.price].filter(Boolean).join('｜');
       const pq=t.opts.qr&&p.name?qrSVG(placeLink(p)):'';
-      const img=p.photo?`<div class="gimg"${bg(p.photo,p.photoPos)}></div>`:useIll?`<div class="gimg gill">${scene(placeCat(p),season,240,180,(p.name||'').length*7+5)}</div>`:`<div class="gimg gini">${esc((p.name||'？').slice(0,1))}</div>`;
+      const img=p.photo?`<div class="gimg"${bg(p.photo,p.photoPos)}></div>`:useIll?`<div class="gimg gill">${scene(placeCat(p),season,240,180,(p.name||'').length*7+5)}</div>`:'';
       const cr=[p.photo&&p.photoSrc?`照片：${esc(p.photoSrc.author)}／Wikimedia Commons，${esc(p.photoSrc.license)}`:'',p.descSrc&&p.desc.trim()?`文字：${esc(srcName(p.descSrc))}〈${esc(p.descSrc.title)}〉，${esc(p.descSrc.license)}`:''].filter(Boolean).join('・');
       const tx=`<div class="gx">${pq?`<div class="gq">${pq}</div>`:''}<div class="gh"><b>${esc(p.name||'未命名景點')}</b>${p.area?`<small>${esc(p.area)}</small>`:''}</div>${v?`<div class="gv">${v}</div>`:''}${payTags(p)}${p.desc.trim()?`<p class="gd">${esc(p.desc.trim().replace(/\s*\n+\s*/g,' '))}</p>`:''}${meta?`<div class="gm">${esc(meta)}</div>`:''}${p.jaAddress||p.address?`<div class="gm">${esc(p.jaAddress||p.address)}</div>`:''}${p.tips?`<div class="gt">${esc(p.tips.replace(/\s*\n+\s*/g,' '))}</div>`:''}${cr?`<div class="gcr">${cr}</div>`:''}</div>`;
-      return `<div class="gi">${k%2?tx+img:img+tx}</div>`}).join('');
-    return `<section class="pg coll${pg.list.length>3?' c4':''}"><div class="body fit"><div class="ph"><span class="ph-en">COLLECTION${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>${esc(pg.g)}</h2></div><div class="glist">${items}</div></div>${pn(no)}</section>`}
+      return `<div class="gi${img?'':' noimg'}">${k%2?tx+img:img+tx}</div>`}).join('');
+    return `<section class="pg coll${pg.list.length>4?' c6':pg.list.length>3?' c4':''}"><div class="body fit"><div class="ph"><span class="ph-en">COLLECTION${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>${esc(pg.g)}</h2></div><div class="glist">${items}</div></div>${pn(no)}</section>`}
   case'plist':{const rows=pg.list.map(p=>{const v=(visits[p.id]||[]).map(i=>'DAY.'+(i+1)).join('、');const pq=t.opts.qr&&p.name?qrSVG(placeLink(p)):'';
       const info=[p.hours&&'營業 '+p.hours,p.closed.length&&'公休 '+p.closed.slice().sort().map(w=>'週'+WK[w]).join('、'),p.price].filter(Boolean).join('｜');
       return `<div class="pl1"><div class="pl1t"><b>${esc(p.name||'未命名景點')}</b>${p.area?`<small>${esc(p.area)}</small>`:''}${v?`<span class="pl1v">${v}</span>`:''}${info?`<div class="pl1i">${esc(info)}</div>`:''}${payTags(p)}${p.jaAddress||p.address?`<div class="pl1a">${esc(p.jaAddress||p.address)}</div>`:''}</div>${pq?`<div class="pl1q">${pq}</div>`:''}</div>`}).join('');
@@ -1925,8 +1931,9 @@ function itemRow(i,j,it){const b=`days.${i}.items.${j}`;const pl=it.placeId?T.pl
     <input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div><button class="morebtn" data-act="lessItem" data-a="${esc(it.id)}">－ 收合</button>`
     :(chips.length?`<button class="morebtn chips" data-act="moreItem" data-a="${esc(it.id)}" title="展開編輯">${chips.map(c=>`<span>${esc(c)}</span>`).join('')}</button>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約、連結景點</button>`);
   return `<div class="item ${open?'open':''}" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"${timeBad(it.time)==='range'?' class="bad" title="這個時間不存在：分鐘要 00–59"':''}><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${pl?esc(pl.name)+'（留空就用景點名稱）':st?esc(st.name)+'（留空就用住宿名稱）':'要做什麼／去哪裡'}">${body}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
-function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId);
-  return `<div class="item autoitem"><div class="ro-t">${esc(it.time)||'—'}</div><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，<a href="#" data-act="tab" data-a="stays">到住宿修改</a></small></div><div></div></div>`}
+function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId),si=T.stays.indexOf(s);
+  /* 時間可以直接改（寫回住宿的入住／退房時間）；不想出現在時間軸就到住宿取消「自動加進每日行程」 */
+  return `<div class="item autoitem"><input class="ro-tin" data-k="stays.${si}.${it.auto==='in'?'cinTime':'coutTime'}" value="${esc(it.time)}" placeholder="${it.auto==='in'?'15:00':'11:00'}" title="直接改${it.auto==='in'?'入住':'退房'}時間"><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，時間可直接改；自己另寫一筆入住／退房，這筆就會自動消失。<a href="#" data-act="tab" data-a="stays">到住宿修改或關閉</a></small></div><div></div></div>`}
 const EMPTY_IMG='assets/travel-book/empty/';
 function emptyIll(img,title,text,extra='',cls=''){return `<div class="empty ill ${cls}"><img src="${EMPTY_IMG}${img}.webp" alt="" width="800" height="440" loading="lazy"><b>${title}</b><p>${text}</p>${extra}</div>`}
 const checksInner=ck=>`<h4>行程檢查 <span class="cnt">${ck.length?ck.length+' 則提醒':'沒有問題'}</span></h4>${ck.length?`<ul>${ck.map(c=>`<li class="${c.lv}">${esc(c.msg)}</li>`).join('')}</ul>`:'<p class="hint">早起、太晚結束、太滿、還沒預約、遇到公休、哪天晚上還沒住宿，都會列在這裡。</p>'}`;
@@ -1975,8 +1982,8 @@ function edPlaces(){
   ${(b=>b?`<p class="hint"><b>書籤小工具（電腦，儲存清單用）</b>：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著名稱、地址、座標和備註回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}
   <p class="hint"><b>Google「我的地圖」</b>：地圖設成「知道連結的任何人都能查看」，把分享連結貼在下面；不想公開就用「匯出成 KML/KMZ」，再選擇那個檔案。會帶入名稱、座標、說明和圖層。</p>
   <p class="hint"><b>複製貼上</b>：電腦版 Google 地圖打開清單，在清單那一欄 Ctrl+A 全選、複製，貼在下面（只會有名稱）。</p>
-  <textarea id="gmPaste" rows="2" placeholder="貼上「我的地圖」分享連結，或清單頁 Ctrl+A 複製的文字"></textarea><div class="row" style="margin-top:8px"><button class="mini" data-act="gmList">讀取</button><label class="mini filebtn" style="margin-top:0">選擇檔案（.kml／.kmz／Takeout .csv／.zip）<input type="file" id="gmFile" accept=".kml,.kmz,.csv,.zip,.json,.geojson" multiple hidden></label></div>
-  <p class="hint" style="margin-top:8px">也接受 Google 官方匯出工具（takeout.google.com，勾「已儲存」）下載的 .zip 或清單 .csv。</p></div>
+  <textarea id="gmPaste" rows="2" placeholder="貼上「我的地圖」分享連結、KML 檔案的內容，或清單頁 Ctrl+A 複製的文字"></textarea><div class="row" style="margin-top:8px"><button class="mini" data-act="gmList">讀取</button><label class="mini filebtn" style="margin-top:0">選擇檔案（.kml／.kmz／Takeout .csv／.zip）<input type="file" id="gmFile" accept=".kml,.kmz,.csv,.zip,.json,.geojson" multiple hidden></label></div>
+  <p class="hint" style="margin-top:8px">不想把地圖設成公開：匯出 KML 後，用「選擇檔案」，或用記事本打開 .kml、全選複製貼進上面的框也可以。也接受 Google 官方匯出工具（takeout.google.com，勾「已儲存」）下載的 .zip 或清單 .csv。</p></div>
   <datalist id="grpList">${[...new Set(T.places.map(p=>p.group).filter(g=>g&&g!=='-'))].map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
   <p class="hint">同一「分組」的景點（例：毛線店、吃吃喝喝）會排成合集頁（一頁最多 4 間）。排進某一天的景點會印成一整頁介紹；還沒排進行程的先當「收藏」，<b>預設不印</b>，想印可以在該景點改成「一律印」。${unplanned?`目前有 <b>${unplanned}</b> 個景點還沒排進行程。`:''}</p>${T.places.length>1?`<div class="bulkbar" id="bulkbar"><button class="mini" data-act="bulkTog">${BULK?'結束批次整理':'批次整理'}</button>${BULK?`<span class="bcnt" id="bcnt">已選 0</span><button class="mini" data-act="bulkAll">全選</button><button class="mini" data-act="bulkNone">全不選</button><button class="mini" data-act="bulkUnplanned">只選沒排進行程的</button><div class="brow"><select id="bulkDay"><option value="">排進哪一天…</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(d.title)}</option>`).join('')}</select><button class="mini" data-act="bulkPlan">排進去</button></div><div class="brow"><button class="mini" data-act="bulkWp">缺介紹的找維基百科</button><input id="bulkGrp" list="grpList" placeholder="分組名稱" style="width:130px;flex:0 0 auto"><button class="mini" data-act="bulkGrp">設成這一組</button><button class="mini" data-act="bulkBook" data-a="yes">一律印</button><button class="mini" data-act="bulkBook" data-a="">自動</button><button class="mini" data-act="bulkBook" data-a="no">不印</button><button class="mini danger" data-act="bulkDel">刪除</button></div>`:''}</div>`:''}`+
   (T.places.length?'':emptyIll('02-no-places','還沒有景點','貼上 Google 地圖連結，或按下面的「新增景點」。<br>想去但還沒決定哪天的地方，也可以先收在這裡。'))+
