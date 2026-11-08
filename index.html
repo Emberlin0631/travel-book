@@ -107,6 +107,8 @@ details.card>.inner{padding:0 12px 6px}
 .morebtn{justify-self:start;background:none;border:0;color:var(--ui-acc);font-size:12px;padding:2px 0;text-align:left}.morebtn:hover{text-decoration:underline}
 .morebtn.chips{display:flex;flex-wrap:wrap;gap:4px 10px;color:var(--ui-mute);font-size:12px;line-height:1.4}.morebtn.chips span{white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}.morebtn.chips:hover{text-decoration:none;color:var(--ui-acc)}
 .item .acts .mini{padding:3px 7px}
+/* 手機：拖曳把手 ⠿ 就能排序，上下箭頭收掉，讓文字欄更寬、每項只佔一列半 */
+@media (max-width:600px){.item{grid-template-columns:58px 1fr 36px;gap:5px}.item .acts{grid-template-columns:1fr;gap:4px}.item .acts .mini[data-act=up],.item .acts .mini[data-act=down]{display:none}.item .acts .drag{min-width:36px;min-height:34px}}
 @media (min-width:901px){.item .acts{grid-template-columns:repeat(4,auto)}}
 .item input,.item select{padding:6px 8px;font-size:13px}
 .ph-in{display:flex;gap:8px;align-items:center}
@@ -1495,6 +1497,13 @@ const hm=s=>{const m=String(s||'').match(TIME_RE);return m?hmv(m[1],m[2]):null};
 const hmEnd=s=>{const m=String(s||'').match(TIME_RE);if(!m||m[3]==null)return null;const a=hmv(m[1],m[2]),b=hmv(m[3],m[4]);return a==null||b==null?null:b<a?b+1440:b};
 const timeBad=s=>{const x=String(s||'').trim();if(!x)return'';const m=x.match(TIME_RE);if(!m)return'fmt';return hmv(m[1],m[2])==null||(m[3]!=null&&hmv(m[3],m[4])==null)?'range':''};
 const fmtHM=v=>String(Math.floor(v/60)).padStart(2,'0')+':'+String(v%60).padStart(2,'0');
+/* 兩地之間的移動時間「概估」：只用座標直線距離（乘 1.3 當作實際路程），不查路線、不含等車與班次。
+   步行 4.5 km/h；大眾運輸 = 12 分鐘（走到車站＋等車）+ 平均 28 km/h；40 公里以上當作長程鐵路 20 分 + 80 km/h */
+const r5m=x=>Math.max(5,Math.round(x/5)*5);
+function travelEst(a,b){if(!a||!b||a.lat==null||b.lat==null)return null;const km=Math.hypot((a.lat-b.lat)*111,(a.lng-b.lng)*111*Math.cos(a.lat*Math.PI/180));
+  if(km<.15)return null;const r=km*1.3,walk=r5m(r/4.5*60),ride=km<40?r5m(12+r/28*60):r5m(20+km*1.2/80*60);
+  return {km,walk,ride,min:km<1.2?walk:Math.min(walk,ride),txt:`距上一站約 ${km<10?km.toFixed(1):Math.round(km)} 公里・${km<2?`步行約 ${walk} 分`:km<40?`大眾運輸約 ${ride} 分`:`長程交通約 ${ride>=90?Math.round(ride/6)/10+' 小時':ride+' 分'}`}（概估）`}}
+const itemPos=(t,it)=>{const p=it.placeId&&t.places.find(x=>x.id===it.placeId);if(p&&p.lat!=null)return p;const s=it.stayId&&t.stays.find(x=>x.id===it.stayId);return s&&s.lat!=null?s:null};
 function tripChecks(t){
   const n=dayCount(t),out=[],pb=Object.fromEntries(t.places.map(p=>[p.id,p]));let streak=0;
   for(let i=0;i<n;i++){const d=t.days[i],date=dayDate(t,i),tag=`DAY.${i+1}`;
@@ -1514,6 +1523,10 @@ function tripChecks(t){
     for(const it of d.items){const p=pb[it.placeId],nm=it.text||p?.name||'';
       if(it.reserve==='need')out.push({lv:'warn',i,msg:`${tag} 「${nm}」還沒預約`});
       if(p&&p.closed.length){const w=pd(date).getUTCDay();if(p.closed.includes(w))out.push({lv:'warn',i,msg:`${tag} 是週${WK[w]}，你填的「${p.name}」公休日剛好是週${WK[w]}`})}}
+    /* 前後兩站的時間差比概估移動時間還短（上一站有寫結束時間就從結束算） */
+    {const U=d.items.map(x=>({x,a:hm(x.time),b:hmEnd(x.time),pos:itemPos(t,x)})).filter(o=>o.a!=null&&o.pos);
+     for(let k=1;k<U.length;k++){const A=U[k-1],B=U[k];if(B.a<A.a)continue;const e=travelEst(A.pos,B.pos);if(!e)continue;const gap=B.a-(A.b??A.a);
+       if(gap<e.min)out.push({lv:'warn',i,msg:`${tag}「${A.pos.name}」到「${B.pos.name}」約 ${e.km<10?e.km.toFixed(1):Math.round(e.km)} 公里，移動概估要 ${e.min} 分，但${A.b!=null?'上一站結束後':'兩站開始時間'}只隔 ${gap} 分`})}}
     if(i<n-1&&!stayFor(t,date))out.push({lv:'info',i,msg:`${md(date)}（${wk(date)}）晚上還沒有住宿`});
   }
   return out;
@@ -1958,7 +1971,8 @@ function edBasic(){
 }
 function itemRow(i,j,it){const b=`days.${i}.items.${j}`;const pl=it.placeId?T.places.find(p=>p.id===it.placeId):null;const st=!pl&&it.stayId?T.stays.find(x=>x.id===it.stayId):null;const open=openMore.has(it.id);
   /* 預設收合成一行（時間、文字、排序鈕），細節用灰色小字摘要；點摘要才展開。這樣一天 10 幾項也好拖曳排序 */
-  const chips=[pl?'連結：'+(pl.name||'未命名景點'):st?'住宿：'+(st.name||'未命名住宿'):(it.placeId||it.stayId?'連結的目標已刪除':''),it.transport?'🚃 '+legsPlain(it.transport):'',it.note?'📝 '+it.note:'',it.reserve==='need'?'需預約':it.reserve==='done'?'已預約'+(it.resNo?' '+it.resNo:''):'',it.secret?'驚喜（送禮版隱藏）':''].filter(Boolean);
+  const prevPos=j>0?itemPos(T,T.days[i].items[j-1]):null,est=!it.transport&&travelEst(prevPos,itemPos(T,it));
+  const chips=[est?'↦ '+est.txt:'',pl?'連結：'+(pl.name||'未命名景點'):st?'住宿：'+(st.name||'未命名住宿'):(it.placeId||it.stayId?'連結的目標已刪除':''),it.transport?'🚃 '+legsPlain(it.transport):'',it.note?'📝 '+it.note:'',it.reserve==='need'?'需預約':it.reserve==='done'?'已預約'+(it.resNo?' '+it.resNo:''):'',it.secret?'驚喜（送禮版隱藏）':''].filter(Boolean);
   const sel=`<select data-k="${b}.placeId"><option value="">— 不連結介紹頁 —</option>${T.places.length?`<optgroup label="景點">${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</optgroup>`:''}${T.stays.filter(x=>x.name).length?`<optgroup label="住宿（回飯店、寄放行李…）">${T.stays.filter(x=>x.name).map(x=>`<option value="stay:${x.id}" ${!it.placeId&&x.id===it.stayId?'selected':''}>住宿：${esc(x.name)}</option>`).join('')}</optgroup>`:''}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option><option value="__newstay">＋ 把這行變成新住宿（住宿頁、每晚住哪）</option></select>`;
   const body=open?`${sel}<textarea data-k="${b}.transport" rows="${Math.min(4,Math.max(1,it.transport.split('\n').length))}" placeholder="交通（選填）。分段寫法：路線｜起站→迄站｜班距、車廂、票價｜出口或路標，一行一段">${esc(it.transport)}</textarea>
     <details class="legadd"><summary>＋ 加一段轉乘（印出來會有路線色塊）</summary><div class="row"><input data-leg="line" list="lineList" placeholder="路線，例：堺筋線"><input data-leg="from" placeholder="起站"><input data-leg="to" placeholder="迄站"></div><div class="row"><input data-leg="info" placeholder="班距、車廂、票價"><input data-leg="note" placeholder="出口、路標"></div><button class="mini" data-act="addLeg" data-a="${i}.${j}">加到交通</button></details>
