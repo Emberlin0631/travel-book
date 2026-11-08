@@ -31,16 +31,14 @@ const JP = [['hokkaido','北海道','北海道'],['aomori','青森県','青森�
   ['kumamoto','熊本県','熊本縣'],['oita','大分県','大分縣'],['miyazaki','宮崎県','宮崎縣'],['kagoshima','鹿児島県','鹿兒島縣'],['okinawa','沖縄県','沖繩縣']];
 export const REGIONS = JP.map(([id, ja, zh]) => ({ id, name: ja, zh, country: 'jp', area: `["name"="${ja}"]["boundary"="administrative"]["admin_level"="4"]` }));
 
-// 一個縣分三次查（餐飲／店家／其他），大縣（東京、大阪）一次查全部容易逾時
-const HEAD = area => `[out:json][timeout:600][maxsize:1073741824];area${area}->.a;`;
-export const queries = area => [
-  HEAD(area) + `(nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"]["name"](area.a););out center tags;`,
-  HEAD(area) + `(nwr["shop"]["name"](area.a););out center tags;`,
-  HEAD(area) + `(nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park|hotel|hostel|guest_house)$"]["name"](area.a);
-nwr["amenity"~"^(place_of_worship|marketplace)$"]["name"](area.a);
-nwr["leisure"~"^(park|garden)$"]["name"](area.a);
-nwr["railway"="station"]["name"](area.a);
-nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"](area.a););out center tags;`];
+// 一個縣分三次查（餐飲／店家／其他）。查不動（伺服器忙、逾時、記憶體不夠）時自動把範圍切成四塊再查，最多切 4 層
+const F = [['nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"]["name"]'], ['nwr["shop"]["name"]'],
+  ['nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park|hotel|hostel|guest_house)$"]["name"]', 'nwr["amenity"~"^(place_of_worship|marketplace)$"]["name"]',
+   'nwr["leisure"~"^(park|garden)$"]["name"]', 'nwr["railway"="station"]["name"]', 'nwr["historic"~"^(castle|ruins|archaeological_site|monument|memorial)$"]["name"]']];
+// 宣告的 timeout 越大，伺服器越晚排到；180 秒以內優先權比較高
+export const query = (area, f, bb) => `[out:json][timeout:180];area${area}->.a;(${f.map(x => `${x}(area.a)${bb ? `(${bb.map(n => n.toFixed(4)).join(',')})` : ''};`).join('')});out center tags;`;
+export const queries = area => F.map(f => query(area, f));
+export const quarter = ([s, w, n, e]) => { const m = (s + n) / 2, c = (w + e) / 2; return [[s, w, m, c], [s, c, m, e], [m, w, n, c], [m, c, n, e]]; };
 
 // 觀光客幾乎不會去的店家類型（美髮、修車、洗衣…），不收
 const SHOP_SKIP = new Set(['hairdresser', 'beauty', 'massage', 'car', 'car_repair', 'car_parts', 'tyres', 'motorcycle', 'motorcycle_repair', 'bicycle', 'dry_cleaning', 'laundry',
@@ -67,17 +65,57 @@ const maps = new WeakMap();
 const mapOf = pair => { let m = maps.get(pair); if (!m) { const A = [...pair[0]], B = [...pair[1]]; m = new Map(A.map((c, i) => [c, B[i]])); maps.set(pair, m); } return m; }; // 用字元陣列，避免擴充區字元（兩個 UTF-16 單位）讓位置錯開
 const conv = (s, pair) => { if (!s) return s; const m = mapOf(pair); let o = ''; for (const ch of s) o += m.get(ch) ?? ch; return o; };
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function overpass(q) {
-  for (let k = 0; k < 6; k++) {
+const sleep = ms => new Promise(r => setTimeout(r, process.env.POI_FAST ? 0 : ms)); // 測試時不等
+// 公開的 Overpass 伺服器（https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances），輪流用
+export const ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.osm.jp/api/interpreter'];
+let ep = 0, fails = 0;
+export class TooBig extends Error {}   // 這塊範圍太大（逾時、記憶體不夠）→ 切小再查
+export class Busy extends Error {}     // 伺服器忙 → 等一下再查
+export class Down extends Error {}     // 連續失敗太多次 → 整個停下來，晚點再跑
+export const resetFails = () => { fails = 0; };
+// rounds：三台都試過算一輪
+export async function overpass(q, rounds = 1, f = fetch) {
+  let last = '', big = false;
+  for (let k = 0; k < rounds * ENDPOINTS.length; k++) {
+    const u = ENDPOINTS[ep % ENDPOINTS.length], host = new URL(u).host;
     try {
-      const r = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', headers: { 'user-agent': UA, 'content-type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(q) });
-      if (r.ok) return await r.json();
-      console.log(`  Overpass 回 ${r.status}（伺服器忙），${20 * 2 ** k} 秒後重試…`);
-    } catch (e) { console.log(`  連線失敗（${e.message}），${20 * 2 ** k} 秒後重試…`); }
-    await sleep(20000 * 2 ** k);
+      const r = await f(u, { method: 'POST', headers: { 'user-agent': UA, 'content-type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(q), signal: AbortSignal.timeout(240000) });
+      if (r.ok) {
+        const j = await r.json();
+        // 逾時或記憶體不夠時，伺服器仍回 200，但資料不完整，remark 會寫原因
+        if (j.remark && /error|timed out|out of memory/i.test(j.remark)) { last = j.remark; big = true; console.log(`  ${host}：這塊太大（${j.remark.slice(0, 70)}）`); }
+        else { fails = 0; return j; }
+      } else {
+        last = 'HTTP ' + r.status; if (r.status === 504) big = true;
+        console.log(`  ${host} 回 ${r.status}${r.status === 429 ? '（查太頻繁）' : r.status === 504 ? '（逾時）' : '（伺服器忙）'}，換下一台…`);
+      }
+    } catch (e) { last = e.message; if (e.name === 'TimeoutError') big = true; console.log(`  ${host} 連線失敗（${e.name === 'TimeoutError' ? '等太久' : e.message}），換下一台…`); }
+    if (++fails >= 15) throw new Down('三台 Overpass 伺服器連續 15 次都失敗，應該是都很忙。晚點再跑一次同樣的指令，會從沒做完的接著做');
+    ep++;
+    await sleep((k + 1) % ENDPOINTS.length ? 5000 : 30000);
   }
-  throw new Error('Overpass 一直沒有回應，稍後再跑一次');
+  throw big ? new TooBig(last) : new Busy(last);
+}
+// 先整縣查；太大就切四塊，每塊再太大再切，最多 3 層（64 塊）
+const MAXD = 3;
+async function fetchArea(area, f, bb, depth, out, f2, tries = 0) {
+  try { const j = await overpass(query(area, f, bb), 1, f2); for (const e of j.elements) out.push(e); }
+  catch (e) {
+    if (e instanceof Busy && tries < 2) { console.log('  三台都忙，等 2 分鐘再試…'); await sleep(120000); return fetchArea(area, f, bb, depth, out, f2, tries + 1); }
+    if (!(e instanceof TooBig) || !bb || depth >= MAXD) throw e;
+    console.log(`  → 範圍切成 4 塊分開查（第 ${depth + 1} 層）`);
+    for (const b of quarter(bb)) { await fetchArea(area, f, b, depth + 1, out, f2); await sleep(2000); }
+  }
+}
+export async function fetchRegion(area, bb, f2 = fetch) {
+  const out = [];
+  for (const f of F) { await fetchArea(area, f, bb, 0, out, f2); await sleep(3000); }
+  return out;
+}
+async function bboxOf(area) {
+  const j = await overpass(`[out:json][timeout:60];rel${area};out bb;`, 3);
+  const b = j.elements?.[0]?.bounds; if (!b) throw new Error('找不到這個行政區的邊界');
+  return [b.minlat, b.minlon, b.maxlat, b.maxlon];
 }
 async function wikidataLabels(ids) {
   const out = {};
@@ -134,9 +172,10 @@ export async function compact(region, elements, wd = {}) {
 }
 
 async function buildOne(region) {
-  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 3 次，大縣可能要 5 分鐘以上）…`);
+  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 3 次，大縣可能要 10 分鐘以上）…`);
+  const bb = await bboxOf(region.area);
   const seen = new Set(), els = [];
-  for (const q of queries(region.area)) { const r = await overpass(q); for (const e of r.elements) { const k = e.type + e.id; if (!seen.has(k)) { seen.add(k); els.push(e); } } await sleep(3000); }
+  for (const e of await fetchRegion(region.area, bb)) { const k = e.type + e.id; if (!seen.has(k)) { seen.add(k); els.push(e); } } // 切塊時邊界上的會重複
   const j = { elements: els };
   await fs.mkdir(CACHE, { recursive: true });
   await fs.writeFile(path.join(CACHE, region.id + '.osm.json'), JSON.stringify(j));
@@ -170,7 +209,8 @@ async function main() {
       const info = await buildOne(r); index.regions = index.regions.filter(x => x.id !== r.id).concat(info);
       index.regions.sort((a, b) => REGIONS.findIndex(x => x.id === a.id) - REGIONS.findIndex(x => x.id === b.id));
       await fs.writeFile(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1)); // 每做完一個就存，中斷也不會白做
-    } catch (e) { console.log(`✖ ${r.name} 失敗：${e.message}（之後再跑一次同樣的指令會補做）`); }
+    } catch (e) { console.log(`✖ ${r.name} 失敗：${e.message}（之後再跑一次同樣的指令會補做）`); if (e instanceof Down) break; }
+    resetFails();
     await sleep(5000); // Overpass 的使用禮節：別連續猛打
   }
   index.regions.sort((a, b) => REGIONS.findIndex(x => x.id === a.id) - REGIONS.findIndex(x => x.id === b.id));

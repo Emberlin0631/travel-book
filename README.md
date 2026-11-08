@@ -53,7 +53,7 @@
 
 ### 旅冊地點庫（自建，`poi/`）
 
-`tools/build-poi.mjs`（Node 18 以上、不需安裝套件）從 OpenStreetMap 的 Overpass API 抓**日本 47 都道府縣**（`REGIONS`，`admin_level=4`；代號如 `tokyo`、`kyoto`、`okinawa`），每縣分三次查（餐飲／店家／景點住宿車站等），避免大縣一次查詢逾時。收景點、寺社、博物館、公園、車站、住宿、餐廳、咖啡甜點、店家（排除美髮、修車、洗衣、便利商店等觀光客用不到的類型，也排除沒有 Wikidata 的路邊石碑與鐵路路線），再用 Wikidata 補繁體中文名稱，沒有的話把 OSM 的 `name:zh` 用 OpenCC 對照表轉成繁體。同名且相距 60 公尺內的視為同一筆。輸出：
+`tools/build-poi.mjs`（Node 18 以上、不需安裝套件）從 OpenStreetMap 的 Overpass API 抓**日本 47 都道府縣**（`REGIONS`，`admin_level=4`；代號如 `tokyo`、`kyoto`、`okinawa`），每縣分三次查（餐飲／店家／景點住宿車站等）。每次查詢宣告 `timeout:180`、不加 `maxsize`（宣告越大，忙碌時越晚排到）；三台公開伺服器輪流用（overpass-api.de、overpass.private.coffee、overpass.osm.jp，見 [OSM wiki](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances)）。整縣查不動（504、逾時、記憶體不夠）時，把該縣邊界框切成四塊分開查，最多切 3 層（64 塊）；三台都只回「忙」就等 2 分鐘再試；連續 15 次失敗就整個停下，晚點重跑會接著做。收景點、寺社、博物館、公園、車站、住宿、餐廳、咖啡甜點、店家（排除美髮、修車、洗衣、便利商店等觀光客用不到的類型，也排除沒有 Wikidata 的路邊石碑與鐵路路線），再用 Wikidata 補繁體中文名稱，沒有的話把 OSM 的 `name:zh` 用 OpenCC 對照表轉成繁體。同名且相距 60 公尺內的視為同一筆。輸出：
 
 - `poi/<縣代號>.json`：`rows` 每筆 `[名稱, 日文名, 繁中名, 英文名, 緯度, 經度, 類別, 細類, 區, 地址, 營業時間(OSM 格式), Wikidata, 平假名/別名]`；範圍 `bbox` 取 0.5%～99.5% 的點（離島照收，但不撐大範圍）
 - `poi/index.json`：地區清單與範圍（每做完一縣就存一次）；`poi/norm.json`：搜尋用的字形對照；`poi/LICENSE.txt`
