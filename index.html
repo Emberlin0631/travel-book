@@ -67,6 +67,8 @@ html.dark .preview{background:var(--ui-bg)}
 @media (max-width:900px){.pager{bottom:78px}.toast{bottom:140px}.pager select{max-width:150px}}
 .pw{position:relative;margin:0 auto 20px;box-shadow:0 3px 16px rgba(0,0,0,.16)}
 .pw>.pg{transform-origin:0 0;position:absolute;left:0;top:0}
+#pages.mvon [data-mv]{outline:1.5px dashed rgba(200,90,60,.75);outline-offset:2px;cursor:move;touch-action:none;user-select:none}
+#pages.mvon [data-mv]:hover{outline-style:solid}#pages.mvon [data-mv].mvdrag{outline:2px solid #c85a3c;background:rgba(255,255,255,.06)}
 .pw.ovf{outline:3px solid #d0533b}
 .pw.ovf::after{content:"內容太多，被截掉了";position:absolute;top:-11px;right:10px;background:#d0533b;color:#fff;font-size:11px;padding:2px 9px;border-radius:10px;z-index:2}
 .f{display:block;margin-bottom:10px}
@@ -522,15 +524,15 @@ html.dark .thumb{background-color:#333}
 .tpl-beni .pg h2,.tpl-beni .pg h3{font-weight:700}.tpl-beni .place h2{letter-spacing:.08em;font-size:1.9em}.tpl-beni .ptag{font-family:var(--en);letter-spacing:.35em}
 .tpl-beni .pn{font-family:var(--en);letter-spacing:.2em}
 /* cover */
-.bk.tpl-beni .pg.cover .cv-en{display:block;position:absolute;left:0;right:0;top:78px;text-align:center;font-family:var(--en);font-weight:600;font-size:60px;line-height:1;letter-spacing:.3em;padding-left:.3em;color:var(--ink);z-index:2;white-space:nowrap}
-.bk.tpl-beni .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:148px;text-align:center;font-family:var(--en);font-weight:700;font-size:16px;letter-spacing:.32em;padding-left:.32em;color:var(--ink);z-index:2}
-.bk.tpl-beni .pg.cover .cv-img{left:92px;right:92px;top:126px;height:400px;border:0;border-radius:0;transform:none;box-shadow:none;filter:saturate(.82) sepia(.08)}
+.bk.tpl-beni .pg.cover .cv-en{display:block;position:absolute;left:0;right:0;top:60px;text-align:center;font-family:var(--en);font-weight:600;font-size:60px;line-height:1;letter-spacing:.3em;padding-left:.3em;color:var(--ink);z-index:2;white-space:nowrap}
+.bk.tpl-beni .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:134px;text-align:center;font-family:var(--en);font-weight:700;font-size:16px;letter-spacing:.32em;padding-left:.32em;color:var(--ink);z-index:2}
+.bk.tpl-beni .pg.cover .cv-img{left:92px;right:92px;top:172px;height:360px;border:0;border-radius:0;transform:none;box-shadow:none;filter:saturate(.82) sepia(.08)}
 .bk.tpl-beni .pg.cover .cv-img::after{content:"";position:absolute;inset:0;background:var(--bd,#6e2f33);opacity:.14}
 .bk.tpl-beni .pg.cover .cv-txt{top:552px;left:40px;right:40px;text-align:center}
 .bk.tpl-beni .pg.cover .cv-ti{display:block;font-family:var(--en);font-weight:600;font-size:15px;letter-spacing:.38em;padding-left:.38em;color:var(--mute);margin-bottom:6px}
 .bk.tpl-beni .pg.cover h1{font-size:26px;letter-spacing:.24em;font-weight:700;margin-top:4px;line-height:1.35;max-width:none}
 .bk.tpl-beni .pg.cover .cv-days{display:none}.bk.tpl-beni .pg.cover .cv-date{font-family:var(--en);font-weight:700;letter-spacing:.24em;color:var(--ink);margin-top:10px}.bk.tpl-beni .pg.cover .cv-stat,.bk.tpl-beni .pg.cover .cv-sub,.bk.tpl-beni .pg.cover .cv-who{color:var(--mute)}
-.bk.tpl-beni.bc-full .pg.cover .cv-img{left:0;right:0;top:0;height:100%}
+.bk.tpl-beni.bc-full .pg.cover .cv-img{left:0;right:0;top:0;height:100%}.bk.tpl-beni.bc-full .pg.cover .cv-en{top:78px}.bk.tpl-beni.bc-full .pg.cover .cv-mon{top:148px}
 .bk.tpl-beni.bc-full .pg.cover .cv-img::after{background:linear-gradient(var(--bd,#6e2f33),transparent 38%,transparent 46%,var(--bd,#6e2f33) 76%);opacity:.9}
 .bk.tpl-beni.bc-full .pg.cover :is(.cv-en,.cv-mon,h1,.cv-date){color:#f4ead2}.bk.tpl-beni.bc-full .pg.cover :is(.cv-ti,.cv-sub,.cv-stat,.cv-who){color:#e2cfb5}
 /* day */
@@ -840,6 +842,7 @@ function normalize(t){
     packing:str(t.packing),rate:str(t.rate),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
+    pos:(o=>{const r={};if(o&&typeof o==='object')Object.entries(o).slice(0,300).forEach(([k,v])=>{if(Array.isArray(v)&&v.length===2&&v.every(n=>isFinite(+n))){const x=Math.max(-900,Math.min(900,Math.round(+v[0]))),y=Math.max(-900,Math.min(900,Math.round(+v[1])));if(x||y)r[String(k).slice(0,120)]=[x,y]}});return r})(t.pos),
     custom:(Array.isArray(t.custom)?t.custom:[]).map(c=>({id:str(c?.id)||uid(),kind:['image','text','spread'].includes(c?.kind)?c.kind:'text',title:str(c?.title),body:str(c?.body),img:okImg(c?.img),fit:c?.fit==='contain'?'contain':'cover',after:str(c?.after)||'end'})),
     budget:(Array.isArray(t.budget)?t.budget:[]).map(b=>({id:str(b?.id)||uid(),name:str(b?.name),amount:str(b?.amount),cur:b?.cur==='TWD'?'TWD':'JPY'})),
     gift:{to:str(t.gift?.to),from:str(t.gift?.from),letter:str(t.gift?.letter)},
@@ -1401,9 +1404,15 @@ const bg=(v,pos)=>v?` style="background-image:url('${v}')${pos?`;background-posi
 function fmtRange(t){const a=pd(t.start),b=pd(t.end);if(!a)return'';const A=t.start.replace(/-/g,'.');if(!b)return A;const B=a.getUTCFullYear()===b.getUTCFullYear()?t.end.slice(5).replace('-','.'):t.end.replace(/-/g,'.');return `${A} — ${B}`}
 const pn=no=>`<div class="pn">${no}</div>`;
 
+/* 可拖曳的文字：封面各行字、合集頁和自訂頁的標題。位置存在 t.pos['頁鍵|元素']=[x,y]（頁面座標 px），
+   用 CSS translate 位移——不影響排版流，其他內容不會被推動。 */
+const MV_CLS=['cv-en','cv-mon','cv-ti','cv-days','cv-sub','cv-date','cv-stat','cv-who','ph','ccap'];
+function mvTag(h,key,pos){if(!key)return h;return h.replace(/<(h1|div)\b([^>]*)>/g,(m,tag,attrs)=>{const cm=attrs.match(/\bclass="([^"]*)"/),cls=cm?cm[1].split(/\s+/):[];
+  const name=tag==='h1'?'h1':MV_CLS.find(c=>cls.includes(c));if(!name)return m;const id=key+'|'+name,o=pos[id];let a=attrs+` data-mv="${esc(id)}"`;
+  if(o){const tr=`translate:${o[0]}px ${o[1]}px`;a=/\bstyle="/.test(a)?a.replace(/\bstyle="/,`style="${tr};`):a+` style="${tr}"`}return `<${tag}${a}>`})}
 function renderPages(t,splits,mode={}){
   const tp=tplOf(t);tp.prepare&&tp.prepare(t);
-  try{const out=renderPages0(t,splits,mode);const res=tp.decorate?out.map(h=>tp.decorate(h,t)):out;return out.kinds?res.map((h,i)=>typeof h==='string'?h.replace(/^<section /,`<section data-k="${out.kinds[i]}" `):h):res}finally{tp.finish&&tp.finish()}
+  try{const out=renderPages0(t,splits,mode);const res=tp.decorate?out.map(h=>tp.decorate(h,t)):out;return out.kinds?res.map((h,i)=>typeof h==='string'?mvTag(h.replace(/^<section /,`<section data-k="${out.kinds[i]}" `),out.mvk[i],t.pos||{}):h):res}finally{tp.finish&&tp.finish()}
 }
 function renderPages0(t,splits,mode={}){
   const C=buildPages(t,splits,mode),{ref,days,dIdx,visits,placeById,entries,vis}=C;
@@ -1515,7 +1524,7 @@ function renderPages0(t,splits,mode={}){
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">JAPANESE PHRASES${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>常用日文</h2></div><div class="phl">${rows}</div><p class="rnote">〇〇的地方換成地名或店名，直接指給對方看也可以。</p></div>${pn(no)}</section>`}
   case'notes':return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">MEMO</span><h2>旅行筆記</h2></div><div class="lines"></div></div>${pn(no)}</section>`;
   }});
-  OUT.kinds=C.pages.map(p=>p.k);return OUT}
+  OUT.kinds=C.pages.map(p=>p.k);OUT.mvk=C.pages.map(p=>p.k==='cover'?'cover':p.k==='coll'?`coll:${p.g}:${p.part}`:p.k==='custom'?`c:${p.c.id}${p.half?':'+p.half:''}${p.tx&&p.tx.parts>1?':'+p.tx.part:''}`:'');return OUT}
 /* split long days across pages: measure at a slightly reduced size, then break where the timeline overflows */
 function computeSplits(t,mode={}){
   const m=$('#measure'),splits={},n=dayCount(t);
@@ -1777,10 +1786,23 @@ function renderTripSel(){
 
 /* ---------- preview ---------- */
 function scaleFor(w){return Math.min(1,(w)/PW)}
-let PMODE='',MONO=false;const curMode=()=>({...(PMODE==='big'?{big:true}:PMODE==='memory'?{memory:true}:{}),...(MONO?{mono:true}:{})});
+let PMODE='',MONO=false,MOVE=false;const curMode=()=>({...(PMODE==='big'?{big:true}:PMODE==='memory'?{memory:true}:{}),...(MONO?{mono:true}:{})});
 /* ibon prices from a 2025–26 how-to article (A4: color NT$10, B/W NT$3 per side); shown as an estimate only */
 const IBON={color:10,mono:3};
 const MODE_NAME={'':'一般版','big':'長輩大字版','memory':'回憶冊'};
+function mvInit(box){let D=null;
+  box.addEventListener('pointerdown',e=>{if(!MOVE)return;const el=e.target.closest('[data-mv]');if(!el||!box.contains(el))return;const pg=el.closest('.pg');if(!pg)return;
+    e.preventDefault();const s=pg.getBoundingClientRect().width/pg.offsetWidth||1,o=(T.pos||{})[el.dataset.mv]||[0,0],r=el.getBoundingClientRect(),P=pg.getBoundingClientRect();
+    const cx=(r.left+r.right)/2,cy=r.top,ch=r.height;
+    D={el,id:el.dataset.mv,s,o,x0:e.clientX,y0:e.clientY,x:o[0],y:o[1],
+      mnx:o[0]+(P.left-cx)/s,mxx:o[0]+(P.right-cx)/s,mny:o[1]+(P.top-cy)/s,mxy:o[1]+(P.bottom-cy-Math.min(ch,P.height*.9))/s,moved:false};
+    try{el.setPointerCapture(e.pointerId)}catch(_){};el.classList.add('mvdrag')});
+  box.addEventListener('pointermove',e=>{if(!D)return;e.preventDefault();const cl=(v,a,b)=>Math.max(Math.min(a,b),Math.min(Math.max(a,b),v));
+    D.x=Math.round(cl(D.o[0]+(e.clientX-D.x0)/D.s,D.mnx,D.mxx));D.y=Math.round(cl(D.o[1]+(e.clientY-D.y0)/D.s,D.mny,D.mxy));
+    if(Math.abs(e.clientX-D.x0)+Math.abs(e.clientY-D.y0)>3)D.moved=true;D.el.style.translate=`${D.x}px ${D.y}px`});
+  const end=()=>{if(!D)return;const d=D;D=null;d.el.classList.remove('mvdrag');if(!d.moved)return;T.pos=T.pos||{};if(d.x||d.y)T.pos[d.id]=[d.x,d.y];else delete T.pos[d.id];touch(true)};
+  box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
+  box.addEventListener('dblclick',e=>{if(!MOVE)return;const el=e.target.closest('[data-mv]');if(!el||!T.pos||!(el.dataset.mv in T.pos))return;delete T.pos[el.dataset.mv];touch(true);toast('已放回原位')})}
 function mountPages(container,htmls,width,mode=curMode()){
   const s=scaleFor(width);
   container.innerHTML=bkOpen(T,mode)+htmls.map((h,i)=>`<div class="pw" data-i="${i}" style="width:${PW*s}px;height:${PH*s}px">${h}</div>`).join('')+'</div>';
@@ -1794,9 +1816,9 @@ function renderPreview(){
   const htmls=pagesFor(T,curMode());
   const pbH=$('#prevbar').offsetHeight||46,availH=pv.clientHeight-pbH-(PAGER_H+38);let w=Math.min(pv.clientWidth-32,PW*1.1)||PW;
   if(FITPAGE&&availH>220)w=Math.min(w,availH*PW/PH);
-  const bad=mountPages($('#pages'),htmls,w);pv.style.scrollPaddingTop=(pbH+6)+'px';
+  const bad=mountPages($('#pages'),htmls,w);$('#pages').classList.toggle('mvon',MOVE);pv.style.scrollPaddingTop=(pbH+6)+'px';
   const wc=tripChecks(T).filter(c=>c.lv==='warn').length;
-  $('#prevbar').innerHTML=`<select id="pmode" title="預覽和匯出都會用這個版本"><option value="">一般版</option><option value="big">長輩大字版</option><option value="memory">回憶冊</option></select><label class="monochk"><input type="checkbox" id="pmono" ${MONO?'checked':''}> 黑白省墨</label><span>共 ${htmls.length} 頁．A4 對折 ${Math.ceil(htmls.length/4)} 張</span><span title="依網路教學文章的 ibon 價格估算：A4 彩色 10 元、黑白 3 元一面；雙面怎麼計費、現在的價格都以門市為準">ibon 估價：${MONO?'黑白':'彩色'}約 ${Math.ceil(htmls.length/4)*2*(MONO?IBON.mono:IBON.color)} 元 ⓘ</span>`+(wc?`<a href="#" class="warn" data-goto="days">⚠ 行程檢查有 ${wc} 則提醒</a>`:'')+(bad.length?`<span class="warn">第 ${bad.map(i=>i+1).join('、')} 頁內容太多：請縮短文字或把行程拆到別天</span>`:'')+(()=>{const sm=$$('#pages .pw').map((w,i)=>[i,parseFloat(($('.body.fit',w)||{style:{getPropertyValue:()=>1}}).style.getPropertyValue('--fs'))||1]).filter(x=>x[1]<0.86&&!bad.includes(x[0]));
+  $('#prevbar').innerHTML=`<select id="pmode" title="預覽和匯出都會用這個版本"><option value="">一般版</option><option value="big">長輩大字版</option><option value="memory">回憶冊</option></select><label class="monochk"><input type="checkbox" id="pmono" ${MONO?'checked':''}> 黑白省墨</label><label class="monochk" title="封面文字、合集頁和自訂頁的標題可以拖曳；點兩下回到原位"><input type="checkbox" id="pmove" ${MOVE?'checked':''}> 移動文字</label>${MOVE&&Object.keys(T.pos||{}).length?'<button class="mini" id="pmvreset">全部回原位</button>':''}<span>共 ${htmls.length} 頁．A4 對折 ${Math.ceil(htmls.length/4)} 張</span><span title="依網路教學文章的 ibon 價格估算：A4 彩色 10 元、黑白 3 元一面；雙面怎麼計費、現在的價格都以門市為準">ibon 估價：${MONO?'黑白':'彩色'}約 ${Math.ceil(htmls.length/4)*2*(MONO?IBON.mono:IBON.color)} 元 ⓘ</span>`+(wc?`<a href="#" class="warn" data-goto="days">⚠ 行程檢查有 ${wc} 則提醒</a>`:'')+(bad.length?`<span class="warn">第 ${bad.map(i=>i+1).join('、')} 頁內容太多：請縮短文字或把行程拆到別天</span>`:'')+(()=>{const sm=$$('#pages .pw').map((w,i)=>[i,parseFloat(($('.body.fit',w)||{style:{getPropertyValue:()=>1}}).style.getPropertyValue('--fs'))||1]).filter(x=>x[1]<0.86&&!bad.includes(x[0]));
     return sm.length?`<span class="soft" title="內容太多時會自動縮小字；縮到 85% 以下，印在 A5 上可能偏小">第 ${sm.map(x=>x[0]+1).join('、')} 頁的字縮小到 ${Math.round(Math.min(...sm.map(x=>x[1]))*100)}%，印出來可能偏小</span>`:''})();
   $('#pmode').value=PMODE;
   pv.scrollTop=st;updPager(true);if(FOLLOW)followPreview();
@@ -2076,7 +2098,7 @@ function openPNG(){
 /* template = allow-list: only fields listed here leave the device; anything new or personal stays out by default */
 function templateTrip(t,inc={}){
   const pick=(o,keys)=>Object.fromEntries(keys.filter(k=>o[k]!=null).map(k=>[k,o[k]]));
-  const c={title:(t.title||'行程')+'（範本）',subtitle:t.subtitle,start:t.start,end:t.end,tz:t.tz,theme:t.theme,opts:t.opts,packing:t.packing,
+  const c={title:(t.title||'行程')+'（範本）',subtitle:t.subtitle,start:t.start,end:t.end,tz:t.tz,theme:t.theme,opts:t.opts,pos:Object.fromEntries(Object.entries(t.pos||{}).filter(([k])=>k.startsWith('cover|'))),packing:t.packing,
     notes:inc.notes===false?'':t.notes,
     budget:t.budget.map(b=>({name:b.name,cur:b.cur})),
     days:t.days.map(d=>({...pick(d,['id','title','area','planB']),items:d.items.map(i=>({...pick(i,['id','time','text','placeId','transport','note']),reserve:i.reserve?'need':''}))})),
@@ -2430,7 +2452,10 @@ function bind(){
   ed.addEventListener('input',onField);ed.addEventListener('change',onField);ed.addEventListener('click',onAct);
   ed.addEventListener('toggle',e=>{const d=e.target;if(d.tagName!=='DETAILS')return;const id=d.dataset.id;if(d.open){openSet.add(id);openSet.delete('x'+id)}else{openSet.delete(id);openSet.add('x'+id)}},true);
   $('#prevbar').addEventListener('change',e=>{if(e.target.id==='pmode'){PMODE=e.target.value;renderPreview();toast('預覽和匯出改用「'+MODE_NAME[PMODE]+'」')}
-    if(e.target.id==='pmono'){MONO=e.target.checked;renderPreview();toast(MONO?'改成黑白省墨版':'改回彩色')}});
+    if(e.target.id==='pmono'){MONO=e.target.checked;renderPreview();toast(MONO?'改成黑白省墨版':'改回彩色')}
+    if(e.target.id==='pmove'){MOVE=e.target.checked;renderPreview();if(MOVE)toast('虛線框的文字可以拖曳，點兩下回原位')}});
+  $('#prevbar').addEventListener('click',e=>{if(e.target.id!=='pmvreset')return;if(!confirm('把所有拖曳過的文字放回原本的位置？'))return;T.pos={};touch(true);toast('已放回原位')});
+  mvInit($('#pages'));
   $('#exportBtn').addEventListener('click',()=>{$('#mnote').textContent='目前版本：'+MODE_NAME[PMODE]+(MONO?'．黑白省墨':'')+'（在預覽上方切換）'});
   $('#prevbar').addEventListener('click',e=>{const a=e.target.closest('[data-goto]');if(!a)return;e.preventDefault();tab=a.dataset.goto;renderEditor();$('#editor').scrollTop=0;if(innerWidth<=900)$('.mswitch [data-v="edit"]').click()});
   $('#tripSel').addEventListener('change',e=>switchTrip(e.target.value));
