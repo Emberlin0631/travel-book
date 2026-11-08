@@ -572,6 +572,8 @@ html.dark .thumb{background-color:#333}
 .ptips b{display:block;color:var(--c);font-size:.85em;letter-spacing:.12em}
 /* shop */
 .sgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:12px;position:absolute;left:0;right:0;top:4.6em;bottom:0}
+.sgrid.has-tot{bottom:2.5em}.stot{position:absolute;left:0;right:0;bottom:0;height:2.1em;display:flex;align-items:center;gap:.8em;flex-wrap:wrap;border-top:1.5px solid var(--c);padding-top:.25em;font-size:.82em;color:var(--mute)}.stot b{color:var(--ink);font-size:1.15em}.stot small{font-size:.8em}
+.lkr{display:flex;justify-content:space-between;gap:10px;align-items:center}.lkr span{flex:1;min-width:0}.lkr select{flex:0 0 46%;max-width:46%}
 .sc{border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;background:#fff;position:relative;min-height:0}
 .tpl-journal .sc{background:#fffaf1}
 .si{flex:1;min-height:0;background:var(--soft) center/cover;display:flex;align-items:center;justify-content:center;color:var(--mid);font-size:2.2em;font-family:var(--head);font-weight:900}
@@ -701,6 +703,22 @@ function dayCount(t){const a=pd(t.start),b=pd(t.end);if(!a||!b||b<a)return 0;ret
 const MAXD=60;const spanDays=t=>{const a=pd(t.start),b=pd(t.end);return a&&b&&b>=a?Math.round((b-a)/864e5)+1:0};
 function dateHint(){const n=dayCount(T),all=spanDays(T);return T.start&&T.end&&!n?'<b style="color:#b23a28">回程日要在出發日之後</b>':all>MAXD?`<b style="color:#b23a28">每份行程最多 ${MAXD} 天，現在選了 ${all} 天，第 ${MAXD+1} 天以後不會出現。</b>可以拆成兩份行程。`:n?`共 ${n} 天，每天會自動產生一頁。`:'填好日期後，每天會自動產生一頁。'}
 const dayDate=(t,i)=>addD(t.start,i);
+/* 購物清單合計：價格欄寫 ¥1,296／1296円／NT$300／300元 都認得；只寫數字的，目的地是日本就當日圓，其他不算 */
+function shopTotal(t){const r={JPY:0,TWD:0,n:0,skip:0};t.shops.forEach(s=>{const p=String(s.price||'').trim();if(!p)return;const v=parseFloat(p.replace(/[^\d.]/g,''));if(!isFinite(v)||!/\d/.test(p)){r.skip++;return}
+  const cur=/¥|￥|円|日圓|日幣|日元|JPY/i.test(p)?'JPY':/NT|台幣|臺幣|TWD|元/i.test(p)?'TWD':(t.country==='jp'||!t.country)?'JPY':'';if(!cur){r.skip++;return}r[cur]+=v;r.n++});return r}
+const shopTotalTxt=(t,r)=>{const rate=parseFloat(String(t.rate).replace(/[,，\s]/g,''));const a=[r.JPY?'¥ '+Math.round(r.JPY).toLocaleString():'',r.TWD?'NT$ '+Math.round(r.TWD).toLocaleString():''].filter(Boolean).join(' ＋ ');
+  return {a,conv:rate>0&&r.JPY?Math.round(r.JPY*rate+r.TWD):null,rate}};
+/* 每日行程的一行 → 景點卡／住宿卡 */
+const lcN=x=>String(x||'').toLowerCase().replace(/[\s　・·,，.。]/g,'');
+const cleanItemName=x=>String(x||'').replace(/^\s*(入住|住宿|前往|抵達|參觀|造訪|check[\s-]?in)\s*[:：]?\s*/i,'').replace(/\s*(入住|check[\s-]?in)\s*$/i,'').trim();
+const STAY_RE=/入住|住宿|check[\s-]?in|飯店|酒店|旅館|旅店|ホテル|hotel|民宿|hostel|\binn\b/i,SKIP_RE=/退房|check[\s-]?out|取車|還車|→|轉乘|集合|出發|返台|回台|機場/i,GENERIC_RE=/^(早餐|午餐|晚餐|宵夜|休息|自由活動|散步|購物|逛街|午休|整理行李)$/;
+function guessLink(t,txt){const x=String(txt||'').trim(),n=cleanItemName(x);if(!n||n.length<2||SKIP_RE.test(x)||GENERIC_RE.test(n))return '';
+  const sp=t.places.find(p=>p.name&&lcN(p.name)===lcN(n));if(sp)return 'p:'+sp.id;const ss=t.stays.find(q=>q.name&&lcN(q.name)===lcN(n));if(ss)return 's:'+ss.id;
+  if(STAY_RE.test(x))return 'stay';const c=detectCat(x);return c==='train'||c==='plane'?'':'place'}
+function newStayAt(t,name,i){const ex=t.stays.find(q=>q.name&&lcN(q.name)===lcN(name));if(ex)return ex;const d=dayDate(t,i);
+  t.stays.forEach(q=>{if(q.checkin&&q.checkout&&q.checkin<d&&d<q.checkout)q.checkout=d});/* 前一間住到這天為止 */
+  const nx=t.stays.map(q=>q.checkin).filter(c=>c&&c>d).sort()[0];const st=normalize({stays:[{name,checkin:d,checkout:nx||(t.end>d?t.end:addD(d,1))}]}).stays[0];t.stays.push(st);t.stays.sort((a,b)=>(a.checkin||'').localeCompare(b.checkin||''));return st}
+function newPlaceFor(t,name,i){const ex=t.places.find(p=>p.name&&lcN(p.name)===lcN(name));if(ex)return ex;const p=mk.place({name,area:t.days[i].area||''});t.places.push(p);return p}
 function nights(a,b){const x=pd(a),y=pd(b);return x&&y&&y>x?Math.round((y-x)/864e5):0}
 const inFrame=()=>{try{return window.self!==window.top}catch(e){return true}};
 const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'旅冊').slice(0,40);
@@ -1487,7 +1505,9 @@ function renderPages0(t,splits,mode={}){
       return `<div class="pl1"><div class="pl1t"><b>${esc(p.name||'未命名景點')}</b>${p.area?`<small>${esc(p.area)}</small>`:''}${v?`<span class="pl1v">${v}</span>`:''}${info?`<div class="pl1i">${esc(info)}</div>`:''}${payTags(p)}${p.jaAddress||p.address?`<div class="pl1a">${esc(p.jaAddress||p.address)}</div>`:''}</div>${pq?`<div class="pl1q">${pq}</div>`:''}</div>`}).join('');
     return `<section class="pg"><div class="body fit"><div class="ph"><span class="ph-en">SPOTS${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>景點速查</h2></div><div class="plist">${rows}</div></div>${pn(no)}</section>`}
   case'shop':{const cards=pg.list.map(s=>{const di=dIdx[s.dayId];return `<div class="sc"><div class="si"${bg(s.photo)}>${s.photo?'':esc((s.name||'？').slice(0,1))}</div><div class="sx"><div class="sn">${esc(s.name)}</div>${s.store?`<div class="ss">${esc(s.store)}</div>`:''}${s.price?`<div class="sp">${esc(s.price)}</div>`:''}${s.note?`<div class="sno">${esc(s.note)}</div>`:''}</div>${di!=null?`<div class="sd"${dayColor(t,di)?` style="background:${dayColor(t,di)}"`:''}>DAY.${di+1}</div>`:''}<div class="cb"></div></div>`}).join('');
-    return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">SHOPPING LIST${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>購物清單</h2></div><div class="sgrid">${cards}</div></div>${pn(no)}</section>`}
+    const tot=pg.part===pg.parts?shopTotal(t):null,tt=tot&&tot.n?shopTotalTxt(t,tot):null;
+    const tl=tt?`<div class="stot"><span>合計 ${tot.n} 項</span><b>${esc(tt.a)}</b>${tt.conv!=null?`<span>≈ NT$ ${tt.conv.toLocaleString()}</span><small>1 日圓 = ${tt.rate} 台幣（自行輸入）</small>`:''}${tot.skip?`<small>另有 ${tot.skip} 項價格看不懂，沒算進去</small>`:''}</div>`:'';
+    return `<section class="pg"><div class="body"><div class="ph"><span class="ph-en">SHOPPING LIST${pg.parts>1?` ${pg.part}/${pg.parts}`:''}</span><h2>購物清單</h2></div><div class="sgrid${tl?' has-tot':''}">${cards}</div>${tl}</div>${pn(no)}</section>`}
   case'res':{
     const rows=pg.list.map(({it,i})=>{const p=placeById[it.placeId];return `<tr><td class="rcb"><span class="cbx"></span></td><td class="ovd"${dayColor(t,i)?` style="color:${dayColor(t,i)}"`:''}>DAY.<b>${i+1}</b></td><td class="ovdate">${md(dayDate(t,i))} ${esc(it.time)}</td><td><div class="ovt">${esc(it.text||p?.name||'')}</div></td><td>${it.reserve==='done'?'<span class="chip">已預約</span>':'<span class="chip warn">需預約</span>'}</td><td class="ovs">${esc(it.resNo)}</td></tr>`}).join('');
     const st=t.stays.filter(s=>s.booking).map(s=>`<tr><td class="rcb"><span class="cbx"></span></td><td class="ovd">住宿</td><td class="ovdate">${md(s.checkin)}</td><td><div class="ovt">${esc(s.name)}</div></td><td><span class="chip">已訂房</span></td><td class="ovs">${esc(s.booking)}</td></tr>`).join('');
@@ -1639,7 +1659,7 @@ function edBasic(){
 function itemRow(i,j,it){const b=`days.${i}.items.${j}`;const pl=it.placeId?T.places.find(p=>p.id===it.placeId):null;const st=!pl&&it.stayId?T.stays.find(x=>x.id===it.stayId):null;const open=openMore.has(it.id);
   /* 預設收合成一行（時間、文字、排序鈕），細節用灰色小字摘要；點摘要才展開。這樣一天 10 幾項也好拖曳排序 */
   const chips=[pl?'連結：'+(pl.name||'未命名景點'):st?'住宿：'+(st.name||'未命名住宿'):(it.placeId||it.stayId?'連結的目標已刪除':''),it.transport?'🚃 '+legsPlain(it.transport):'',it.note?'📝 '+it.note:'',it.reserve==='need'?'需預約':it.reserve==='done'?'已預約'+(it.resNo?' '+it.resNo:''):'',it.secret?'驚喜（送禮版隱藏）':''].filter(Boolean);
-  const sel=`<select data-k="${b}.placeId"><option value="">— 不連結介紹頁 —</option>${T.places.length?`<optgroup label="景點">${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</optgroup>`:''}${T.stays.filter(x=>x.name).length?`<optgroup label="住宿（回飯店、寄放行李…）">${T.stays.filter(x=>x.name).map(x=>`<option value="stay:${x.id}" ${!it.placeId&&x.id===it.stayId?'selected':''}>住宿：${esc(x.name)}</option>`).join('')}</optgroup>`:''}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option></select>`;
+  const sel=`<select data-k="${b}.placeId"><option value="">— 不連結介紹頁 —</option>${T.places.length?`<optgroup label="景點">${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</optgroup>`:''}${T.stays.filter(x=>x.name).length?`<optgroup label="住宿（回飯店、寄放行李…）">${T.stays.filter(x=>x.name).map(x=>`<option value="stay:${x.id}" ${!it.placeId&&x.id===it.stayId?'selected':''}>住宿：${esc(x.name)}</option>`).join('')}</optgroup>`:''}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option><option value="__newstay">＋ 把這行變成新住宿（住宿頁、每晚住哪）</option></select>`;
   const body=open?`${sel}<textarea data-k="${b}.transport" rows="${Math.min(4,Math.max(1,it.transport.split('\n').length))}" placeholder="交通（選填）。分段寫法：路線｜起站→迄站｜班距、車廂、票價｜出口或路標，一行一段">${esc(it.transport)}</textarea>
     <details class="legadd"><summary>＋ 加一段轉乘（印出來會有路線色塊）</summary><div class="row"><input data-leg="line" list="lineList" placeholder="路線，例：堺筋線"><input data-leg="from" placeholder="起站"><input data-leg="to" placeholder="迄站"></div><div class="row"><input data-leg="info" placeholder="班距、車廂、票價"><input data-leg="note" placeholder="出口、路標"></div><button class="mini" data-act="addLeg" data-a="${i}.${j}">加到交通</button></details>
     <input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div><button class="morebtn" data-act="lessItem" data-a="${esc(it.id)}">－ 收合</button>`
@@ -1653,12 +1673,27 @@ const checksInner=ck=>`<h4>行程檢查 <span class="cnt">${ck.length?ck.length+
 /* 每次預覽重畫（打字停頓後）就順便更新「每日」分頁的檢查卡和每天的 ⚠ 數，不用切分頁 */
 function refreshChecks(ck){const ed=$('#editor');if(!ed||ed.dataset.tid!==T.id)return;const box=$('.card.checks',ed);if(!box)return;const h=checksInner(ck);if(box.innerHTML!==h)box.innerHTML=h;
   const byDay={};ck.forEach(c=>{if(c.lv==='warn')byDay[c.i]=(byDay[c.i]||0)+1});$$('[data-wc]',ed).forEach(x=>{const n=byDay[x.dataset.wc]||0;x.hidden=!n;x.textContent='⚠ '+n})}
+function unlinkedItems(t){const L=[];t.days.slice(0,dayCount(t)).forEach((d,i)=>d.items.forEach((it,j)=>{if(!it.placeId&&!it.stayId&&(it.text||'').trim())L.push({i,j,it})}));return L}
+function linkPicker(){const L=unlinkedItems(T);if(!L.length){toast('每一行都已經連結了');return}
+  const opt=(g,cur)=>{const o=[['place','變成新景點'],['stay','變成新住宿'],['','不要']];const ex=T.places.filter(p=>p.name).map(p=>['p:'+p.id,'連結：'+p.name]).concat(T.stays.filter(q=>q.name).map(q=>['s:'+q.id,'連結住宿：'+q.name]));
+    return [...o,...ex].map(([v,l])=>`<option value="${esc(v)}" ${v===g?'selected':''}>${esc(l)}</option>`).join('')};
+  const bg=document.createElement('div');bg.className='modal-bg gm';
+  bg.innerHTML=`<div class="modal" role="dialog"><h3>把行程變成景點／住宿頁</h3><p style="margin-bottom:8px">已經依內容先猜好了：像店名、景點的變成景點，有「入住、飯店」的變成住宿，交通、吃飯這類一般行程預設「不要」。名稱會去掉「入住」「前往」這類字，建立後可以再改。和現有的同名景點或住宿會直接連結，不會重複建立。</p>
+  <div class="gm-list lk">${L.map((x,k)=>`<label class="lkr"><span><b>DAY.${x.i+1}</b> ${esc(x.it.time||'')} ${esc(x.it.text)}</span><select data-li="${k}">${opt(guessLink(T,x.it.text))}</select></label>`).join('')}</div>
+  <div class="row"><button class="btn" data-lk="cancel">取消</button><button class="btn primary" data-lk="ok">套用</button></div></div>`;
+  bg.addEventListener('click',e=>{const b=e.target.closest('[data-lk]');if(!b){if(e.target===bg)bg.remove();return}if(b.dataset.lk==='cancel'){bg.remove();return}
+    let np=0,ns=0,nl=0;$$('select[data-li]',bg).forEach(sel=>{const x=L[+sel.dataset.li],v=sel.value,it=x.it,name=cleanItemName(it.text)||it.text.trim();if(!v)return;
+      if(v==='place'){const had=T.places.length;const p=newPlaceFor(T,name,x.i);it.placeId=p.id;it.stayId='';T.places.length>had?np++:nl++}
+      else if(v==='stay'){const had=T.stays.length;const st=newStayAt(T,name,x.i);it.stayId=st.id;it.placeId='';T.stays.length>had?ns++:nl++}
+      else if(v.startsWith('p:')){it.placeId=v.slice(2);it.stayId='';nl++}else if(v.startsWith('s:')){it.stayId=v.slice(2);it.placeId='';nl++}});
+    bg.remove();if(!np&&!ns&&!nl){toast('沒有套用任何一行');return}commit();toast([np&&`新增 ${np} 個景點`,ns&&`新增 ${ns} 間住宿`,nl&&`連結 ${nl} 行到現有的`].filter(Boolean).join('、')+'。景點頁可以到「景點」分頁補介紹')});
+  document.body.appendChild(bg)}
 function edDays(){
   const n=dayCount(T);
   if(!n)return emptyIll('01-no-trips','還沒有日期','先到「基本」填出發日和回程日，<br>這裡就會自動列出每一天。','<button class="btn pri" data-act="tab" data-a="basic">去填日期</button>');
   const ck=tripChecks(T),byDay={};ck.forEach(c=>{byDay[c.i]=(byDay[c.i]||0)+(c.lv==='warn'?1:0)});
   const ckHTML=`<div class="card checks">${checksInner(ck)}</div>
-  <div class="row" style="margin-bottom:12px"><button class="btn" data-act="openImport">貼上文字匯入行程</button><button class="btn" data-act="ics">加入行事曆（.ics）</button></div>`;
+  <div class="row" style="margin-bottom:12px"><button class="btn" data-act="openImport">貼上文字匯入行程</button><button class="btn" data-act="ics">加入行事曆（.ics）</button>${(n=>n?`<button class="btn" data-act="linkAll">把 ${n} 行變成景點／住宿頁…</button>`:'')(unlinkedItems(T).length)}</div>`;
   return ckHTML+`<p class="hint">行程連結到「景點介紹」後，小冊會自動標上頁碼（例如 <b>P.8</b>），景點頁也會寫出是哪天去的。改了景點或日期，所有頁碼會自動更新。</p>`+
   T.days.slice(0,n).map((d,i)=>{const date=dayDate(T,i);
     return det(d.id,`<b>DAY.${i+1}</b> ${md(date)}（${wk(date)}）<span class="sum-t" data-sum="${i}">${esc(d.title)}</span><span class="cnt">${dayEntries(T,i).length} 項</span><span class="cnt warnc" data-wc="${i}"${byDay[i]?'':' hidden'}>⚠ ${byDay[i]||0}</span>`,
@@ -1700,7 +1735,8 @@ function edPlaces(){
   `<button class="add" data-act="addPlace">＋ 新增景點</button>`;
 }
 function edShops(){
-  return `<p class="hint">每頁排 6 張卡片，會依照日期排序。指定哪天買，那天的頁面下方就會出現「今日採買」。</p>`+
+  const st=shopTotal(T),tt=st.n?shopTotalTxt(T,st):null;
+  return `<p class="hint">每頁排 6 張卡片，會依照日期排序。指定哪天買，那天的頁面下方就會出現「今日採買」。價格寫成 ¥1,296、1296円、NT$300 都會自動加總，印在最後一頁底部${T.rate?'':'；到「清單」分頁填匯率，還會換算成台幣'}。</p>${tt?`<p class="hint"><b>目前合計：${esc(tt.a)}${tt.conv!=null?`（≈ NT$ ${tt.conv.toLocaleString()}）`:''}</b>${st.skip?`，另有 ${st.skip} 項價格看不懂`:''}</p>`:''}`+
   T.shops.map((s,i)=>`<div class="card"><div class="shoprow"><div>${photoIn('shops.'+i+'.photo',s.photo)}</div><div></div></div><div style="height:8px"></div>
   <div class="row">${fld('品名','shops.'+i+'.name','例：生八橋')}${fld('價格','shops.'+i+'.price','例：¥ 700')}</div>
   ${fld('在哪買','shops.'+i+'.store','例：京都站伴手禮區')}
@@ -2343,9 +2379,12 @@ function onField(e){
   if(getPath(T,k)===v)return;
   if(/\.placeId$/.test(k)&&typeof v==='string'&&(v.startsWith('stay:')||getPath(T,k.replace(/placeId$/,'stayId')))){const m=k.match(/^days\.(\d+)\.items\.(\d+)\./);const it=m&&T.days[+m[1]]&&T.days[+m[1]].items[+m[2]];
     if(it&&v!=='__new'){if(v.startsWith('stay:')){it.stayId=v.slice(5);it.placeId=''}else{it.stayId='';it.placeId=v}touch(true);renderEditor();return}}
+  if(/\.placeId$/.test(k)&&v==='__newstay'){const m=k.match(/^days\.(\d+)\.items\.(\d+)\./);const it=m&&T.days[+m[1]]&&T.days[+m[1]].items[+m[2]];if(!it){el.value='';return}
+    const name=cleanItemName(it.text);if(!name){el.value=it.placeId||'';toast('先在這一行寫上住宿名稱，再選「變成新住宿」');return}
+    const st=newStayAt(T,name,+m[1]);it.stayId=st.id;it.placeId='';openSet.add(st.id);touch(true);renderEditor();toast(`已建立住宿「${name}」（${md(st.checkin)} 入住、${md(st.checkout)} 退房，可到「住宿」分頁改）`);return}
   if(/\.placeId$/.test(k)&&v==='__new'){const m=k.match(/^days\.(\d+)\.items\.(\d+)\./);const it=m&&T.days[+m[1]]&&T.days[+m[1]].items[+m[2]];if(!it){el.value='';return}
     const name=(it.text||'').trim();if(!name){el.value=it.placeId||'';toast('先在這一行寫上地點名稱，再選「變成新景點」');return}
-    const p=mk.place({name,area:T.days[+m[1]].area||''});T.places.push(p);it.placeId=p.id;openSet.add(p.id);touch(true);renderEditor();toast('已建立景點「'+name+'」並連結；到「景點」分頁可以補介紹、營業時間');return}
+    const p=newPlaceFor(T,cleanItemName(name)||name,+m[1]);it.placeId=p.id;it.stayId='';openSet.add(p.id);touch(true);renderEditor();toast('已建立景點「'+p.name+'」並連結；到「景點」分頁可以補介紹、營業時間');return}
   setPath(T,k,v);
   if(/\.time$/.test(k)&&/^days\./.test(k)){const bad=timeBad(v)==='range';el.classList.toggle('bad',bad);el.title=bad?'這個時間不存在：分鐘要 00–59，小時最多 29':''}
   {const nm=k.match(/^(places|stays)\.\d+\.name$/);if(nm){const sb=el.closest('details')?.querySelector(':scope>summary>b');if(sb)sb.textContent=String(v).trim()||(nm[1]==='places'?'未命名景點':'未命名住宿')}}
@@ -2383,6 +2422,7 @@ function onAct(e){
     case'delItem':T.days[i].items.splice(j,1);break;
     case'up':move(T.days[i].items,j,-1);break;
     case'down':move(T.days[i].items,j,1);break;
+    case'linkAll':linkPicker();return;
     case'sortItems':{/* 沒填時間的項目跟著它上面那一項走（例：12:00 午餐 下面的「買咖啡」排序後仍在午餐後面）；最上面就沒時間的留在最上面 */
       let last=-1;T.days[i].items=T.days[i].items.map((x,o)=>{const v=hm(x.time);if(v!=null)last=v;return {x,o,k:v!=null?v:last,t:v!=null?0:1}}).sort((p,q)=>(p.k-q.k)||(p.k===q.k&&p.t!==q.t&&p.t-q.t)||p.o-q.o).map(p=>p.x);
       if(T.days[i].items.some(x=>!x.time.trim()))toast('沒填時間的項目會跟著它上面那一項');break}
