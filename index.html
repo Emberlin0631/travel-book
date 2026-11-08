@@ -1083,7 +1083,8 @@ const kata2hira=s=>s.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCod
 function pkey(s,N){s=String(s||'').normalize('NFKC').toLowerCase();let o='';for(const ch of s){const a=N.jp.get(ch)??ch;o+=N.ts.get(a)??a}return kata2hira(o).replace(/[\s・·･\-_'"’.,，、。()（）「」『』【】\[\]&＆!！?？~〜]/g,'')}
 function poiPick(t,idx){const pts=[...t.places,...t.stays].filter(p=>p.lat!=null);const inB=(r,p)=>r.bbox&&p.lat>=r.bbox[0]-.05&&p.lat<=r.bbox[2]+.05&&p.lng>=r.bbox[1]-.05&&p.lng<=r.bbox[3]+.05;
   const text=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.area+' '+p.address),...t.stays.map(x=>x.name+' '+x.address)].join(' ');
-  let L=idx.filter(r=>pts.some(p=>inB(r,p))||text.includes(r.name.replace(/市$/,'')));if(!L.length)L=idx.filter(r=>!t.country||r.country===t.country);return L}
+  /* 行程點 60 公里內的城市也載入：住京都、大阪的人常當天來回奈良、神戶 */const near=(r,p)=>r.bbox&&distKm(p.lat,p.lng,(r.bbox[0]+r.bbox[2])/2,(r.bbox[1]+r.bbox[3])/2)<60;
+  let L=idx.filter(r=>pts.some(p=>inB(r,p)||near(r,p))||text.includes(r.name.replace(/市$/,'')));if(!L.length)L=idx.filter(r=>!t.country||r.country===t.country);return L}
 function poiRegion(r,N){if(POI.reg[r.id])return Promise.resolve(POI.reg[r.id]);if(!POI.load[r.id])POI.load[r.id]=fetch(r.file).then(x=>x.json()).then(j=>{const rows=j.rows.map(a=>({a,reg:j.name,t:String(a[7]||'').replace(/^shop:/,''),k:[a[0],a[1],a[2],a[3]].filter(Boolean).map(x=>pkey(x,N)),k2:String(a[12]||'').split(';').filter(Boolean).map(x=>pkey(x,N))}));POI.reg[r.id]=rows;return rows}).catch(e=>{delete POI.load[r.id];throw e});return POI.load[r.id]}
 async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return null;const N=await poiNorm(),k=pkey(q,N);if(!k)return [];
   const all=(await Promise.all(poiPick(T,idx).map(r=>poiRegion(r,N).catch(()=>[])))).flat(),tok=String(q).trim().split(/\s+/).map(x=>pkey(x,N)).filter(Boolean);
