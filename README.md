@@ -10,7 +10,7 @@
 
 - `index.html`：整個 app（單一檔案）
 - `manifest.webmanifest`、`sw.js`、`icons/`：加到主畫面與離線使用
-- `worker.js`、`wrangler.toml`、`.assetsignore`：Cloudflare Worker。靜態檔案照常由 Workers Static Assets 提供，另外多一個 `/api/gmaps-list`（見下）
+- `worker.js`、`wrangler.toml`、`.assetsignore`：Cloudflare Worker。靜態檔案照常由 Workers Static Assets 提供，另外只有一個 `/api/gmaps-place`（展開單一地點短網址，見下）
 
 `index.html` 走「先連網、失敗才用快取」，所以有網路時使用者打開就會拿到新版，不用改 `sw.js`。只有改了圖示或 `manifest.webmanifest` 時，才需要把 `sw.js` 裡的 `VERSION` 加一號，讓舊的快取被清掉。
 
@@ -38,28 +38,15 @@
 
 沒填時間的項目跟著原本在它上面的那一項走（`12:00 午餐` 下面沒時間的「買咖啡」，排序後仍在午餐後面）；一天最上面就沒時間的留在最上面。
 
-## 從 Google 地圖「儲存清單」匯入景點（需要 Worker）
+## 從 Google 地圖匯入多個地點（不經過伺服器）
 
-匯進來的景點預設是「收藏」：`places[].book` 為 `''`（自動：排進某一天才印）、`'yes'`（一律印）、`'no'`（不印）。`buildPages` 依此把未收錄的景點加進 `hidden`，景點頁、景點速查、目的地卡、數位閱讀版都一致。景點分頁有「批次整理」：勾選多個景點後一次排進某天、改收錄狀態或刪除。
+2026-11 起移除「貼儲存清單連結、由 Worker 代讀」的做法（條款風險較高），只保留三種在使用者瀏覽器裡處理的方式：
 
-重複判斷（`gmHave`）：同 Google CID → 同一間；否則名稱相同且任一方沒座標或相距 300 公尺內 → 同一間；同名但距離很遠視為不同分店。
+1. **書籤小工具**（電腦，給「儲存清單」用）：在 Google 地圖打開清單時點書籤，程式在 google.com 自己的網域讀清單，帶著 `#gm=…`（[名稱, 地址, lat, lng, 備註, cid]）開回旅冊，`gmFromHash` 交給勾選視窗。仍屬灰色地帶：讀的是 Google 未公開的 getlist 路徑（robots.txt 目前 `Allow: /maps/preview`）。
+2. **Google「我的地圖」**：貼分享連結（見下節），或選擇匯出的 KML／KMZ 檔。
+3. **複製貼上**：電腦版清單欄 Ctrl+A 複製後貼上，`parseGmPageText` 只認出名稱。
 
-`sw.js` 對 `/api/` 不做快取（Cache API 不會看 Cache-Control 到期，否則重新匯入會拿到舊清單）。`node --test test/worker.test.mjs` 用固定回應片段驗證解析器，Google 改格式時會先紅。
-
-景點分頁可以貼上 Google 地圖清單的分享連結（`maps.app.goo.gl/…`），一次把清單裡的地點勾選匯入（名稱、地址、座標、清單備註）。
-
-瀏覽器做不到這件事：清單頁是 JS 動態載入，Google 的清單 API（`/maps/preview/entitylist/getlist`）沒有 CORS 標頭，短網址的轉址也看不到。所以由 `worker.js` 代讀：解短網址 → 取清單 id（`!2s…` 或 `/placelists/list/…`）→ 呼叫 getlist → 回傳精簡 JSON（含 `Access-Control-Allow-Origin: *`，資料本來就是公開分享的清單）。Worker 只接受 Google 地圖的網址，不是通用代理。
-
-部署：`npx wrangler deploy`（會同時上傳靜態檔案與 Worker）。app 預設打 `https://travel-book.jim99725.workers.dev/api/gmaps-list`；自架的人可在瀏覽器 console 設 `localStorage.setItem('tabisatsu.gmproxy','https://你的.workers.dev/api/gmaps-list')`。
-
-方法三（電腦、最穩）：景點分頁有一個可拖到書籤列的「匯入旅冊」書籤小工具。它在 Google 地圖清單頁執行，因為跟 Google 同源所以沒有 CORS 問題、也不經過任何伺服器；抓到清單後帶著 `#gm=<base64 JSON>` 開啟旅冊，旅冊啟動時看到 `#gm=` 就跳出勾選框（資料不會留在網址列，讀完就清掉）。
-
-沒有 Worker（GitHub Pages、離線）時的方法二：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼到同一個框，只會得到名稱與類別。
-
-已知限制：一次最多讀 500 個（`!4i500`）。Google 對 Cloudflare 機房 IP 的 www.google.com 會回 429（實測 2026-11 如此），所以 Worker 固定讀 `maps.google.com`，只讀一次；被擋時 app 會提示改用方法三或方法二。`/api/gmaps-list?u=…&debug=1` 會多回 `via`。
-
-
-條款相關（2026-11-08）：google.com/robots.txt 對 `User-agent: *` 有 `Allow: /maps/preview`，getlist 在開放範圍內。Worker 只向 maps.google.com 讀一次，被 Google 擋（429/403/503）就直接回報、不換主機重試，避免看起來像繞過限流。仍要注意 Google 地圖附加條款對「大量下載」「複製內容」的限制；公開上架前建議另行評估，或改推「我的地圖」匯入。
+貼上儲存清單的分享連結時，會跳出說明視窗引導改用以上方法。另外也接受 Google Takeout 的檔案（見「檔案匯入」）。
 ## 景點介紹：維基百科導言（文字 CC BY-SA 4.0）
 
 景點分頁每個景點有「從維基百科找導言」，批次整理也有「缺介紹的找維基百科」。瀏覽器直接呼叫 Wikipedia API（`origin=*`，帶 `Api-User-Agent`），不經伺服器：先用座標 `list=geosearch`（400 m）找附近條目，再用 `list=search&srwhat=nearmatch` 以名稱核對；名稱對得上（`wpScore` ≥ 0.8）才算確定，座標附近但名稱不符的只列為「不確定」候選，批次模式不採用。語言順序依名稱字元決定（中文→日文→英文、假名→日文優先、拉丁字母→英文優先）；中文版用 `variant=zh-tw` 取繁體。導言取前幾句、去掉讀音括號，約 120–190 字。
