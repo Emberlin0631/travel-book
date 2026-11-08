@@ -794,7 +794,7 @@ const ART={img:{},failed:new Set(),busy:{}};
 /* 粉彩插畫的底色：封面字用同色系深色，換主題色也不會出現藍底紅字 */
 /* 物件太低會壓到下方中文標題：往上移幾 px（頁面高 794），空出來的地方用底色補 */
 const ARTUP={'pastel-kyoto':110};
-const ARTBG={'pastel-kyoto':'#f6d0c6','pastel-osaka':'#fce4ab','pastel-tokyo':'#bcd8ee','pastel-hokkaido':'#ded1ec','pastel-okinawa':'#bee5de','pastel-nara':'#f3dcbf','pastel-fukuoka':'#cee5d6','pastel-japan':'#c5d9eb'};
+const ARTBG={'pastel-kyoto':'#f6d0c6','pastel-osaka':'#fce4ab','pastel-tokyo':'#bcd8ee','pastel-hokkaido':'#ded1ec','pastel-okinawa':'#bee5de','pastel-nara':'#dae4c6','pastel-fukuoka':'#cee5d6','pastel-japan':'#c5d9eb'};
 /* 依行程猜城市：建立行程時選的熱門城市 → 都道府縣 → 標題文字；都沒有但在日本 → 日本通用 */
 function artCity(t){const ks=Object.keys(CVART_ZH).filter(k=>k!=='japan');
   for(const c of t.cities||[]){const k=ks.find(k=>CVART_ZH[k]===c);if(k)return k}
