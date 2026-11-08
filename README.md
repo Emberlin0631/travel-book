@@ -52,8 +52,10 @@
 
 沒有 Worker（GitHub Pages、離線）時的方法二：電腦版 Google 地圖打開清單，在清單欄 Ctrl+A 全選、複製，貼到同一個框，只會得到名稱與類別。
 
-已知限制：一次最多讀 500 個（`!4i500`）。Google 對 Cloudflare 機房 IP 會回 429（實測 2026-11 如此），Worker 會依序換 `www.google.com`、`maps.google.com`、`www.google.com.tw`、`www.google.co.jp` 再試；全被擋時 app 會提示改用方法三或方法二。`/api/gmaps-list?u=…&debug=1` 會多回 `via`（成功的主機）與 `tried`。
+已知限制：一次最多讀 500 個（`!4i500`）。Google 對 Cloudflare 機房 IP 的 www.google.com 會回 429（實測 2026-11 如此），所以 Worker 固定讀 `maps.google.com`，只讀一次；被擋時 app 會提示改用方法三或方法二。`/api/gmaps-list?u=…&debug=1` 會多回 `via`。
 
+
+條款相關（2026-11-08）：google.com/robots.txt 對 `User-agent: *` 有 `Allow: /maps/preview`，getlist 在開放範圍內。Worker 只向 maps.google.com 讀一次，被 Google 擋（429/403/503）就直接回報、不換主機重試，避免看起來像繞過限流。仍要注意 Google 地圖附加條款對「大量下載」「複製內容」的限制；公開上架前建議另行評估，或改推「我的地圖」匯入。
 ## 景點介紹：維基百科導言（文字 CC BY-SA 4.0）
 
 景點分頁每個景點有「從維基百科找導言」，批次整理也有「缺介紹的找維基百科」。瀏覽器直接呼叫 Wikipedia API（`origin=*`，帶 `Api-User-Agent`），不經伺服器：先用座標 `list=geosearch`（400 m）找附近條目，再用 `list=search&srwhat=nearmatch` 以名稱核對；名稱對得上（`wpScore` ≥ 0.8）才算確定，座標附近但名稱不符的只列為「不確定」候選，批次模式不採用。語言順序依名稱字元決定（中文→日文→英文、假名→日文優先、拉丁字母→英文優先）；中文版用 `variant=zh-tw` 取繁體。導言取前幾句、去掉讀音括號，約 120–190 字。

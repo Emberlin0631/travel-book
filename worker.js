@@ -60,31 +60,25 @@ async function gmapsList(url) {
   try { id = await listIdFrom(raw); } catch (e) { return json({ error: e.message === 'blocked' ? 'blocked' : 'upstream' }, 502); }
   if (!id) return json({ error: 'notlist' }, 400);
   const pb = `!1m6!1s${id}!2e3!3m1!1e1!3m1!1e9!2e2!3e2!4i500`;
-  // Google 對資料中心 IP 常回 429；換幾個主機依序試，哪個通就用哪個
-  const hosts = ['www.google.com', 'maps.google.com', 'www.google.com.tw', 'www.google.co.jp'];
-  const tried = [];
-  for (const h of hosts) {
-    const api = `https://${h}/maps/preview/entitylist/getlist?authuser=0&hl=zh-TW&gl=tw&pb=${encodeURIComponent(pb)}`;
-    let r;
-    try {
-      r = await fetch(api, { headers: {
-        'user-agent': UA, 'accept': '*/*', 'accept-language': 'zh-TW,zh;q=0.9,en;q=0.8',
-        'referer': `https://${h}/maps/`, 'origin': `https://${h}`, 'x-same-domain': '1',
-        'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty',
-        'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Windows"'
-      } });
-    } catch (e) { tried.push(h + ':fetch-failed'); continue; }
-    if (!r.ok) { tried.push(h + ':' + r.status); if (r.status !== 429 && r.status !== 403 && r.status !== 503) break; continue; }
-    const txt = (await r.text()).replace(/^\)\]\}'\n?/, '');
-    let data;
-    let parsed;
-    try { parsed = JSON.parse(txt); } catch (e) { tried.push(h + ':badjson'); continue; }   // 不是 JSON：多半是擋下來的 HTML 頁，換下一個主機
-    data = parseList(parsed);
-    if (!data) return json({ error: 'format', tried }, 502);   // 是 JSON 但結構認不得：Google 改格式了，不要再換主機硬試
-    if (url.searchParams.get('debug')) data.via = h, data.tried = tried;
-    return json(data, 200, { 'cache-control': 'public, max-age=300' });
-  }
-  return json({ error: tried.some(t => /:(429|403|503)$/.test(t)) ? 'blocked' : 'upstream', tried }, 502);
+  // 只向一個主機讀一次。被 Google 擋（429/403/503）就直接回報，不換主機或重試——那會像在繞過 Google 的限流
+  const h = 'maps.google.com';
+  const api = `https://${h}/maps/preview/entitylist/getlist?authuser=0&hl=zh-TW&gl=tw&pb=${encodeURIComponent(pb)}`;
+  let r;
+  try {
+    r = await fetch(api, { headers: {
+      'user-agent': UA, 'accept': '*/*', 'accept-language': 'zh-TW,zh;q=0.9,en;q=0.8',
+      'referer': `https://${h}/maps/`, 'origin': `https://${h}`, 'x-same-domain': '1',
+      'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty',
+      'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Windows"'
+    } });
+  } catch (e) { return json({ error: 'upstream', tried: [h + ':fetch-failed'] }, 502); }
+  if (!r.ok) return json({ error: [429, 403, 503].includes(r.status) ? 'blocked' : 'upstream', tried: [h + ':' + r.status] }, 502);
+  let parsed;
+  try { parsed = JSON.parse((await r.text()).replace(/^\)\]\}'\n?/, '')); } catch (e) { return json({ error: 'blocked', tried: [h + ':badjson'] }, 502); }   // 不是 JSON：多半是擋下來的 HTML 頁
+  const data = parseList(parsed);
+  if (!data) return json({ error: 'format' }, 502);   // 是 JSON 但結構認不得：Google 改格式了
+  if (url.searchParams.get('debug')) data.via = h;
+  return json(data, 200, { 'cache-control': 'public, max-age=300' });
 }
 
 /* 3. GET /api/gmaps-place?u=<單一地點分享短網址>
