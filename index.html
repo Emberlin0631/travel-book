@@ -566,7 +566,7 @@ html.dark .thumb{background-color:#333}
 .bk.tpl-poster .pg.cover::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.13;mix-blend-mode:multiply;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .25 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 .bk.tpl-poster .pg.cover::before{content:"";position:absolute;inset:14px;border:1px solid rgba(46,42,37,.35);pointer-events:none;z-index:4}
 .bk.tpl-poster .pg.cover .cv-en{display:block;position:absolute;left:0;right:0;top:52px;text-align:center;font-family:var(--en);font-weight:400;line-height:1.05;letter-spacing:.08em;padding-left:.08em;color:var(--ink);z-index:2;white-space:nowrap;text-transform:uppercase}
-.bk.tpl-poster .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:132px;text-align:center;font-family:var(--en);font-size:15px;letter-spacing:.5em;padding-left:.5em;color:var(--ink);opacity:.8;text-transform:uppercase;z-index:2}
+.bk.tpl-poster .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:calc(52px + var(--enfs,60px)*1.05 + 22px);text-align:center;font-family:var(--en);font-size:15px;letter-spacing:.5em;padding-left:.5em;color:var(--ink);opacity:.8;text-transform:uppercase;z-index:2}
 .bk.tpl-poster .pg.cover .cv-img{left:0;right:0;top:30%;bottom:0;height:auto;filter:sepia(.2) saturate(.85) contrast(1.03)}
 .bk.tpl-poster .pg.cover.art .cv-img{display:none}
 .bk.tpl-poster .pg.cover.art :is(.cv-en,.cv-mon){text-shadow:0 0 6px rgba(246,239,224,.95),0 0 14px rgba(246,239,224,.85),0 0 28px rgba(246,239,224,.6)}
@@ -1012,7 +1012,7 @@ const payTags=p=>p.pay&&p.pay.length?`<div class="ptags">${PAYS.filter(x=>p.pay.
 const CATS=[['plane','機場'],['hotel','住宿'],['temple','寺廟'],['shrine','神社'],['museum','博物館'],['cafe','咖啡甜點'],['food','美食'],['shop','購物'],['beach','海邊'],['nature','山與公園'],['train','交通'],['city','城市']];
 const CAT_RE={plane:/機場|航廈|空港|airport/i,hotel:/飯店|旅館|酒店|hotel|ホテル|民宿|入住|退房/i,temple:/寺|五重塔|大佛/,shrine:/神社|大社|神宮|稻荷|鳥居|八幡/,
   museum:/博物館|美術館|水族館|資料館|紀念館|海遊館/,cafe:/咖啡|カフェ|cafe|coffee|甜點|甜品|甘味|パフェ|蛋糕|冰淇淋|抹茶/i,food:/拉麵|ラーメン|麵|食|餐|飯|市場|燒|壽司|丼|居酒屋|料理|小吃|道頓堀/,
-  shop:/百貨|商店|購物|逛街|藥妝|商場|outlet|mall|老街|伴手禮|心齋橋/i,beach:/海|灣|港|沙灘/,nature:/山|公園|庭園|森|瀑布|溪|湖|竹林|花園|賞楓|賞櫻/,train:/站|電車|JR|新幹線|地鐵|巴士|公車|鐵|→/};
+  shop:/百貨|商店|購物|逛街|藥妝|商場|outlet|mall|老街|伴手禮|心齋橋/i,beach:/(?<![北上])海(?![道鮮產])|(?<![台臺])灣|(?<!香)港|沙灘/,nature:/山|公園|庭園|森|瀑布|溪|湖|竹林|花園|賞楓|賞櫻/,train:/站|電車|JR|新幹線|地鐵|巴士|公車|鐵|→/};
 /* ---- 交通段：transport 一行一段，「路線｜起站→迄站｜班距、車廂、票價｜出口或路標」----
    路線色只收錄查證過色名的路線（Osaka Metro 6 線、東京 Metro＋都營 13 線、阪急 3 線、JR京都線／JR神戸線＝藍、大阪環状線＝橘）；色碼是依色名取的近似值。
    其他路線（京都地鐵、京阪、南海、JR 其他線…）用主題色，不猜。中央線、東西線同名，依當天地區判斷東京或大阪。 */
@@ -1053,6 +1053,8 @@ function passHTML(f){const end=(a,c)=>{const code=IATA(a),name=String(a||'').rep
 /* 景點依行程先後排序：第一次出現的（第幾天, 那天第幾項）；沒排進行程的放最後，維持景點清單原順序 */
 function visitOrder(t,days,vis=()=>true){const key={};days.forEach((d,i)=>d.items.forEach((it,j)=>{if(it.placeId&&vis(it)&&!(it.placeId in key))key[it.placeId]=i*1000+j}));
   const pos=Object.fromEntries(t.places.map((p,k)=>[p.id,k]));return (a,b)=>((key[a.id]??1e9)-(key[b.id]??1e9))||(pos[a.id]-pos[b.id])}
+/* 機場、車站：自動模式下不印整頁介紹（只是轉乘點）；寫了介紹或放了照片就照常印 */
+const isTransit=p=>['train','plane'].includes(placeCat(p))&&!p.desc.trim()&&!p.photo;
 function detectCat(x){x=String(x||'');for(const[k]of CATS){if(k!=='city'&&CAT_RE[k].test(x))return k}return'city'}
 const placeCat=p=>p.cat||detectCat(p.name+' '+p.area);
 /* 合集分組：手動填的優先；沒填的餐廳、咖啡、購物自動歸「吃吃喝喝」「購物」（只看手選分類或名稱，不看地區——地區寫「心齋橋」不代表是店）；填「-」＝單獨一頁 */
@@ -1207,7 +1209,9 @@ async function poiSearch(q){const idx=await poiIndex();if(!idx.length)return nul
     if(best){if(/temple|shrine|museum|nature/.test(x.a[6])||x.a[11])best+=4;if(/^(attraction|theme_park|zoo|aquarium|museum|castle|viewpoint|place_of_worship|gallery|garden|park|marketplace|water|waterfall|peak|volcano|mountain_range|valley|gorge|beach|bay|cape|hot_spring|island|islet|national_park)$/.test(x.t))best+=20;if(x.t==='station'||x.a[6]==='hotel')best-=4;if(/memorial|monument/.test(x.t))best-=10;res.push({x,sc:best})}}
   return res.sort((a,b)=>b.sc-a.sc)};
   let R=await run(base);if(!R.length||R[0].sc<80){const more=poiNear(T,idx,base);if(more.length){const R2=await run(more);R=[...R,...R2].sort((a,b)=>b.sc-a.sc)}}
-  return R.slice(0,8).map(r=>r.x)}
+  /* 同名的同一個地方只留一筆（小樽運河在 OSM 有展望點、景點好幾個物件）：景點類 1 公里內算同一處；店家、住宿是連鎖店分店，只合併 150 公尺內的 */
+  const out=[];for(const r of R){const a=r.x.a,k=pkey(poiName(a),N),lim=/^(food|cafe|shop|hotel)$/.test(a[6])?.15:1;if(out.some(o=>pkey(poiName(o.a),N)===k&&Math.hypot((o.a[4]-a[4])*111,(o.a[5]-a[5])*91)<lim))continue;out.push(r.x);if(out.length>=8)break}
+  return out}
 /* 顯示名稱：日文原名有假名（京都タワー、サクラテラス）才用繁中名；純漢字的（金閣寺、伏見稲荷大社）用原名轉繁體字形，
    避免 Wikidata 的正式名（鹿苑寺）蓋掉大家熟悉的叫法 */
 const hasKana=s=>/[\u3040-\u30ff]/.test(s||'');
@@ -1236,7 +1240,7 @@ function poiHTML(){if(Array.isArray(POI.none))return `<p class="hint">${esc(POI.
   return `<div class="wsr"><div><b>${esc(nm)}</b><div class="s">${esc(sub)}${a[10]?'・有營業時間':''}${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="poiAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join('')}
 function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=poiName(a),ja=nm!==a[0]?a[0]:(a[1]||'');
   const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg,address:a[9]||'',hours:ohZh(a[10]),phone:fmtJpPhone(a[13]),web:a[14]||'',cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
-  T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]||a[13]?'（營業時間、電話來自 OpenStreetMap，可能過時，出發前再確認）':''));
+  T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]||a[13]?`（${[a[10]&&'營業時間',a[13]&&'電話'].filter(Boolean).join('、')}來自 OpenStreetMap，可能過時，出發前再確認）`:''));
   if(/^Q\d+$/.test(a[11]||''))wdIntro(p.id,a[11])}
 /* 日本電話：OSM 的寫法很亂（81753518000、+81-75-351-8000、075 351 8000…），統一成國內撥號格式。
    只有已知區碼（東京 03、大阪 06、手機、0120 與主要城市的 3 位數區碼）才加連字號；其他區碼長度不一，只轉成 0 開頭、不亂斷 */
@@ -1572,7 +1576,7 @@ const CTY=Object.fromEntries(COUNTRIES.map(c=>[c.id,c]));
 /* 目的地（地點庫的地區代號）：[代號, 繁中名, 日文名, 國家]。跟 tools/build-poi.mjs 的 REGIONS 對應 */
 const REGS=[['hokkaido','北海道','北海道'],['aomori','青森縣','青森県'],['iwate','岩手縣','岩手県'],['miyagi','宮城縣','宮城県'],['akita','秋田縣','秋田県'],['yamagata','山形縣','山形県'],['fukushima','福島縣','福島県'],['ibaraki','茨城縣','茨城県'],['tochigi','栃木縣','栃木県'],['gunma','群馬縣','群馬県'],['saitama','埼玉縣','埼玉県'],['chiba','千葉縣','千葉県'],['tokyo','東京都','東京都'],['kanagawa','神奈川縣','神奈川県'],['niigata','新潟縣','新潟県'],['toyama','富山縣','富山県'],['ishikawa','石川縣','石川県'],['fukui','福井縣','福井県'],['yamanashi','山梨縣','山梨県'],['nagano','長野縣','長野県'],['gifu','岐阜縣','岐阜県'],['shizuoka','靜岡縣','静岡県'],['aichi','愛知縣','愛知県'],['mie','三重縣','三重県'],['shiga','滋賀縣','滋賀県'],['kyoto','京都府','京都府'],['osaka','大阪府','大阪府'],['hyogo','兵庫縣','兵庫県'],['nara','奈良縣','奈良県'],['wakayama','和歌山縣','和歌山県'],['tottori','鳥取縣','鳥取県'],['shimane','島根縣','島根県'],['okayama','岡山縣','岡山県'],['hiroshima','廣島縣','広島県'],['yamaguchi','山口縣','山口県'],['tokushima','德島縣','徳島県'],['kagawa','香川縣','香川県'],['ehime','愛媛縣','愛媛県'],['kochi','高知縣','高知県'],['fukuoka','福岡縣','福岡県'],['saga','佐賀縣','佐賀県'],['nagasaki','長崎縣','長崎県'],['kumamoto','熊本縣','熊本県'],['oita','大分縣','大分県'],['miyazaki','宮崎縣','宮崎県'],['kagoshima','鹿兒島縣','鹿児島県'],['okinawa','沖繩縣','沖縄県']].map(r=>[...r,'jp']);
 /* 熱門城市 → 所在縣（城市名也會拿來當封面英文字） */
-const HOT=[['東京','tokyo','TOKYO'],['大阪','osaka','OSAKA'],['京都','kyoto','KYOTO'],['奈良','nara','NARA'],['神戶','hyogo','KOBE'],['北海道','hokkaido','HOKKAIDO'],['札幌','hokkaido','SAPPORO'],['沖繩','okinawa','OKINAWA'],['福岡','fukuoka','FUKUOKA'],['名古屋','aichi','NAGOYA'],['橫濱','kanagawa','YOKOHAMA'],['箱根','kanagawa','HAKONE'],['鎌倉','kanagawa','KAMAKURA'],['富士山・河口湖','yamanashi','MT. FUJI'],['輕井澤','nagano','KARUIZAWA'],['金澤','ishikawa','KANAZAWA'],['高山・白川鄉','gifu','TAKAYAMA'],['廣島・宮島','hiroshima','HIROSHIMA'],['仙台','miyagi','SENDAI'],['日光','tochigi','NIKKO'],['和歌山・白濱','wakayama','WAKAYAMA'],['伊勢','mie','ISE'],['姬路','hyogo','HIMEJI'],['長崎','nagasaki','NAGASAKI'],['鹿兒島','kagoshima','KAGOSHIMA'],['由布院・別府','oita','BEPPU']];
+const HOT=[['東京','tokyo','TOKYO'],['大阪','osaka','OSAKA'],['京都','kyoto','KYOTO'],['奈良','nara','NARA'],['神戶','hyogo','KOBE'],['北海道','hokkaido','HOKKAIDO'],['札幌','hokkaido','SAPPORO'],['小樽','hokkaido','OTARU'],['函館','hokkaido','HAKODATE'],['富良野・美瑛','hokkaido','FURANO'],['沖繩','okinawa','OKINAWA'],['福岡','fukuoka','FUKUOKA'],['名古屋','aichi','NAGOYA'],['橫濱','kanagawa','YOKOHAMA'],['箱根','kanagawa','HAKONE'],['鎌倉','kanagawa','KAMAKURA'],['富士山・河口湖','yamanashi','MT. FUJI'],['輕井澤','nagano','KARUIZAWA'],['金澤','ishikawa','KANAZAWA'],['高山・白川鄉','gifu','TAKAYAMA'],['廣島・宮島','hiroshima','HIROSHIMA'],['仙台','miyagi','SENDAI'],['日光','tochigi','NIKKO'],['和歌山・白濱','wakayama','WAKAYAMA'],['伊勢','mie','ISE'],['姬路','hyogo','HIMEJI'],['長崎','nagasaki','NAGASAKI'],['鹿兒島','kagoshima','KAGOSHIMA'],['由布院・別府','oita','BEPPU']];
 function guessCountry(t){const txt=[t.title,t.subtitle,...t.days.map(d=>d.area+' '+d.title),...t.places.map(p=>p.name+' '+p.area),...t.stays.map(s=>s.name+' '+s.address)].join(' ');for(const c of COUNTRIES)if(c.re.test(txt))return c.id;return null}
 const ctyOf=t=>CTY[t.country]||CTY.xx;
 const CTY_EN={jp:'JAPAN',kr:'KOREA',tw:'TAIWAN',hk:'HONG KONG',mo:'MACAU',sg:'SINGAPORE',my:'MALAYSIA',th:'THAILAND',vn:'VIETNAM',id:'INDONESIA',ph:'PHILIPPINES',cn:'CHINA',us:'U.S.A.',ca:'CANADA',gb:'U.K.',fr:'FRANCE',it:'ITALY',es:'SPAIN',de:'GERMANY',eu:'EUROPE',au:'AUSTRALIA',nz:'NEW ZEALAND'};
@@ -1625,7 +1629,7 @@ function buildPages(t,splits={},mode={}){
   if(mode.gift){const pub=new Set(),sec=new Set();days.forEach(d=>d.items.forEach(it=>{if(it.placeId)(it.secret?sec:pub).add(it.placeId)}));sec.forEach(id=>{if(!pub.has(id))hidden.add(id)})}
   const vis=it=>!(mode.gift&&it.secret);
   /* 景點收錄：book='yes' 一律印、'no' 不印、''（預設）只在排進某一天時才印——匯入上百個收藏不會把小冊變成景點目錄 */
-  {const planned=new Set();days.forEach(d=>d.items.forEach(it=>{if(it.placeId&&vis(it))planned.add(it.placeId)}));t.places.forEach(p=>{if(p.book==='no'||(p.book!=='yes'&&!planned.has(p.id)))hidden.add(p.id)})}
+  {const planned=new Set();days.forEach(d=>d.items.forEach(it=>{if(it.placeId&&vis(it))planned.add(it.placeId)}));t.places.forEach(p=>{if(p.book==='no'||(p.book!=='yes'&&(!planned.has(p.id)||isTransit(p))))hidden.add(p.id)})}
   /* 分組：同一組有 2 個以上要印的景點 → 排成合集頁（一頁 3 個），放在該組第一個景點原本的位置 */
   const byVisit=t.opts.placeSort==='list'?null:visitOrder(t,days,vis);
   const groups={};t.places.forEach(p=>{const g=grpOf(t,p);if(g&&!hidden.has(p.id))(groups[g]=groups[g]||[]).push(p)});if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
@@ -1710,7 +1714,8 @@ function renderPages0(t,splits,mode={}){
   case'cover':{const n=days.length;const art=t.cover?'':useIll?scene(tripCat(t),season,559,476,3):'<span>JOURNEY</span>';
     const stat=n?`<div class="cv-stat">${n} 天．${nItems} 個地點${nStays?`．住宿 ${nStays} 間`:''}</div>`:'';
     const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],sd=pd(t.start);
-    return `<section class="pg cover"><div class="cv-en" style="font-size:${Math.min(60,Math.floor(470/Math.max(1,[...coverEn(t)].length)))}px">${esc(coverEn(t))}</div>${sd?`<div class="cv-mon">${MON[sd.getUTCMonth()]} ${sd.getUTCFullYear()}</div>`:''}<div class="cv-img ${!t.cover&&useIll?'ill-bg':''}"${bg(t.cover,t.coverPos)}>${art}</div><div class="cv-txt"><div class="cv-ti">Travel Itinerary</div>${n?`<div class="cv-days">${n} DAYS</div>`:''}<h1>${esc(t.title||'未命名的旅行')}</h1>${t.subtitle?`<div class="cv-sub">${esc(t.subtitle)}</div>`:''}<div class="cv-date">${fmtRange(t)}</div>${stat}${t.travelers?`<div class="cv-who">${esc(t.travelers)}</div>`:''}</div></section>`}
+    const enfs=Math.min(60,Math.floor(470/Math.max(1,[...coverEn(t)].length)));
+    return `<section class="pg cover"><div class="cv-en" style="font-size:${enfs}px">${esc(coverEn(t))}</div>${sd?`<div class="cv-mon" style="--enfs:${enfs}px">${MON[sd.getUTCMonth()]} ${sd.getUTCFullYear()}</div>`:''}<div class="cv-img ${!t.cover&&useIll?'ill-bg':''}"${bg(t.cover,t.coverPos)}>${art}</div><div class="cv-txt"><div class="cv-ti">Travel Itinerary</div>${n?`<div class="cv-days">${n} DAYS</div>`:''}<h1>${esc(t.title||'未命名的旅行')}</h1>${t.subtitle?`<div class="cv-sub">${esc(t.subtitle)}</div>`:''}<div class="cv-date">${fmtRange(t)}</div>${stat}${t.travelers?`<div class="cv-who">${esc(t.travelers)}</div>`:''}</div></section>`}
   case'route':{const st=pg.stops;
     const leg=st.filter(s=>s.idx).map(s=>{const names=[...new Set(s.idx.map(i=>stayFor(t,dayDate(t,i))).filter(Boolean).map(x=>x.name))];
       return `<div class="irow"><div class="k">${esc(s.sub)}</div><div><b>${esc(s.name)}</b>${s.idx.map(i=>days[i].title?`<span class="s">　${esc(days[i].title)}</span>`:'').join('')}${names.length?`<div class="s">住宿：${names.map(esc).join('、')}</div>`:''}</div></div>`}).join('');
@@ -1992,10 +1997,10 @@ function edPlaces(){
   <p class="hint">同一「分組」的景點（例：毛線店、吃吃喝喝）會排成合集頁（一頁最多 4 間）。排進某一天的景點會印成一整頁介紹；還沒排進行程的先當「收藏」，<b>預設不印</b>，想印可以在該景點改成「一律印」。${unplanned?`目前有 <b>${unplanned}</b> 個景點還沒排進行程。`:''}</p>${T.places.length>1?`<div class="bulkbar" id="bulkbar"><button class="mini" data-act="bulkTog">${BULK?'結束批次整理':'批次整理'}</button>${BULK?`<span class="bcnt" id="bcnt">已選 0</span><button class="mini" data-act="bulkAll">全選</button><button class="mini" data-act="bulkNone">全不選</button><button class="mini" data-act="bulkUnplanned">只選沒排進行程的</button><div class="brow"><select id="bulkDay"><option value="">排進哪一天…</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(d.title)}</option>`).join('')}</select><button class="mini" data-act="bulkPlan">排進去</button></div><div class="brow"><button class="mini" data-act="bulkWp">缺介紹的找維基百科</button><input id="bulkGrp" list="grpList" placeholder="分組名稱" style="width:130px;flex:0 0 auto"><button class="mini" data-act="bulkGrp">設成這一組</button><button class="mini" data-act="bulkBook" data-a="yes">一律印</button><button class="mini" data-act="bulkBook" data-a="">自動</button><button class="mini" data-act="bulkBook" data-a="no">不印</button><button class="mini danger" data-act="bulkDel">刪除</button></div>`:''}</div>`:''}`+
   (T.places.length?'':emptyIll('02-no-places','還沒有景點','貼上 Google 地圖連結，或按下面的「新增景點」。<br>想去但還沒決定哪天的地方，也可以先收在這裡。'))+
   T.places.map((p,i)=>{const v=(C.visits[p.id]||[]).map(x=>'DAY.'+(x+1)).join('、');
-    const printed=p.book==='yes'||(p.book!=='no'&&v);
+    const printed=p.book==='yes'||(p.book!=='no'&&v&&!isTransit(p));
     return det(p.id,`${BULK?`<input type="checkbox" class="bsel" data-bsel="${p.id}" ${BULKSEL.has(p.id)?'checked':''} onclick="event.stopPropagation()">`:''}<b>${esc(p.name||'未命名景點')}</b><span class="sum-t">${esc(p.area)}${(g=>g?`　<i class="gchip${p.group?'':' auto'}"${p.group?'':' title="自動分組"'}>${esc(g)}</i>`:'')(grpOf(T,p))}${printed?'':'　<i class="noprint">不印</i>'}</span>`,
     `<div class="used ${v?'':'no'}">${v?'已排進：'+v:'還沒有排進任何一天'}${printed?'':'，不會印進小冊'}</div>
-    <label class="f"><span>印進小冊</span><select data-k="places.${i}.book"><option value="">自動（排進行程才印）</option><option value="yes">一律印</option><option value="no">不印（只留在景點清單）</option></select></label>
+    <label class="f"><span>印進小冊</span><select data-k="places.${i}.book"><option value="">自動（排進行程才印；機場、車站不印）</option><option value="yes">一律印</option><option value="no">不印（只留在景點清單）</option></select></label>
     <div class="row">${fld('名稱','places.'+i+'.name','例：伏見稻荷大社')}${fld('地區','places.'+i+'.area','例：東山')}</div>
     <label class="f"><span>插圖分類</span><select data-k="places.${i}.cat"><option value="">自動判斷（目前：${CATS.find(c=>c[0]===detectCat(p.name+' '+p.area))[1]}）</option>${CATS.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('')}</select></label>
     <div class="row" style="margin-bottom:10px"><select data-plan="${i}" style="flex:1"><option value="">排進哪一天…</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}">DAY.${k+1} ${md(dayDate(T,k))} ${esc(d.title)}</option>`).join('')}</select><button class="mini" data-act="planPlace" data-a="${i}">加入行程</button></div>
