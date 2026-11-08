@@ -73,6 +73,8 @@
 
 授權：`poi/*.json` 是 OpenStreetMap 的衍生資料庫，依 ODbL 必須同樣以 ODbL 公開並標示 © OpenStreetMap contributors（檔案內與 `poi/LICENSE.txt` 已寫明）；印出的小冊屬於「作品」，在圖文來源頁標示即可。`tools/cjk-map.json` 由 OpenCC（Apache-2.0）的轉換表產生。
 
+維基百科結果依名稱相似度排序（完全相同、包含、兩字一組重疊比例；也比對重新導向的名稱，例如「金閣寺」→鹿苑寺）。相似度低於 0.45 的收進預設收合的「其他名稱不太相符的結果」，例外是維基搜尋排第一且有座標的條目。已選目的地但該縣的地點庫還沒建好時，提示會寫出縣名並說明這次只查維基百科。
+
 ### 查 OpenStreetMap（店家、餐廳）
 
 維基查不到時，使用者按「查 OpenStreetMap」才會呼叫公開的 Nominatim（`osmSearch`）。依 Nominatim 使用規範（全部使用者合計每秒最多 1 次、不得做自動完成），只由按鈕觸發，並在本機排隊至少間隔 1.1 秒；帶 `countrycodes`（目的地國家）與 `viewbox`（行程已有景點的範圍，偏好但不限制）。加入時帶名稱、日文名（`name:ja`）、座標、地區、地址、類別，並記錄 `locSrc:'osm'`；圖文來源頁與手機閱讀版會列出這些地點並印出「© OpenStreetMap contributors，ODbL，https://www.openstreetmap.org/copyright」。實測（2026-11-08）：「一蘭 道頓堀」查得到；「中村藤吉 本店」會找到同名不同店，所以介面提醒使用者確認。用量變大時要改成自架或付費的 Nominatim。
