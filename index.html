@@ -786,7 +786,7 @@ const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'
      bkStyle(t) → css text     extra custom properties on the .bk container
      onSelect(t)               when the user switches to this template */
 /* 封面插畫（復古海報、粉彩）：assets/covers/<版型>-<城市>.webp。新增圖時把城市加進 CVART，檔名照格式放進資料夾 */
-const CVART={poster:['kyoto','osaka','tokyo'],pastel:['kyoto','osaka','hokkaido','okinawa','nara','fukuoka','japan']};
+const CVART={poster:['kyoto','osaka','tokyo','hokkaido'],pastel:['kyoto','osaka','hokkaido','okinawa','nara','fukuoka','japan']};
 const CVART_ZH={kyoto:'京都',osaka:'大阪',tokyo:'東京',hokkaido:'北海道',okinawa:'沖繩',nara:'奈良',fukuoka:'福岡',nagoya:'名古屋',japan:'日本'};
 function artOptions(id){return [['auto','自動（依目的地）'],['photo','用我的封面照片'],...CVART[id].map(k=>[k,(k==='japan'?'日本通用':CVART_ZH[k])+'插畫'])]}
 const ART={img:{},failed:new Set(),busy:{}};
