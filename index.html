@@ -150,6 +150,7 @@ html.dark .empty.ill img{opacity:.88}
 @media (max-width:720px){.hm-show{padding-top:28px}.hm-pages{gap:10px}.hm-pages figcaption{font-size:12px}}
 .hm-foot{text-align:center;color:var(--tb-muted,#66655f);font-size:12px;padding:0 20px 30px}
 .tpls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.adv{margin-top:10px;border-top:1px solid var(--ui-line,#e3ddd2);padding-top:8px}.adv>summary{cursor:pointer;font-weight:700;font-size:14px;padding:6px 0;color:var(--ui-acc)}.adv[open]>summary{margin-bottom:6px}
 .tplc{border:2px solid var(--ui-line);border-radius:8px;padding:8px;background:#fff;text-align:left}
 .tplc.on{border-color:var(--ui-acc)}
 .tplc .sw-prev{height:54px;border-radius:4px;margin-bottom:6px;position:relative;overflow:hidden}
@@ -955,7 +956,7 @@ function normalize(t){
   const o={schema:SCHEMA,id:str(t.id)||uid(),title:str(t.title),subtitle:str(t.subtitle),start:str(t.start),end:str(t.end),travelers:str(t.travelers),
     cover:okImg(t.cover),coverPos:okPos(t.coverPos),created:+t.created||Date.now(),backupAt:+t.backupAt||0,notes:str(t.notes),updated:t.updated||Date.now(),
     theme:{template:TEMPLATES.some(x=>x.id===t.theme?.template)?t.theme.template:'clean',color:okColor(t.theme?.color)},
-    opts:{placeOrder:t.opts?.placeOrder==='after-day'?'after-day':'end',notesPage:t.opts?.notesPage!==false,
+    opts:{placeOrder:t.opts?.placeOrder==='after-day'?'after-day':'end',thinMerge:t.opts?.thinMerge!==false,notesPage:t.opts?.notesPage!==false,
       dayColors:!!t.opts?.dayColors,illus:t.opts?.illus!==false,season:['auto','sakura','summer','maple','snow','none'].includes(t.opts?.season)?t.opts.season:'auto',dayNotes:!!t.opts?.dayNotes,routeMap:t.opts?.routeMap!==false,
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
@@ -1238,9 +1239,12 @@ const OH_D={Mo:'一',Tu:'二',We:'三',Th:'四',Fr:'五',Sa:'六',Su:'日'};
 const ohZh=s=>String(s||'').replace(/\bMo-Su\b/g,'每天').replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,(m,a,b)=>'週'+OH_D[a]+'至'+OH_D[b]).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,m=>'週'+OH_D[m]).replace(/\bPH\b/g,'國定假日').replace(/\boff\b/g,'休').replace(/;\s*/g,'；');
 function poiHTML(){if(Array.isArray(POI.none))return `<p class="hint">${esc(POI.none.join('、'))}的旅冊地點庫還沒建好，這次只查維基百科；店家、餐廳可以按「查 OpenStreetMap」。</p>`;if(POI.none&&POI.idx&&POI.idx.length)return `<p class="hint">要用旅冊地點庫，先<button class="linkbtn" data-act="regPick">選這趟的目的地</button>（例如京都、大阪）。</p>`;if(!WS_POI||!WS_POI.length)return '';return `<div class="wsh">旅冊地點庫（OpenStreetMap）</div>`+WS_POI.map((x,k)=>{const a=x.a,nm=poiName(a),sub=[nm!==a[0]?a[0]:'',a[2]&&a[2]!==nm?a[2]:'',OSM_TYPE[String(a[7]||'').replace(/^shop:/,'')]||'',a[8]||x.reg].filter(Boolean).join('・'),had=T.places.some(p=>p.name&&(wpNorm(p.name)===wpNorm(nm)||wpNorm(p.name)===wpNorm(a[0])));
   return `<div class="wsr"><div><b>${esc(nm)}</b><div class="s">${esc(sub)}${a[10]?'・有營業時間':''}${had?'・<span class="have">已在景點裡</span>':''}</div></div><button class="mini" data-act="poiAdd" data-a="${k}">${had?'再加一次':'加入'}</button></div>`}).join('')}
+/* 搜尋區「加入後排進 DAY.N」：加入景點時順便排進那天，時間接在當天最後一筆後面 */
+let WSDAY='';
+function planNew(p){const k=WSDAY;if(k===''||!T.days[+k]||+k>=dayCount(T))return '';const d=T.days[+k];d.items.push(mk.item({time:nextTime(d),placeId:p.id}));openSet.add(d.id);return `，排進 DAY.${+k+1}`}
 function poiAdd(k){const x=WS_POI&&WS_POI[k];if(!x)return;const a=x.a,nm=poiName(a),ja=nm!==a[0]?a[0]:(a[1]||'');
   const p=mk.place({name:nm,jaName:ja&&ja!==nm?ja:'',lat:a[4],lng:a[5],area:a[8]||x.reg,address:a[9]||'',hours:ohZh(a[10]),phone:fmtJpPhone(a[13]),web:a[14]||'',cat:a[6],mapUrl:`https://www.google.com/maps/search/?api=1&query=${a[4]},${a[5]}`,locSrc:'osm'});
-  T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+nm+'」'+(a[10]||a[13]?`（${[a[10]&&'營業時間',a[13]&&'電話'].filter(Boolean).join('、')}來自 OpenStreetMap，可能過時，出發前再確認）`:''));
+  T.places.push(p);openSet.add(p.id);const pl=planNew(p);commit();toast('已加入「'+nm+'」'+pl+(a[10]||a[13]?`（${[a[10]&&'營業時間',a[13]&&'電話'].filter(Boolean).join('、')}來自 OpenStreetMap，可能過時，出發前再確認）`:''));
   if(/^Q\d+$/.test(a[11]||''))wdIntro(p.id,a[11])}
 /* 日本電話：OSM 的寫法很亂（81753518000、+81-75-351-8000、075 351 8000…），統一成國內撥號格式。
    只有已知區碼（東京 03、大阪 06、手機、0120 與主要城市的 3 位數區碼）才加連字號；其他區碼長度不一，只轉成 0 開頭、不亂斷 */
@@ -1296,10 +1300,10 @@ function osmResHTML(){if(!OSM)return '';if(!OSM.length)return '<p class="hint">O
 function osmAdd(k){const x=OSM&&OSM[k];if(!x)return;const a=x.address||{},ja=x.namedetails?.['name:ja']||'',lat=+(+x.lat).toFixed(7),lng=+(+x.lon).toFixed(7);
   const addr=[a.postcode,a.province||a.state,a.city||a.town||a.village,a.suburb||a.city_district||a.quarter,a.neighbourhood,a.road,a.house_number].filter(Boolean).join(' ');
   const p=mk.place({name:x.name,jaName:ja&&ja!==x.name?ja:'',lat,lng,area:a.suburb||a.city_district||a.city||a.town||'',address:addr,cat:osmCat(x),mapUrl:`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,locSrc:'osm'});
-  T.places.push(p);openSet.add(p.id);commit();toast('已加入「'+x.name+'」，地點資料來自 OpenStreetMap（會印在圖文來源頁）')}
+  T.places.push(p);openSet.add(p.id);const pl=planNew(p);commit();toast('已加入「'+x.name+'」'+pl+'，地點資料來自 OpenStreetMap（會印在圖文來源頁）')}
 async function wsAdd(k){const x=WS[k];if(!x)return;const nm=x.lang==='zh'?wsClean(x.title):wsClean(x.other||x.title),ja=x.lang==='ja'?x.title:x.other;
-  const p=mk.place({name:nm,jaName:ja&&ja!==nm?wsClean(ja):'',lat:x.lat,lng:x.lng,mapUrl:x.lat!=null?`https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}`:''});T.places.push(p);openSet.add(p.id);
-  const withDesc=$('#wsDesc')?.checked;commit();toast('已加入「'+nm+'」'+(withDesc?'，正在帶入介紹…':''));
+  const p=mk.place({name:nm,jaName:ja&&ja!==nm?wsClean(ja):'',lat:x.lat,lng:x.lng,mapUrl:x.lat!=null?`https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}`:''});T.places.push(p);openSet.add(p.id);const pl=planNew(p);
+  const withDesc=$('#wsDesc')?.checked;commit();toast('已加入「'+nm+'」'+pl+(withDesc?'，正在帶入介紹…':''));
   if(withDesc){try{const e=await wpExtract(x.lang,x.title);const q=T.places.find(z=>z.id===p.id);if(e&&q&&!q.desc.trim()){q.desc=e.text;q.descSrc=wpSrc(e);commit();toast('已帶入「'+nm+'」的維基介紹，來源會印在圖文來源頁')}}catch(err){toast('介紹沒帶到，可以之後在景點裡按「從維基百科找介紹」')}}}
 async function wpFillMany(ids){const list=T.places.filter(p=>ids.has(p.id)&&!p.desc.trim()&&(p.name||p.lat!=null));if(!list.length){toast('勾選的景點都已經有介紹');return}
   let ok=0,none=0,unsure=0;const btn=$('[data-act=bulkWp]');if(btn){btn.disabled=true}
@@ -1632,9 +1636,14 @@ function buildPages(t,splits={},mode={}){
   {const planned=new Set();days.forEach(d=>d.items.forEach(it=>{if(it.placeId&&vis(it))planned.add(it.placeId)}));t.places.forEach(p=>{if(p.book==='no'||(p.book!=='yes'&&(!planned.has(p.id)||isTransit(p))))hidden.add(p.id)})}
   /* 分組：同一組有 2 個以上要印的景點 → 排成合集頁（一頁 3 個），放在該組第一個景點原本的位置 */
   const byVisit=t.opts.placeSort==='list'?null:visitOrder(t,days,vis);
-  const groups={};t.places.forEach(p=>{const g=grpOf(t,p);if(g&&!hidden.has(p.id))(groups[g]=groups[g]||[]).push(p)});if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
-  const pushPlace=p=>{if(placed.has(p.id))return;const g=grpOf(t,p),G=g&&groups[g];
-    if(G&&G.length>1){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const cap=!t.opts.illus&&L.every(x=>!x.photo)?6:4/* 沒照片也沒插圖時改純文字緊湊排，一頁放 6 個 */,parts=Math.ceil(L.length/cap);for(let k=0;k<parts;k++)pages.push({k:'coll',g,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
+  /* 沒介紹、沒照片、沒小提醒的景點不印整頁空白筆記，併到「其他景點」合集頁（設成「一律印」的照舊印整頁） */
+  const THIN='其他景點',thin=p=>p.book!=='yes'&&!p.desc.trim()&&!p.photo&&!p.tips.trim(),gOf=p=>grpOf(t,p)||(t.opts.thinMerge!==false&&thin(p)?THIN:'');
+  const groups={};t.places.forEach(p=>{const g=gOf(p);if(g&&!hidden.has(p.id))(groups[g]=groups[g]||[]).push(p)});
+  /* 只有自己一個的分組（例如只有一家餐廳的「吃吃喝喝」），內容又空，也併進「其他景點」 */
+  const GID={};if(t.opts.thinMerge!==false)for(const [g,G] of Object.entries(groups))if(g!==THIN&&G.length===1&&thin(G[0])){delete groups[g];(groups[THIN]=groups[THIN]||[]).push(G[0]);GID[G[0].id]=THIN}
+  if(byVisit&&groups[THIN])groups[THIN].sort(byVisit);if(byVisit)Object.values(groups).forEach(G=>G.sort(byVisit));
+  const pushPlace=p=>{if(placed.has(p.id))return;const g=GID[p.id]||gOf(p),G=g&&groups[g];
+    if(G&&(G.length>1||g===THIN)){const L=G.filter(x=>!placed.has(x.id));L.forEach(x=>placed.add(x.id));const cap=!t.opts.illus&&L.every(x=>!x.photo)?6:4/* 沒照片也沒插圖時改純文字緊湊排，一頁放 6 個 */,parts=Math.ceil(L.length/cap);for(let k=0;k<parts;k++)pages.push({k:'coll',g,list:L.slice(Math.round(k*L.length/parts),Math.round((k+1)*L.length/parts)),part:k+1,parts});return}
     placed.add(p.id);pages.push({k:'place',p})};
   const mem=!!mode.memory,off=new Set(t.opts.hide||[]);
   const pushC=key=>{for(const c of t.custom){if(c.after!==key)continue;
@@ -1893,6 +1902,7 @@ function photoIn(k,val,cls=''){return `<div class="ph-in ${cls}">${val?`<div cla
 function dayOpts(sel){const n=dayCount(T);return `<option value="">（不指定哪天）</option>`+T.days.slice(0,n).map((d,i)=>`<option value="${d.id}" ${d.id===sel?'selected':''}>DAY.${i+1} ${md(dayDate(T,i))} ${esc(d.title)}</option>`).join('')}
 function det(id,sum,inner,defOpen){const o=openSet.has(id)||(defOpen&&!openSet.has('x'+id));return `<details class="card" data-id="${id}" ${o?'open':''}><summary>${sum}</summary><div class="inner">${inner}</div></details>`}
 
+let ADVOPEN=false;
 function edBasic(){
   const n=dayCount(T);
   return `<div class="card"><h4>旅行資訊</h4>
@@ -1908,9 +1918,11 @@ function edBasic(){
   <div class="f"><span>主題色</span><div class="sw">${COLORS.map(c=>`<button class="swc ${T.theme.color===c?'on':''}" style="background:${c}" data-act="color" data-a="${c}" aria-label="${c}"></button>`).join('')}<input type="color" data-k="theme.color" value="${okColor(T.theme.color)}" title="自訂顏色"></div></div>
   ${T.theme.template==='beni'?fld('封面英文大字（留空會依國家自動帶入，目前：'+esc(coverEn({...T,coverEn:''}))+'）','coverEn','例：OSAKA & KYOTO'):''}
   <div class="row">${(c=>`<label class="f"><span>${c.label}</span><select data-k="${c.key}">${c.options.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>`)(tplOf(T).cover)}<label class="f"><span>內文字體</span><select data-k="opts.font"><option value="sans">黑體</option><option value="serif">明體</option></select></label></div>
+  <details class="adv"${ADVOPEN?' open':''} ontoggle="ADVOPEN=this.open"><summary>進階設定（詳細程度、景點頁、插圖、時區…）</summary>
   <label class="f"><span>資訊詳細程度</span><select data-k="opts.detail"><option value="brief">精簡：每日只列時間和名稱，景點合併成「景點速查」</option><option value="std">標準</option><option value="full">完整：每日行程加上營業時間、費用、景點提醒</option></select></label>
   <label class="f"><span>景點介紹頁放在哪裡</span><select data-k="opts.placeOrder"><option value="end">集中放在每日行程之後</option><option value="after-day">放在第一次去的那天後面</option></select></label>
   <label class="f"><span>景點介紹頁的順序</span><select data-k="opts.placeSort"><option value="visit">依行程先後（第一次去的日子、時間）</option><option value="list">依景點分頁的清單順序</option></select></label>
+  <label class="chk"><input type="checkbox" data-k="opts.thinMerge" ${T.opts.thinMerge!==false?'checked':''}> 沒寫介紹、沒放照片的景點不印整頁，合併到「其他景點」合集頁</label>
   <label class="chk"><input type="checkbox" data-k="opts.autoGroup" ${T.opts.autoGroup?'checked':''}> 餐廳、咖啡、購物自動合成「吃吃喝喝」「購物」合集頁（景點自己填了分組的照填的；填「-」單獨一頁）</label>
   <label class="chk"><input type="checkbox" data-k="opts.flightCard" ${T.opts.flightCard?'checked':''}> 出發資訊頁的航班印成登機證樣式</label>
   <label class="chk"><input type="checkbox" data-k="opts.dayColors" ${T.opts.dayColors?'checked':''}> 每天用不同顏色</label>
@@ -1926,10 +1938,10 @@ function edBasic(){
   <label class="chk"><input type="checkbox" data-k="opts.sun" ${T.opts.sun?'checked':''}> 每日頁顯示日出日落（依地區或景點的地圖連結估算，誤差約 1～2 分鐘）</label>
   <label class="f"><span>目的地國家／地區（緊急電話、目的地卡用語）${(g=>g&&g!==T.country?`　<button class="mini" data-act="useCty" data-a="${g}">看起來是${CTY[g].name}，改成這個</button>`:'')(guessCountry(T))}</span><select data-k="country"><option value="">尚未選擇</option>${COUNTRIES.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></label>
   <label class="f"><span>目的地時區（算日出日落、行事曆用）${(g=>g!=null&&g!==T.tz?`　<button class="mini" data-act="useTz" data-a="${g}">看起來是 ${tzLabel(g)}，改成這個</button>`:'')(guessTz(T))}</span><select data-k="tz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label><p class="hint" style="margin-top:-6px">有夏令時間的地方，夏天要選快 1 小時的那一格。</p>
-  <label class="f"><span>出發地時區（去程航班用）</span><select data-k="homeTz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label></div>
+  <label class="f"><span>出發地時區（去程航班用）</span><select data-k="homeTz">${TZS.map(([v,l])=>`<option value="${v}">${tzLabel(v)} ${l}</option>`).join('')}</select></label></details></div>
   <div class="card"><h4>頁面順序</h4><p class="hint">用 ↑↓ 調整整個區塊的順序；取消勾選就不印。封面固定在第一頁。</p><div class="secl">${secOrder(T).map((k,ix,arr)=>`<div class="secr"><label class="chk" style="margin:0"><input type="checkbox" data-sec="${k}" ${T.opts.hide.includes(k)?'':'checked'}> ${SECTIONS.find(x=>x[0]===k)[1]}</label><span><button class="mini" data-act="secUp" data-a="${k}" ${ix?'':'disabled'}>↑</button><button class="mini" data-act="secDown" data-a="${k}" ${ix<arr.length-1?'':'disabled'}>↓</button></span></div>`).join('')}</div><button class="mini" data-act="secReset" style="margin:8px 0 10px">恢復預設順序</button></div>
   <div class="card"><h4>出發前提醒</h4><p class="hint">一行寫一則，會印在「出發資訊」頁。</p><textarea data-k="notes" rows="4" placeholder="例：肉製品不能帶回台灣">${esc(T.notes)}</textarea><div style="height:10px"></div></div>
-  <div class="foot-note">行程資料只存在這台裝置的瀏覽器裡，不會上傳。唯一的例外：用「Google 地圖儲存清單匯入」時，那個清單的分享連結會經過旅冊的讀取服務去向 Google 取得清單，不會送出你的行程。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
+  <div class="foot-note">行程資料只存在這台裝置的瀏覽器裡，不會上傳。唯一的例外：貼上手機分享的 Google 地圖短網址時，那個網址會經過旅冊的讀取服務展開成地點名稱和座標，不會送出你的行程。換裝置或清除瀏覽器資料前，記得從「匯出」下載備份檔。<br><span id="stinfo"></span></div>`;
 }
 function itemRow(i,j,it){const b=`days.${i}.items.${j}`;const pl=it.placeId?T.places.find(p=>p.id===it.placeId):null;const st=!pl&&it.stayId?T.stays.find(x=>x.id===it.stayId):null;const open=openMore.has(it.id);
   /* 預設收合成一行（時間、文字、排序鈕），細節用灰色小字摘要；點摘要才展開。這樣一天 10 幾項也好拖曳排序 */
@@ -1985,7 +1997,7 @@ function edDays(){
 function edPlaces(){
   const C=buildPages(T);
   const unplanned=T.places.filter(p=>!(C.visits[p.id]||[]).length).length;
-  return `<div class="card"><h4>搜尋景點</h4><p class="hint">先查旅冊地點庫（OpenStreetMap 整理的京都、大阪、奈良、神戶景點與店家，在你的瀏覽器裡查），再查維基百科：寺廟、神社、公園、車站這類有條目的地點，會帶入名稱、日文名和座標（也能帶入介紹）。店家、餐廳多半查不到，再按「查 OpenStreetMap」（開放地圖，會帶入座標、地區、地址）。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><div id="wsRes" class="wsres">${wsResHTML()}</div><div class="row" style="margin-top:6px"><button class="mini" data-act="osmSearch">查 OpenStreetMap（店家、餐廳）</button></div><div id="osmRes" class="wsres">${osmResHTML()}</div></div>
+  return `<div class="card"><h4>搜尋景點</h4><p class="hint">先查旅冊地點庫（OpenStreetMap 整理的日本各地景點與店家，依「基本」選的目的地載入，在你的瀏覽器裡查），再查維基百科：寺廟、神社、公園、車站這類有條目的地點，會帶入名稱、日文名和座標（也能帶入介紹）。店家、餐廳多半查不到，再按「查 OpenStreetMap」（開放地圖，會帶入座標、地區、地址）。</p><div class="row"><input id="wsQ" value="${esc(WS_Q)}" placeholder="例：清水寺、伏見稻荷大社、大阪城" onkeydown="if(event.key==='Enter'){event.preventDefault();wsSearch()}"><button class="mini" data-act="wsSearch">搜尋</button></div><div class="row" style="margin-top:6px;align-items:center"><label class="chk" style="margin:0;flex:1"><input type="checkbox" id="wsDesc" checked> 同時帶入維基百科的介紹（CC BY-SA，會自動標示來源）</label><select id="wsDay" onchange="WSDAY=this.value" title="按「加入」時順便排進這一天" style="flex:0 0 auto;width:auto"><option value="">加入後先不排</option>${T.days.slice(0,dayCount(T)).map((d,k)=>`<option value="${k}"${String(WSDAY)===String(k)?' selected':''}>加入後排進 DAY.${k+1}</option>`).join('')}</select></div><div id="wsRes" class="wsres">${wsResHTML()}</div><div class="row" style="margin-top:6px"><button class="mini" data-act="osmSearch">查 OpenStreetMap（店家、餐廳）</button></div><div id="osmRes" class="wsres">${osmResHTML()}</div></div>
   <div class="card"><h4>從 Google 地圖新增</h4><p class="hint">在 Google 地圖打開地點 → 分享 → 複製連結，貼在這裡。完整網址和手機分享的短網址（maps.app.goo.gl）都會自動帶出名稱；短網址要連網經過旅冊的讀取服務展開，讀不到時請自己填，地圖連結和 QR code 一樣能用。</p><div class="row" style="margin-bottom:10px"><input id="mapPaste" placeholder="https://www.google.com/maps/place/…"><button class="mini" data-act="addFromMap">新增景點</button></div></div>
   <div class="card"><h4>從 Google 地圖一次匯入多個地點</h4><p class="hint">會列出地點讓你勾選，已經在景點裡的預設不勾。三種方法都只在你的瀏覽器裡處理，不經過旅冊的伺服器：</p>
   ${(b=>b?`<p class="hint"><b>書籤小工具（電腦，儲存清單用）</b>：把這個按鈕拖到瀏覽器的書籤列 → 在 Google 地圖打開清單 → 點一下書籤，會帶著名稱、地址、座標和備註回到旅冊：<a class="mini bmk" href="${b}" draggable="true" title="拖到書籤列" onclick="return false">匯入旅冊 ✦</a></p>`:'')(gmBookmarklet())}
@@ -2689,6 +2701,8 @@ function onField(e){
   touch(e.type==='change');
 }
 function move(arr,i,d){const j=i+d;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]]}
+/* 新增行程的預設時間：當天最晚的那筆 + 90 分鐘；當天還沒有時間就 09:00；超過 22:00 就留空 */
+function nextTime(d){const ts=d.items.map(it=>tkey(it.time)).filter(k=>k!=='99:99').sort();if(!ts.length)return '09:00';const [h,m]=ts[ts.length-1].split(':').map(Number),x=h*60+m+90;return x>22*60?'':String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
 const tkey=s=>{const m=String(s).match(/^(\d{1,2}):(\d{2})/);return m?m[1].padStart(2,'0')+':'+m[2]:'99:99'};
 function onAct(e){
   const b=e.target.closest('[data-act]');if(!b)return;e.preventDefault();const a=b.dataset.a,act=b.dataset.act;
@@ -2705,7 +2719,7 @@ function onAct(e){
     case'tpl':T.theme.template=a;{const tp=tplOf(T);tp.onSelect&&tp.onSelect(T)}break;
     case'color':T.theme.color=a;break;
     case'rmPhoto':setPath(T,a,null);if(/^places\.\d+\.photo$/.test(a))setPath(T,a+'Src',null);break;
-    case'addItem':T.days[i].items.push(mk.item());openSet.add(T.days[i].id);wantFollow('day',T.days[i].id);break;
+    case'addItem':T.days[i].items.push(mk.item({time:nextTime(T.days[i])}));openSet.add(T.days[i].id);wantFollow('day',T.days[i].id);break;
     case'delItem':T.days[i].items.splice(j,1);break;
     case'up':move(T.days[i].items,j,-1);break;
     case'down':move(T.days[i].items,j,1);break;
@@ -2732,7 +2746,7 @@ function onAct(e){
     case'bulkPlan':{const sel=$('#bulkDay');if(!sel||sel.value===''){toast('先選要排進哪一天');return}if(!BULKSEL.size){toast('先勾選景點');return}const k=+sel.value;let n=0;T.places.forEach(p=>{if(!BULKSEL.has(p.id))return;if(T.days[k].items.some(x=>x.placeId===p.id))return;T.days[k].items.push({id:uid(),time:'',text:'',placeId:p.id,transport:'',note:'',secret:false,reserve:'',resNo:''});n++});openSet.add(T.days[k].id);toast(`已把 ${n} 個景點排進 DAY.${k+1}（時間先空著，到「每日」再填）`);break}
     case'bulkBook':{if(!BULKSEL.size){toast('先勾選景點');return}T.places.forEach(p=>{if(BULKSEL.has(p.id))p.book=a});toast(`已把 ${BULKSEL.size} 個景點設為「${a==='yes'?'一律印':a==='no'?'不印':'自動'}」`);break}
     case'bulkDel':{if(!BULKSEL.size){toast('先勾選景點');return}const n=BULKSEL.size;modal('刪除景點',`要刪除勾選的 <b>${n}</b> 個景點嗎？已排進行程的那幾行會保留文字，但不再連結介紹頁。`,[['取消'],['刪除',()=>{T.days.forEach(d=>d.items.forEach(x=>{if(BULKSEL.has(x.placeId)){const p=T.places.find(q=>q.id===x.placeId);if(!x.text&&p)x.text=p.name;x.placeId=''}}));T.places=T.places.filter(p=>!BULKSEL.has(p.id));BULKSEL.clear();commit()},'danger']]);return}
-    case'planPlace':{const sel=$(`[data-plan="${i}"]`);if(!sel||sel.value===''){toast('先選要排進哪一天');return}const k=+sel.value;T.days[k].items.push({id:uid(),time:'',text:'',placeId:T.places[i].id,transport:'',note:'',secret:false,reserve:'',resNo:''});openSet.add(T.days[k].id);toast(`已排進 DAY.${k+1}`);break}
+    case'planPlace':{const sel=$(`[data-plan="${i}"]`);if(!sel||sel.value===''){toast('先選要排進哪一天');return}const k=+sel.value;T.days[k].items.push({id:uid(),time:nextTime(T.days[k]),text:'',placeId:T.places[i].id,transport:'',note:'',secret:false,reserve:'',resNo:''});openSet.add(T.days[k].id);toast(`已排進 DAY.${k+1}`);break}
     case'wsSearch':wsSearch();return;
     case'osmSearch':osmSearch();return;
     case'regPick':regionPicker(false);return;
