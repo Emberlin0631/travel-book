@@ -13,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="旅冊">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&family=DM+Serif+Display&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/travel-book/style-tokens.css">
 <style>
 /* UI colours come from the Travel Book design tokens (style-tokens.css). --ui-acc / --ui-dark are darker steps of --tb-primary-deep so text on white keeps ≥4.5:1 contrast. Booklet print CSS (#bkcss) does not use these. */
@@ -548,6 +548,56 @@ html.dark .thumb{background-color:#333}
 .bk.tpl-beni .pg.day :is(.tl,.dfoot,.planb,.dnotes){position:relative;z-index:1}
 .bk.tpl-beni .tl .t{font-family:var(--en);font-weight:700;font-size:1.12em;letter-spacing:.03em}.bk.tpl-beni .tl li{border-bottom-color:var(--line)}
 .bk.tpl-beni .pkh{font-family:var(--head);letter-spacing:.35em;text-align:center;background:#efe6cd;color:#3d3c4a;padding:.2em 0;margin-top:.8em}.bk.mono.tpl-beni .pkh{background:#fff;border:1px solid #999}
+/* ===== 復古海報（poster）：米色紙、襯線大字、滿版水彩插畫、封面書名標籤 ===== */
+.bk.tpl-poster{--paper:#f3ead8;--ink:#2e2a25;--mute:#7d7060;--line:#d9ccb2;--head:"Noto Serif TC","Songti TC","PMingLiU","Noto Serif CJK TC",serif;--en:"DM Serif Display","Noto Serif TC",serif}
+.bk.mono.tpl-poster{--paper:#fff}
+.tpl-poster .pg:not(.cover):not(.cimg):not(.blank)::before{content:"";position:absolute;inset:14px;border:1px solid var(--line);pointer-events:none}
+.tpl-poster .ph{text-align:center;padding-bottom:.55em;border-bottom:3px double var(--c)}
+.tpl-poster .ph-en{font-family:var(--en);font-weight:400;font-size:1.05em;letter-spacing:.22em;text-transform:uppercase}
+.tpl-poster .ph h2{font-weight:700;letter-spacing:.18em;font-size:1.6em}
+.tpl-poster .pg h2,.tpl-poster .pg h3{font-weight:700}
+.tpl-poster .dh{border-bottom:3px double var(--c)}.tpl-poster .dn{font-family:var(--en);font-weight:400;letter-spacing:.2em}.tpl-poster .dd .dt{font-weight:700}
+.tpl-poster .tl .t,.tpl-poster .pn,.tpl-poster .ovd{font-family:var(--en);font-weight:400}.tpl-poster .pn{letter-spacing:.3em}
+.tpl-poster .ptag{font-family:var(--en);font-weight:400;letter-spacing:.3em}.tpl-poster .place h2{font-weight:700;letter-spacing:.06em}
+.tpl-poster .dphoto,.tpl-poster .place .pimg{filter:sepia(.18) saturate(.88)}
+.bk.tpl-poster .pg.cover{background-color:var(--paper);background-size:cover;background-position:center top}
+.bk.tpl-poster .pg.cover::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.13;mix-blend-mode:multiply;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .25 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.bk.tpl-poster .pg.cover::before{content:"";position:absolute;inset:14px;border:1px solid rgba(46,42,37,.35);pointer-events:none;z-index:4}
+.bk.tpl-poster .pg.cover .cv-en{display:block;position:absolute;left:0;right:0;top:52px;text-align:center;font-family:var(--en);font-weight:400;line-height:1.05;letter-spacing:.08em;padding-left:.08em;color:var(--ink);z-index:2;white-space:nowrap;text-transform:uppercase}
+.bk.tpl-poster .pg.cover .cv-mon{display:block;position:absolute;left:0;right:0;top:132px;text-align:center;font-family:var(--en);font-size:15px;letter-spacing:.5em;padding-left:.5em;color:var(--ink);opacity:.8;text-transform:uppercase;z-index:2}
+.bk.tpl-poster .pg.cover .cv-img{left:0;right:0;top:30%;bottom:0;height:auto;filter:sepia(.2) saturate(.85) contrast(1.03)}
+.bk.tpl-poster .pg.cover.art .cv-img{display:none}
+.bk.tpl-poster .pg.cover .cv-txt{left:50%;right:auto;top:auto;bottom:46px;transform:translateX(-50%);width:max-content;max-width:78%;text-align:center;background:rgba(246,239,224,.94);border:1px solid rgba(46,42,37,.45);outline:1px solid rgba(246,239,224,.94);outline-offset:3px;padding:12px 26px 13px;z-index:2}
+.bk.tpl-poster .pg.cover h1{font-size:23px;font-weight:700;letter-spacing:.16em;line-height:1.35;margin:0;max-width:none}
+.bk.tpl-poster .pg.cover :is(.cv-ti,.cv-days,.cv-stat){display:none}
+.bk.tpl-poster .pg.cover .cv-sub{font-size:12px;margin-top:3px}
+.bk.tpl-poster .pg.cover .cv-date{font-family:var(--en);font-weight:400;font-size:13px;letter-spacing:.24em;margin-top:5px;color:var(--c)}
+.bk.tpl-poster .pg.cover .cv-who{font-size:11px;margin-top:2px}
+.bk.mono .pg.cover.art{background-image:none!important}
+/* ===== 粉彩（pastel）：純色粉彩封面、圓胖英文大字、單一小插圖、圓角色塊 ===== */
+.bk.tpl-pastel{--paper:#fffaf5;--ink:#3a3330;--mute:#8a7f78;--line:#eadfd6;--en:"Fredoka","Noto Sans TC",sans-serif}
+.bk.mono.tpl-pastel{--paper:#fff;--pb:#f0f0f0;--pd:#222}
+.bk.mono.tpl-pastel .pg.cover{background-color:#fff}
+.tpl-pastel .ph{background:var(--pb);border-radius:16px;padding:.55em 1em .6em}
+.tpl-pastel .ph-en{font-family:var(--en);font-weight:600;font-size:.85em;letter-spacing:.14em;color:var(--pd);text-transform:uppercase}
+.tpl-pastel .ph h2{color:var(--pd)}
+.tpl-pastel .dh{border:0;background:var(--pb);border-radius:16px;padding:10px 14px}
+.tpl-pastel .dn{font-family:var(--en);font-weight:700;color:var(--pd);letter-spacing:.08em}.tpl-pastel .dd .dt{color:var(--pd)}
+.tpl-pastel .tl .t,.tpl-pastel .pn,.tpl-pastel .ovd,.tpl-pastel .ptag{font-family:var(--en);font-weight:600}
+.tpl-pastel .place h2{color:var(--pd)}.tpl-pastel .place .pimg{left:24px;right:24px;top:24px;height:276px;border-radius:20px}
+.tpl-pastel :is(.sc,.bp,.sw1,.ptips){border-radius:16px}.tpl-pastel .dphoto{border-radius:16px}.tpl-pastel .cv-days{border-radius:20px}
+.bk.tpl-pastel .pg.cover{background-color:var(--pb);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:flex-start;padding:54px 46px 0}
+.bk.tpl-pastel .pg.cover .cv-en{display:block;position:relative;z-index:2;font-family:var(--en);font-weight:700;line-height:.98;letter-spacing:.01em;color:var(--pd);white-space:nowrap;text-transform:uppercase}
+.bk.tpl-pastel .pg.cover .cv-mon{display:block;position:relative;z-index:2;font-family:var(--en);font-weight:600;font-size:20px;letter-spacing:.06em;color:var(--pd);opacity:.7;margin-top:6px}
+.bk.tpl-pastel .pg.cover.art .cv-img{display:none}
+.bk.tpl-pastel .pg.cover .cv-img{left:76px;right:76px;top:228px;height:330px;border-radius:26px;overflow:hidden;background-color:rgba(255,255,255,.45)}
+.bk.tpl-pastel .pg.cover .cv-img.ill-bg{background:transparent}.bk.tpl-pastel .pg.cover .cv-img span{color:var(--pd);opacity:.25}
+.bk.tpl-pastel .pg.cover .cv-txt{left:46px;right:46px;top:auto;bottom:46px;z-index:2}
+.bk.tpl-pastel .pg.cover h1{font-size:25px;font-weight:900;color:var(--pd);margin-top:0;line-height:1.3}
+.bk.tpl-pastel .pg.cover :is(.cv-ti,.cv-days,.cv-stat){display:none}
+.bk.tpl-pastel .pg.cover .cv-sub{font-size:13px;color:var(--pd);opacity:.75;margin-top:2px}
+.bk.tpl-pastel .pg.cover .cv-date{font-family:var(--en);font-weight:600;font-size:14px;letter-spacing:.08em;color:var(--pd);margin-top:6px}
+.bk.tpl-pastel .pg.cover .cv-who{color:var(--pd);opacity:.75}
 /* place */
 .place .pimg{position:absolute;left:0;right:0;top:0;height:300px;background:center/cover}
 .tpl-journal .place .pimg{left:32px;right:32px;top:32px;height:262px;border:6px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15)}
@@ -735,6 +785,33 @@ const safeName=s=>(String(s||'旅冊').replace(/[\\/:*?"<>|\n\r]/g,'').trim()||'
      decorate(html,t) → html   post-process each page
      bkStyle(t) → css text     extra custom properties on the .bk container
      onSelect(t)               when the user switches to this template */
+/* 封面插畫（復古海報、粉彩）：assets/covers/<版型>-<城市>.webp。新增圖時把城市加進 CVART，檔名照格式放進資料夾 */
+const CVART={poster:['kyoto'],pastel:['kyoto','osaka','hokkaido','okinawa','nara','fukuoka','japan']};
+const CVART_ZH={kyoto:'京都',osaka:'大阪',tokyo:'東京',hokkaido:'北海道',okinawa:'沖繩',nara:'奈良',fukuoka:'福岡',nagoya:'名古屋',japan:'日本'};
+function artOptions(id){return [['auto','自動（依目的地）'],['photo','用我的封面照片'],...CVART[id].map(k=>[k,(k==='japan'?'日本通用':CVART_ZH[k])+'插畫'])]}
+const ART={img:{},failed:new Set(),busy:{}};
+/* 粉彩插畫的底色：封面字用同色系深色，換主題色也不會出現藍底紅字 */
+const ARTBG={'pastel-kyoto':'#f6d6cc','pastel-osaka':'#fae5af','pastel-hokkaido':'#e0d5ef','pastel-okinawa':'#c7e6e0','pastel-nara':'#f3dcbf','pastel-fukuoka':'#cee5d6','pastel-japan':'#c5d9eb'};
+/* 依行程猜城市：建立行程時選的熱門城市 → 都道府縣 → 標題文字；都沒有但在日本 → 日本通用 */
+function artCity(t){const ks=Object.keys(CVART_ZH).filter(k=>k!=='japan');
+  for(const c of t.cities||[]){const k=ks.find(k=>CVART_ZH[k]===c);if(k)return k}
+  for(const r of t.regions||[]){const k=r==='aichi'?'nagoya':ks.includes(r)?r:null;if(k)return k}
+  const txt=[t.title,t.subtitle,t.coverEn,...(t.days||[]).map(d=>d.area)].join(' ');for(const k of ks)if(txt.includes(CVART_ZH[k])||txt.toLowerCase().includes(k))return k;
+  return t.country==='jp'||(!t.country&&guessCountry(t)==='jp')?'japan':null}
+function artName(t){const id=t.theme.template,set=CVART[id];if(!set)return null;const o=t.opts.acover||'auto';if(o==='photo')return null;
+  if(o!=='auto')return set.includes(o)?id+'-'+o:null;const c=artCity(t);if(c&&set.includes(c))return id+'-'+c;
+  /* 沒有這個城市的插畫：有封面照片就用照片，沒有才退到日本通用 */
+  return !t.cover&&c&&set.includes('japan')?id+'-japan':null}
+function artFetch(n){if(ART.img[n])return Promise.resolve(true);if(location.protocol==='file:'){ART.failed.add(n);return Promise.resolve(false)}if(ART.busy[n])return ART.busy[n];
+  return ART.busy[n]=fetch('assets/covers/'+n+'.webp').then(r=>{if(!r.ok)throw 0;return r.blob()})
+    .then(b=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(f.result);f.onerror=rej;f.readAsDataURL(b)}))
+    .then(u=>{ART.img[n]=u;ART.failed.delete(n);return true}).catch(()=>{ART.failed.add(n);return false}).finally(()=>{delete ART.busy[n]})}
+async function loadArt(t=T,retry=false){const n=t&&artName(t);if(!n||ART.img[n]||(!retry&&ART.failed.has(n)))return ART;const ok=await artFetch(n);
+  if(!ok&&!retry)toast('封面插畫載入失敗，先用封面照片顯示');if(typeof renderPreview==='function'&&T)setTimeout(renderPreview,0);return ART}
+const artMissing=t=>{const n=artName(t);return n&&!ART.img[n]?[n]:[]};
+function artPrepare(t){const n=artName(t);if(n&&!ART.img[n]&&!ART.failed.has(n)&&!ART.busy[n])loadArt(t)}
+function artDecorate(h,t){if(!h.startsWith('<section class="pg cover">'))return h;const n=artName(t),u=n&&ART.img[n];
+  return h.replace('<section class="pg cover">',u?`<section class="pg cover art" style="background-image:url(${u})${ARTBG[n]?`;--pd:${deepHex(ARTBG[n],.3,.5)}`:''}">`:'<section class="pg cover noart">')}
 const COVER_STYLES={key:'opts.coverStyle',label:'封面樣式',options:[['top','照片在上'],['full','滿版照片'],['frame','拱門框'],['note','手帳（紙膠帶＋印章）']]};
 const TEMPLATES=[
   {id:'clean',name:'簡約白',desc:'乾淨俐落，適合列印',tier:'free',paper:'#ffffff',softMix:.1,cover:COVER_STYLES,prev:'background:#fffdf9;border-left:5px solid var(--sw)'},
@@ -755,6 +832,18 @@ const TEMPLATES=[
    decorate:(h,t)=>MTON?mtDecorate(h,t):h,
    bkStyle:t=>MATCHA.img['paper-tile']?`;--mt-paper:url(${MATCHA.img['paper-tile']})`:'',
    onSelect:t=>{if(t.theme.color==='#2f5d50')t.theme.color='#5f7c6c'}},
+  {id:'poster',name:'復古海報',desc:'像老旅行海報的精裝書：水彩插畫、襯線大字、米色紙',tier:'free',paper:'#f3ead8',softMix:.12,
+   cover:{key:'opts.acover',label:'封面圖',options:artOptions('poster')},
+   prev:'background:linear-gradient(#e9c9a8 0 40%,#9fb3a6 40% 58%,#5f7c6c 58% 76%,#c86f4a 76%);box-shadow:inset 0 0 0 4px #f3ead8,inset 0 0 0 5px #2e2a25',
+   palette:[['#a8553a','陶土'],['#2f5a4f','深綠'],['#2a3f5f','海軍藍'],['#a07a2c','芥末'],['#a5636a','煙燻粉'],['#3b3631','墨']],
+   load:(t,retry)=>loadArt(t,retry),missing:t=>artMissing(t),prepare:t=>artPrepare(t),decorate:(h,t)=>artDecorate(h,t),
+   onSelect:t=>{if(['#2f5d50','#5f7c6c','#7b2f35'].includes(t.theme.color))t.theme.color='#a8553a'}},
+  {id:'pastel',name:'粉彩',desc:'純色粉彩封面、圓胖大字、一個可愛小插圖',tier:'free',paper:'#fffaf5',softMix:.14,
+   cover:{key:'opts.acover',label:'封面圖',options:artOptions('pastel')},
+   prev:'background:#f6d6cc radial-gradient(circle at 50% 66%,#d9604c 0 17%,transparent 18%);border-radius:10px',
+   palette:[['#d9746a','蜜桃'],['#cf9a2e','奶油黃'],['#5b8fc6','天空藍'],['#8a74c4','薰衣草'],['#4f9f8c','薄荷'],['#c96f96','莓果']],
+   load:(t,retry)=>loadArt(t,retry),missing:t=>artMissing(t),prepare:t=>artPrepare(t),decorate:(h,t)=>artDecorate(h,t),
+   onSelect:t=>{if(['#2f5d50','#5f7c6c','#7b2f35'].includes(t.theme.color))t.theme.color='#d9746a'}},
 ];
 const TPL=Object.fromEntries(TEMPLATES.map(x=>[x.id,x]));
 const tplOf=t=>TPL[t&&t.theme&&t.theme.template]||TEMPLATES[0];
@@ -858,7 +947,7 @@ function normalize(t){
       qr:t.opts?.qr!==false,taxiCards:t.opts?.taxiCards!==false,
       sun:t.opts?.sun!==false,emgPage:t.opts?.emgPage!==false,emgLocal:t.opts?.emgLocal!==false,phrasePage:!!t.opts?.phrasePage,phraseCats:Array.isArray(t.opts?.phraseCats)?t.opts.phraseCats.filter(x=>PHRASES.some(g=>g[0]===x)):PHRASES.map(g=>g[0]),
       order:Array.isArray(t.opts?.order)?t.opts.order.map(String):[],hide:Array.isArray(t.opts?.hide)?t.opts.hide.map(String):[],
-      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,placeSort:t.opts?.placeSort==='list'?'list':'visit',autoGroup:t.opts?.autoGroup!==false,flightCard:t.opts?.flightCard!==false,detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
+      coverStyle:['top','full','frame','note'].includes(t.opts?.coverStyle)?t.opts.coverStyle:'top',mcover:['a','b','c'].includes(t.opts?.mcover)?t.opts.mcover:'a',bcover:['frame','full'].includes(t.opts?.bcover)?t.opts.bcover:'frame',acover:['auto','photo',...Object.keys(CVART_ZH)].includes(t.opts?.acover)?t.opts.acover:'auto',tlIcons:typeof t.opts?.tlIcons==='boolean'?t.opts.tlIcons:null,placeSort:t.opts?.placeSort==='list'?'list':'visit',autoGroup:t.opts?.autoGroup!==false,flightCard:t.opts?.flightCard!==false,detail:['brief','std','full'].includes(t.opts?.detail)?t.opts.detail:'std',font:t.opts?.font==='serif'?'serif':'sans',resPage:t.opts?.resPage!==false,packPage:t.opts?.packPage!==false,budgetPage:t.opts?.budgetPage!==false},
     packing:str(t.packing),rate:str(t.rate),cities:(Array.isArray(t.cities)?t.cities:[]).filter(c=>HOT.some(h=>h[0]===c)).slice(0,12),regions:(Array.isArray(t.regions)?t.regions:[]).filter(x=>REGS.some(r=>r[0]===x)).slice(0,12),tz:isFinite(+t.tz)&&t.tz!==''&&t.tz!=null&&+t.tz>=-12&&+t.tz<=14?+t.tz:8,tzSet:!!t.tzSet,country:CTY[t.country]?t.country:'',countrySet:!!t.countrySet,coverEn:str(t.coverEn).slice(0,24),homeTz:isFinite(+t.homeTz)&&t.homeTz!==''&&t.homeTz!=null&&+t.homeTz>=-12&&+t.homeTz<=14?+t.homeTz:8,
     emg:Object.fromEntries(EMG_FIELDS.map(([k])=>[k,str(t.emg?.[k])])),
     expenses:(Array.isArray(t.expenses)?t.expenses:[]).map(x=>({id:str(x?.id)||uid(),date:str(x?.date),name:str(x?.name),amount:str(x?.amount),cur:x?.cur==='TWD'?'TWD':'JPY'})),
@@ -1719,8 +1808,8 @@ function deepHex(hex,L,S=.5){const [r,g,b]=[1,3,5].map(i=>parseInt(hex.substr(i,
   if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}
   l=Math.min(l,L);s=Math.min(s,S);const C=(1-Math.abs(2*l-1))*s,X=C*(1-Math.abs((h/60)%2-1)),m=l-C/2;const [a,b2,c]=h<60?[C,X,0]:h<120?[X,C,0]:h<180?[0,C,X]:h<240?[0,X,C]:h<300?[X,0,C]:[C,0,X];
   return '#'+[a,b2,c].map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('')}
-function cvars(c,tpl){c=okColor(c);const tp=TPL[tpl]||TEMPLATES[0];const ink=deepHex(c,.2,.45);return `--c:${c};--soft:${mixHex(c,tp.paper,tp.softMix)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`+(tpl==='beni'?`;--bd:${deepHex(c,.3)};--bink:${ink};--bmute:${mixHex(ink,'#e8e0c7',.55)}`:'')}
-const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${t.opts.coverStyle} bc-${t.opts.bcover} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${tplOf(t).bkStyle?tplOf(t).bkStyle(t):''}">`;
+function cvars(c,tpl){c=okColor(c);const tp=TPL[tpl]||TEMPLATES[0];const ink=deepHex(c,.2,.45);return `--c:${c};--soft:${mixHex(c,tp.paper,tp.softMix)};--tint:${mixHex(c,'#fffdf9',.14)};--dark:${mixHex(c,'#000000',.5)};--mid:${mixHex(c,'#ffffff',.45)}`+(tpl==='beni'?`;--bd:${deepHex(c,.3)};--bink:${ink};--bmute:${mixHex(ink,'#e8e0c7',.55)}`:'')+(tpl==='pastel'?`;--pb:${mixHex(c,'#ffffff',.26)};--pd:${deepHex(c,.3,.5)}`:'')}
+const bkOpen=(t,mode={})=>`<div class="bk tpl-${t.theme.template} cs-${tplOf(t).cover===COVER_STYLES?t.opts.coverStyle:'own'} bc-${t.opts.bcover} f-${t.opts.font}${mode.big?' big':''}${mode.mono?' mono':''}" style="${cvars(t.theme.color,t.theme.template)}${tplOf(t).bkStyle?tplOf(t).bkStyle(t):''}">`;
 function fitEl(el){let fs=1;el.style.setProperty('--fs',fs);while(el.scrollHeight>el.clientHeight+1&&fs>0.72){fs=+(fs-0.04).toFixed(2);el.style.setProperty('--fs',fs)}return el.scrollHeight>el.clientHeight+1}
 function fitAll(root){const bad=[];$$('.pg',root).forEach((p,i)=>{const b=$('.body.fit',p);if(b&&fitEl(b))bad.push(i)});return bad}
 
@@ -2176,7 +2265,7 @@ document.getElementById('drvx').addEventListener('click',function(){document.get
 async function exportDigital(){const h=digitalHTML(T);if(await saveFile(safeName(T.title)+'_手機閱讀版.html',h,'text/html'))toast('已下載手機閱讀版')}
 async function exportHTML(){
   const a=await offscreenPages();const inner=a.innerHTML;a.innerHTML='';
-  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}\n${EXPORT_CSS}</style></head><body><div class="bar"><button onclick="print()">列印／存成 PDF</button><span>列印設定：紙張 A5、邊界「無」、勾選「背景圖形」</span></div>${inner}<script>function z(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-16)/${PW}))}z();addEventListener('resize',z)<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&family=DM+Serif+Display&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}\n${EXPORT_CSS}</style></head><body><div class="bar"><button onclick="print()">列印／存成 PDF</button><span>列印設定：紙張 A5、邊界「無」、勾選「背景圖形」</span></div>${inner}<script>function z(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-16)/${PW}))}z();addEventListener('resize',z)<\/script></body></html>`;
   if(await saveFile(safeName(T.title)+(PMODE?'_'+MODE_NAME[PMODE]:'')+'_小冊.html',html,'text/html'))toast('已下載'+MODE_NAME[PMODE]+'小冊');
 }
 const GIFT_CSS=`body{margin:0;background:#3b3632;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;color:#2b2622}
@@ -2233,7 +2322,7 @@ async function giftHTML(preview){
   let enc='';if(n){a.innerHTML=bkOpen(T)+pagesFor(T).join('')+'</div>';fitAll(a);enc=btoa(unescape(encodeURIComponent(a.innerHTML))).split('').reverse().join('')}
   a.innerHTML='';
   const g=T.gift,c=okColor(T.theme.color),data=JSON.stringify({start:T.start,n,enc,id:T.id,p:preview?1:0}).replace(/</g,'\\u003c');
-  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(g.to?'給 '+g.to+' 的旅行':T.title||'旅行禮物')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"><style>:root{--c:${c}}${$('#bkcss').textContent}\n${GIFT_CSS}</style></head><body>
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(g.to?'給 '+g.to+' 的旅行':T.title||'旅行禮物')}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&family=DM+Serif+Display&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet"><style>:root{--c:${c}}${$('#bkcss').textContent}\n${GIFT_CSS}</style></head><body>
 <div class="env" id="env"><div class="stage"><div class="envelope"><div class="back"></div><div class="letter"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div>${nl(g.letter)}</div><div class="pocket"></div><div class="flap"></div><div class="seal">旅</div></div><div class="tap">點信封打開</div><button class="skipenv" id="skipEnv">先不拆，直接看行程</button></div>
 <div class="card"><div class="lt-to">${g.to?'給 '+esc(g.to):''}</div><div>${nl(g.letter)||esc(T.title)}</div>${g.from?`<div class="lt-from">— ${esc(g.from)}</div>`:''}<button id="toBook">打開旅行小冊</button></div></div>
 <div id="book" style="display:none"><div class="cdbar" id="cd"></div><button class="reletter" id="reLetter">再看一次信</button><div id="pages">${masked}</div></div>
@@ -2494,7 +2583,7 @@ function imposeSheets(pgs){
 async function exportA4(){
   const a=await offscreenPages();const pgs=$$('.pg',a).map(x=>x.outerHTML);const open=bkOpen(T,curMode());a.innerHTML='';
   const im=imposeSheets(pgs);
-  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}｜A4 對折小冊</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}
+  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(T.title||'旅冊')}｜A4 對折小冊</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&family=DM+Serif+Display&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet"><style>${$('#bkcss').textContent}
 ${A4_CSS}
 body{margin:0;background:#4a4744;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif}
 .bar{position:sticky;top:0;z-index:5;background:#1f2a27;color:#fff;padding:10px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px;line-height:1.6}
