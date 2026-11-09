@@ -2008,7 +2008,7 @@ function edDays(){
   if(!n)return emptyIll('01-no-trips','還沒有日期','先到「基本」填出發日和回程日，<br>這裡就會自動列出每一天。','<button class="btn pri" data-act="tab" data-a="basic">去填日期</button>');
   const ck=tripChecks(T),byDay={};ck.forEach(c=>{byDay[c.i]=(byDay[c.i]||0)+(c.lv==='warn'?1:0)});
   const ckHTML=`<div class="card checks">${checksInner(ck)}</div>
-  <div class="row" style="margin-bottom:12px"><button class="btn" data-act="openImport">貼上文字匯入行程</button><button class="btn" data-act="ics">加入行事曆（.ics）</button>${(n=>n?`<button class="btn" data-act="linkAll">把 ${n} 行變成景點／住宿頁…</button>`:'')(unlinkedItems(T).length)}</div>`;
+  <div class="row" style="margin-bottom:12px"><button class="btn" data-act="openImport">貼上文字匯入行程</button><button class="btn" data-act="ics">加入行事曆（.ics）</button>${(n=>n?`<button class="btn" data-act="linkAll" title="還沒連結景點或住宿的行程，一次建成景點頁、住宿頁（會先讓你勾選）">${n} 行建成景點頁</button>`:'')(unlinkedItems(T).length)}</div>`;
   return ckHTML+`<p class="hint">行程連結到「景點介紹」後，小冊會自動標上頁碼（例如 <b>P.8</b>），景點頁也會寫出是哪天去的。改了景點或日期，所有頁碼會自動更新。</p>`+
   T.days.slice(0,n).map((d,i)=>{const date=dayDate(T,i);
     return det(d.id,`<b>DAY.${i+1}</b> ${md(date)}（${wk(date)}）<span class="sum-t" data-sum="${i}">${esc(d.title)}</span><span class="cnt">${dayEntries(T,i).length} 項</span><span class="cnt warnc" data-wc="${i}"${byDay[i]?'':' hidden'}>⚠ ${byDay[i]||0}</span>`,
