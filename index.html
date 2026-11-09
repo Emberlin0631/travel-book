@@ -44,7 +44,7 @@ html.dark .tbtn.pri{background:#2f6d5b;border-color:#2f6d5b;color:#fff}html.dark
 .menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:6px}
 .menu button:hover{background:#f3f0ea}
 .menu small{display:block;color:var(--ui-mute);font-size:11px}
-.main{display:grid;grid-template-columns:minmax(360px,470px) 1fr;height:calc(100vh - 54px)}
+.main{display:grid;grid-template-columns:minmax(360px,clamp(470px,30vw,600px)) 1fr;height:calc(100vh - 54px)}
 .editor{overflow:auto;background:var(--ui-panel);border-right:1px solid var(--ui-line)}
 .tabs{display:flex;position:sticky;top:0;background:#fff;border-bottom:1px solid var(--ui-line);z-index:5;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}
 @media (max-width:900px){.tabs{mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent)}.tabs.atend{mask-image:none;-webkit-mask-image:none}.tab{padding:12px 10px}}
@@ -56,6 +56,8 @@ html.dark .preview{background:var(--ui-bg)}
 .prevbar{position:sticky;top:0;z-index:4;background:rgba(236,232,225,.94);backdrop-filter:blur(4px);padding:9px 16px;font-size:12px;color:var(--ui-mute);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .prevbar .warn{color:#b23a28;font-weight:700}.prevbar .soft{color:#8a5a14}
 #pages{padding:10px 16px 24px}
+/* 寬螢幕：兩頁並排（像翻開的小冊），右半不再空一大片 */
+#pages.two>.bk{display:grid;grid-template-columns:repeat(2,max-content);justify-content:center;column-gap:22px}#pages.two .pw{margin:0 0 22px}
 .preview{scroll-snap-type:y proximity}
 .pw{scroll-snap-align:start}
 .pager{position:sticky;bottom:14px;z-index:5;display:flex;gap:4px;align-items:center;width:max-content;margin:0 auto 14px;padding:5px;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:999px;box-shadow:0 4px 16px rgba(0,0,0,.14)}
@@ -2180,6 +2182,7 @@ function renderPreview(){
   const htmls=pagesFor(T,curMode());
   const pbH=$('#prevbar').offsetHeight||46,availH=pv.clientHeight-pbH-(PAGER_H+38);let w=Math.min(pv.clientWidth-32,PW*1.1)||PW;
   if(FITPAGE&&availH>220)w=Math.min(w,availH*PW/PH);
+  const two=pv.clientWidth-32>=2*w+22&&pv.clientWidth>=1000;$('#pages').classList.toggle('two',two);
   const bad=mountPages($('#pages'),htmls,w);$('#pages').classList.toggle('mvon',MOVE);pv.style.scrollPaddingTop=(pbH+6)+'px';
   const ck0=tripChecks(T),wc=ck0.filter(c=>c.lv==='warn').length;refreshChecks(ck0);
   $('#prevbar').innerHTML=`<select id="pmode" title="預覽和匯出都會用這個版本"><option value="">一般版</option><option value="big">長輩大字版</option><option value="memory">回憶冊</option></select><label class="monochk"><input type="checkbox" id="pmono" ${MONO?'checked':''}> 黑白省墨</label><label class="monochk" title="封面文字、合集頁和自訂頁的標題可以拖曳；點兩下回到原位"><input type="checkbox" id="pmove" ${MOVE?'checked':''}> 移動文字</label>${MOVE&&Object.keys(T.pos||{}).length?'<button class="mini" id="pmvreset">全部回原位</button>':''}<span>共 ${htmls.length} 頁．A4 對折 ${Math.ceil(htmls.length/4)} 張</span><span title="依網路教學文章的 ibon 價格估算：A4 彩色 10 元、黑白 3 元一面；雙面怎麼計費、現在的價格都以門市為準">ibon 估價：${MONO?'黑白':'彩色'}約 ${Math.ceil(htmls.length/4)*2*(MONO?IBON.mono:IBON.color)} 元 ⓘ</span>`+(wc?`<a href="#" class="warn" data-goto="days">⚠ 行程檢查有 ${wc} 則提醒</a>`:'')+(bad.length?`<span class="warn">第 ${bad.map(i=>i+1).join('、')} 頁內容太多：請縮短文字或把行程拆到別天</span>`:'')+(()=>{const sm=$$('#pages .pw').map((w,i)=>[i,parseFloat(($('.body.fit',w)||{style:{getPropertyValue:()=>1}}).style.getPropertyValue('--fs'))||1]).filter(x=>x[1]<0.86&&!bad.includes(x[0]));
