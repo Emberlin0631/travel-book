@@ -7,6 +7,7 @@
  *   node tools/build-poi.mjs            → 建立還沒做過的縣（第一次全日本約 1～2 小時；中斷後再跑會接著做）
  *   node tools/build-poi.mjs tokyo      → 只重做東京
  *   node tools/build-poi.mjs --all      → 全部重新抓最新資料
+ *   node tools/build-poi.mjs --upgrade  → 把舊版做的縣升級（補電話、網站；只補抓自然景點與機場，其餘用 tools/cache 已下載的資料）
  * 跑完再 npx wrangler deploy。建議每 1～3 個月更新一次。
  *
  * 授權：資料 © OpenStreetMap contributors，以 ODbL 1.0 授權；輸出的 poi/*.json 是衍生資料庫，同樣以 ODbL 公開。
@@ -110,9 +111,9 @@ async function fetchArea(area, f, bb, depth, out, f2, tries = 0) {
     for (const b of quarter(bb)) { await fetchArea(area, f, b, depth + 1, out, f2); await sleep(2000); }
   }
 }
-export async function fetchRegion(area, bb, f2 = fetch) {
+export async function fetchRegion(area, bb, f2 = fetch, only = null) {
   const out = [];
-  for (const f of F) { await fetchArea(area, f, bb, 0, out, f2); await sleep(3000); }
+  for (const f of only || F) { await fetchArea(area, f, bb, 0, out, f2); await sleep(3000); }
   return out;
 }
 async function bboxOf(area) {
@@ -176,12 +177,20 @@ export async function compact(region, elements, wd = {}) {
     cols: ['name', 'ja', 'zh', 'en', 'lat', 'lng', 'cat', 'type', 'area', 'addr', 'hours', 'wikidata', 'alt', 'phone', 'web'], rows };
 }
 
-async function buildOne(region) {
-  console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 4 次，大縣可能要 10 分鐘以上）…`);
-  const bb = await bboxOf(region.area);
-  const seen = new Set(), els = [];
-  for (const e of await fetchRegion(region.area, bb)) { const k = e.type + e.id; if (!seen.has(k)) { seen.add(k); els.push(e); } } // 切塊時邊界上的會重複
-  const j = { elements: els };
+async function buildOne(region, upgrade = false) {
+  const seen = new Set(), els = [], add = list => { for (const e of list) { const k = e.type + e.id; if (!seen.has(k)) { seen.add(k); els.push(e); } } }; // 切塊時邊界上的會重複
+  let old = null;
+  if (upgrade) try { old = JSON.parse(await fs.readFile(path.join(CACHE, region.id + '.osm.json'), 'utf8')); } catch (e) {}
+  if (old && old.v === 2) { console.log(`▶ ${region.name}：用已下載的資料重新整理`); add(old.elements); }
+  else if (old) {
+    // 舊版下載只有前三類；只補抓「自然景點、機場」那一類，其他沿用，幾分鐘就好
+    console.log(`▶ ${region.name}：沿用已下載的資料，只補抓自然景點與機場…`);
+    add(old.elements); add(await fetchRegion(region.area, await bboxOf(region.area), fetch, [F[3]]));
+  } else {
+    console.log(`▶ ${region.name}：向 OpenStreetMap 查詢（分 4 次，大縣可能要 10 分鐘以上）…`);
+    add(await fetchRegion(region.area, await bboxOf(region.area)));
+  }
+  const j = { v: 2, elements: els };
   await fs.mkdir(CACHE, { recursive: true });
   await fs.writeFile(path.join(CACHE, region.id + '.osm.json'), JSON.stringify(j));
   const ids = [...new Set(j.elements.map(e => e.tags?.wikidata).filter(x => /^Q\d+$/.test(x || '')))];
@@ -196,7 +205,7 @@ async function buildOne(region) {
 }
 
 async function main() {
-  const args = process.argv.slice(2), all = args.includes('--all'), want = args.filter(a => !a.startsWith('--'));
+  const args = process.argv.slice(2), all = args.includes('--all'), upgrade = args.includes('--upgrade'), want = args.filter(a => !a.startsWith('--'));
   await fs.mkdir(OUT, { recursive: true });
   let index = { v: 1, regions: [] };
   try { index = JSON.parse(await fs.readFile(path.join(OUT, 'index.json'), 'utf8')); } catch (e) {}
@@ -204,19 +213,22 @@ async function main() {
   index.regions = (index.regions || []).filter(r => REGIONS.some(x => x.id === r.id && x.name === r.name));
   for (const f of await fs.readdir(OUT)) if (/\.json$/.test(f) && !['index.json', 'norm.json'].includes(f) && !index.regions.some(r => r.id + '.json' === f) && !REGIONS.some(r => r.id + '.json' === f)) await fs.unlink(path.join(OUT, f));
   // 不指定時只做還沒做過的（中斷後再跑一次會接著做）；--all 全部重做；指定代號只做那幾個
-  const list = want.length ? REGIONS.filter(r => want.includes(r.id)) : all ? REGIONS : REGIONS.filter(r => !index.regions.some(x => x.id === r.id));
+  // --upgrade：把舊版產生器做的縣升級（補電話、網站、自然景點、機場），已升級的跳過，中斷後再跑會接著做
+  const isNew = async r => { try { return JSON.parse(await fs.readFile(path.join(OUT, r.id + '.json'), 'utf8')).cols.includes('phone'); } catch (e) { return false; } };
+  const up = []; if (upgrade) for (const r of REGIONS) if (!(await isNew(r))) up.push(r);
+  const list = want.length ? REGIONS.filter(r => want.includes(r.id)) : all ? REGIONS : upgrade ? up : REGIONS.filter(r => !index.regions.some(x => x.id === r.id));
   if (want.length && !list.length) { console.log('沒有這個代號。可用：' + REGIONS.map(r => r.id).join(', ')); process.exit(1); }
   if (!list.length) console.log('全部都已經建好了。要重新抓最新資料請加 --all，或指定代號，例如：node tools/build-poi.mjs tokyo');
   let k = 0;
   for (const r of list) {
     console.log(`\n[${++k}/${list.length}]`);
     try {
-      const info = await buildOne(r); index.regions = index.regions.filter(x => x.id !== r.id).concat(info);
+      const info = await buildOne(r, upgrade); index.regions = index.regions.filter(x => x.id !== r.id).concat(info);
       index.regions.sort((a, b) => REGIONS.findIndex(x => x.id === a.id) - REGIONS.findIndex(x => x.id === b.id));
       await fs.writeFile(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1)); // 每做完一個就存，中斷也不會白做
     } catch (e) { console.log(`✖ ${r.name} 失敗：${e.message}（之後再跑一次同樣的指令會補做）`); if (e instanceof Down) break; }
     resetFails();
-    await sleep(5000); // Overpass 的使用禮節：別連續猛打
+    if (!upgrade) await sleep(5000); else await sleep(2000); // Overpass 的使用禮節：別連續猛打
   }
   index.regions.sort((a, b) => REGIONS.findIndex(x => x.id === a.id) - REGIONS.findIndex(x => x.id === b.id));
   index.src = '© OpenStreetMap contributors'; index.license = 'ODbL 1.0 — https://www.openstreetmap.org/copyright';
