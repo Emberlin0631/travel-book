@@ -98,7 +98,7 @@ details.card>.inner{padding:0 12px 6px}
 .add{border:1px dashed #b8b0a3;background:none;border-radius:8px;padding:9px;color:var(--ui-acc);font-weight:700;width:100%;margin:4px 0 10px}
 .add:hover{background:#f6f3ee}
 .item{display:grid;grid-template-columns:62px 1fr auto;gap:6px;align-items:start;padding:9px 0;border-top:1px dashed var(--ui-line)}
-.item .main-f{display:grid;gap:5px}
+.item.rng{grid-template-columns:94px minmax(0,1fr) auto}.item.rng>input{font-size:12.5px;padding-left:6px;padding-right:4px;letter-spacing:-.2px}.item .main-f{display:grid;gap:5px}.rtlink{font-size:12px;color:var(--ui-acc);text-decoration:none;white-space:nowrap;align-self:center;justify-self:start;padding:2px 0}.rtlink:hover{text-decoration:underline}
 .autoitem{background:#f3f7f5;border-radius:6px;padding:8px 6px;border-top:0;margin:3px 0}
 .ro-t{font-weight:700;color:var(--ui-acc);padding:2px 4px}
 .autoitem .ro-tin{font-weight:700;color:var(--ui-acc);background:transparent;border:1px dashed transparent}.autoitem .ro-tin:hover,.autoitem .ro-tin:focus{border-color:var(--ui-line,#cfc8bb);background:#fff}
@@ -107,10 +107,10 @@ details.card>.inner{padding:0 12px 6px}
 .item .acts{display:grid;grid-template-columns:1fr 1fr;gap:3px}.item .acts .drag{display:inline-flex;align-items:center;justify-content:center}
 .dayempty{font-size:12.5px;color:var(--ui-mute);background:var(--tb-bg-card,#faf8f3);border:1px dashed var(--ui-line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;line-height:1.6}.linkbtn{background:none;border:0;padding:0;color:var(--ui-acc);font-weight:700;text-decoration:underline;font-size:inherit}
 .morebtn{justify-self:start;background:none;border:0;color:var(--ui-acc);font-size:12px;padding:2px 0;text-align:left}.morebtn:hover{text-decoration:underline}
-.morebtn.chips{display:flex;flex-wrap:wrap;gap:4px 10px;color:var(--ui-mute);font-size:12px;line-height:1.4}.morebtn.chips span{white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}.morebtn.chips:hover{text-decoration:none;color:var(--ui-acc)}
+.morebtn.chips{display:flex;flex-wrap:wrap;gap:4px 10px;color:var(--ui-mute);font-size:12px;line-height:1.4}.morebtn.chips{min-width:0}.morebtn.chips span{white-space:nowrap;max-width:min(260px,100%);overflow:hidden;text-overflow:ellipsis}.morebtn.chips:hover{text-decoration:none;color:var(--ui-acc)}
 .item .acts .mini{padding:3px 7px}
 /* 手機：拖曳把手 ⠿ 就能排序，上下箭頭收掉，讓文字欄更寬、每項只佔一列半 */
-@media (max-width:600px){.item{grid-template-columns:58px 1fr 36px;gap:5px}.item .acts{grid-template-columns:1fr;gap:4px}.item .acts .mini[data-act=up],.item .acts .mini[data-act=down]{display:none}.item .acts .drag{min-width:36px;min-height:34px}}
+@media (max-width:600px){.item{grid-template-columns:58px 1fr 36px;gap:5px}.item.rng{grid-template-columns:86px minmax(0,1fr) 36px}.item .acts{grid-template-columns:1fr;gap:4px}.item .acts .mini[data-act=up],.item .acts .mini[data-act=down]{display:none}.item .acts .drag{min-width:36px;min-height:34px}}
 @media (min-width:901px){.item .acts{grid-template-columns:repeat(4,auto)}}
 .item input,.item select{padding:6px 8px;font-size:13px}
 .ph-in{display:flex;gap:8px;align-items:center}
@@ -1505,6 +1505,11 @@ const r5m=x=>Math.max(5,Math.round(x/5)*5);
 function travelEst(a,b){if(!a||!b||a.lat==null||b.lat==null)return null;const km=Math.hypot((a.lat-b.lat)*111,(a.lng-b.lng)*111*Math.cos(a.lat*Math.PI/180));
   if(km<.15)return null;const r=km*1.3,walk=r5m(r/4.5*60),ride=km<40?r5m(12+r/28*60):r5m(20+km*1.2/80*60);
   return {km,walk,ride,min:km<1.2?walk:Math.min(walk,ride),txt:`距上一站約 ${km<10?km.toFixed(1):Math.round(km)} 公里・${km<2?`步行約 ${walk} 分`:km<40?`大眾運輸約 ${ride} 分`:`長程交通約 ${ride>=90?Math.round(ride/6)/10+' 小時':ride+' 分'}`}（概估）`}}
+/* Google 地圖的路線連結（不用金鑰）：有座標用座標，沒有就用名稱＋地址；沒給起點時 Google 會用手機目前位置 */
+const routePt=p=>p?(p.lat!=null?p.lat+','+p.lng:placeQuery(p)):'';
+const routeURL=(a,b)=>{const d=routePt(b);if(!d)return'';const o=routePt(a);return 'https://www.google.com/maps/dir/?api=1'+(o?'&origin='+encodeURIComponent(o):'')+'&destination='+encodeURIComponent(d)+'&travelmode=transit'};
+const durTxt=m=>m%60?(m>=60?Math.floor(m/60)+' 小時 ':'')+m%60+' 分':m/60+' 小時';
+const STAYS=[30,45,60,90,120,180,240];
 const itemPos=(t,it)=>{const p=it.placeId&&t.places.find(x=>x.id===it.placeId);if(p&&p.lat!=null)return p;const s=it.stayId&&t.stays.find(x=>x.id===it.stayId);return s&&s.lat!=null?s:null};
 function tripChecks(t){
   const n=dayCount(t),out=[],pb=Object.fromEntries(t.places.map(p=>[p.id,p]));let streak=0;
@@ -1974,13 +1979,17 @@ function edBasic(){
 function itemRow(i,j,it){const b=`days.${i}.items.${j}`;const pl=it.placeId?T.places.find(p=>p.id===it.placeId):null;const st=!pl&&it.stayId?T.stays.find(x=>x.id===it.stayId):null;const open=openMore.has(it.id);
   /* 預設收合成一行（時間、文字、排序鈕），細節用灰色小字摘要；點摘要才展開。這樣一天 10 幾項也好拖曳排序 */
   const prevPos=j>0?itemPos(T,T.days[i].items[j-1]):null,est=!it.transport&&travelEst(prevPos,itemPos(T,it));
-  const chips=[est?'↦ '+est.txt:'',pl?'連結：'+(pl.name||'未命名景點'):st?'住宿：'+(st.name||'未命名住宿'):(it.placeId||it.stayId?'連結的目標已刪除':''),it.transport?'🚃 '+legsPlain(it.transport):'',it.note?'📝 '+it.note:'',it.reserve==='need'?'需預約':it.reserve==='done'?'已預約'+(it.resNo?' '+it.resNo:''):'',it.secret?'驚喜（送禮版隱藏）':''].filter(Boolean);
+  const tA=hm(it.time),tB=hmEnd(it.time),stay=tA!=null&&tB!=null&&tB>tA?tB-tA:0;
+  const prevTgt=j>0?(()=>{const q=T.days[i].items[j-1];return T.places.find(x=>x.id===q.placeId)||T.stays.find(x=>x.id===q.stayId)||null})():null,rUrl=prevTgt&&(pl||st)&&prevTgt!==(pl||st)?routeURL(prevTgt,pl||st):'';
+  const rLink=rUrl?`<a class="rtlink" href="${esc(rUrl)}" target="_blank" rel="noopener" title="在 Google 地圖查「${esc(prevTgt.name||'上一站')} → ${esc((pl||st).name||'這一站')}」的大眾運輸路線、班次和票價">查路線 ↗</a>`:'';
+  const staySel=`<select data-stay="${i}.${j}" title="選了會把時間寫成 09:00–10:30 這樣的範圍；也可以直接在時間欄自己打"><option value="">停留多久：不指定</option>${[...new Set([...STAYS,stay||30])].sort((a,b)=>a-b).map(m=>`<option value="${m}" ${m===stay?'selected':''}>停留 ${durTxt(m)}</option>`).join('')}</select>`;
+  const chips=[stay?'停留 '+durTxt(stay):'',est?'↦ '+est.txt:'',pl?'連結：'+(pl.name||'未命名景點'):st?'住宿：'+(st.name||'未命名住宿'):(it.placeId||it.stayId?'連結的目標已刪除':''),it.transport?'🚃 '+legsPlain(it.transport):'',it.note?'📝 '+it.note:'',it.reserve==='need'?'需預約':it.reserve==='done'?'已預約'+(it.resNo?' '+it.resNo:''):'',it.secret?'驚喜（送禮版隱藏）':''].filter(Boolean);
   const sel=`<select data-k="${b}.placeId"><option value="">— 不連結介紹頁 —</option>${T.places.length?`<optgroup label="景點">${T.places.map(p=>`<option value="${p.id}" ${p.id===it.placeId?'selected':''}>連結：${esc(p.name||'未命名景點')}</option>`).join('')}</optgroup>`:''}${T.stays.filter(x=>x.name).length?`<optgroup label="住宿（回飯店、寄放行李…）">${T.stays.filter(x=>x.name).map(x=>`<option value="stay:${x.id}" ${!it.placeId&&x.id===it.stayId?'selected':''}>住宿：${esc(x.name)}</option>`).join('')}</optgroup>`:''}<option value="__new">＋ 把這行變成新景點（會多一頁介紹）</option><option value="__newstay">＋ 把這行變成新住宿（住宿頁、每晚住哪）</option></select>`;
-  const body=open?`${sel}<textarea data-k="${b}.transport" rows="${Math.min(4,Math.max(1,it.transport.split('\n').length))}" placeholder="交通（選填）。分段寫法：路線｜起站→迄站｜班距、車廂、票價｜出口或路標，一行一段">${esc(it.transport)}</textarea>
+  const body=open?`<div class="row">${staySel}${rLink||'<span></span>'}</div>${sel}<textarea data-k="${b}.transport" rows="${Math.min(4,Math.max(1,it.transport.split('\n').length))}" placeholder="交通（選填）。分段寫法：路線｜起站→迄站｜班距、車廂、票價｜出口或路標，一行一段">${esc(it.transport)}</textarea>
     <details class="legadd"><summary>＋ 加一段轉乘（印出來會有路線色塊）</summary><div class="row"><input data-leg="line" list="lineList" placeholder="路線，例：堺筋線"><input data-leg="from" placeholder="起站"><input data-leg="to" placeholder="迄站"></div><div class="row"><input data-leg="info" placeholder="班距、車廂、票價"><input data-leg="note" placeholder="出口、路標"></div><button class="mini" data-act="addLeg" data-a="${i}.${j}">加到交通</button></details>
     <input data-k="${b}.note" value="${esc(it.note)}" placeholder="備註（選填）"><div class="row"><select data-k="${b}.reserve" class="rsel ${it.reserve}"><option value="">不用預約</option><option value="need">需預約</option><option value="done">已預約</option></select>${it.reserve?`<input data-k="${b}.resNo" value="${esc(it.resNo)}" placeholder="預約編號（選填）">`:'<span></span>'}</div><button class="morebtn" data-act="lessItem" data-a="${esc(it.id)}">－ 收合</button>`
-    :(chips.length?`<button class="morebtn chips" data-act="moreItem" data-a="${esc(it.id)}" title="展開編輯">${chips.map(c=>`<span>${esc(c)}</span>`).join('')}</button>`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 交通、備註、預約、連結景點</button>`);
-  return `<div class="item ${open?'open':''}" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"${timeBad(it.time)==='range'?' class="bad" title="這個時間不存在：分鐘要 00–59"':''}><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${pl?esc(pl.name)+'（留空就用景點名稱）':st?esc(st.name)+'（留空就用住宿名稱）':'要做什麼／去哪裡'}">${body}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
+    :(chips.length?`<button class="morebtn chips" data-act="moreItem" data-a="${esc(it.id)}" title="展開編輯">${chips.map(c=>`<span>${esc(c)}</span>`).join('')}</button>${rLink}`:`<button class="morebtn" data-act="moreItem" data-a="${esc(it.id)}">＋ 停留時間、交通、備註、預約、連結景點</button>`);
+  return `<div class="item ${open?'open':''}${tB!=null?' rng':''}" data-j="${j}"><input data-k="${b}.time" value="${esc(it.time)}" placeholder="09:00"${timeBad(it.time)==='range'?' class="bad" title="這個時間不存在：分鐘要 00–59"':''}><div class="main-f"><input data-k="${b}.text" value="${esc(it.text)}" placeholder="${pl?esc(pl.name)+'（留空就用景點名稱）':st?esc(st.name)+'（留空就用住宿名稱）':'要做什麼／去哪裡'}">${body}</div><div class="acts"><span class="drag" data-drag="${i}.${j}" title="按住拖曳排序">⠿</span><button class="mini" data-act="up" data-a="${i}.${j}" title="上移">↑</button><button class="mini" data-act="down" data-a="${i}.${j}" title="下移">↓</button><button class="mini danger" data-act="delItem" data-a="${i}.${j}" title="刪除">✕</button></div></div>`}
 function autoRow(it){const s=T.stays.find(x=>x.id===it.stayId),si=T.stays.indexOf(s);
   /* 時間可以直接改（寫回住宿的入住／退房時間）；不想出現在時間軸就到住宿取消「自動加進每日行程」 */
   return `<div class="item autoitem"><input class="ro-tin" data-k="stays.${si}.${it.auto==='in'?'cinTime':'coutTime'}" value="${esc(it.time)}" placeholder="${it.auto==='in'?'15:00':'11:00'}" title="直接改${it.auto==='in'?'入住':'退房'}時間"><div class="ro"><span class="ro-chip">${it.auto==='in'?'入住':'退房'}</span>${esc(s.name)}<small>從「住宿」自動帶入，時間可直接改；自己另寫一筆入住／退房，這筆就會自動消失。<a href="#" data-act="tab" data-a="stays">到住宿修改或關閉</a></small></div><div></div></div>`}
@@ -2561,7 +2570,7 @@ function renderToday(){
     if(s){R(e.auto==='in'?'入住':'退房',esc(e.auto==='in'?s.cinTime:s.coutTime));R('地址',esc(s.jaAddress||s.address));R('電話',s.phone?`<a href="tel:${esc(s.phone.replace(/[^\d+]/g,''))}">${esc(s.phone)}</a>`:'');R('房型',esc(s.room));R('訂房代號',esc(s.booking))}
     if(e.reserve)R('預約',e.reserve==='done'?'已預約'+(e.resNo?' '+esc(e.resNo):''):'<b class="warnc">還沒預約</b>');R('備註',nl(e.note||''));
     return `<div class="tdcard tdnext"><div class="tdnh"><small>下一站</small><b>${esc(name(e))}</b></div><dl class="tdinfo">${rows.join('')}</dl>
-      <div class="tacts">${tgt?`<a class="btn pri" href="${esc(linkOf(tgt))}" target="_blank" rel="noopener">開地圖導航</a>`:''}${drvBtn(e)}<button class="btn" data-tdone="${esc(e.id)}" data-tnext="1">到了，下一站</button></div></div>`})();
+      <div class="tacts">${tgt?`<a class="btn pri" href="${esc(linkOf(tgt))}" target="_blank" rel="noopener">開地圖導航</a><a class="btn" href="${esc(routeURL(null,tgt))}" target="_blank" rel="noopener" title="從你現在的位置出發，看電車班次、時間和票價">從這裡怎麼去</a>`:''}${drvBtn(e)}<button class="btn" data-tdone="${esc(e.id)}" data-tnext="1">到了，下一站</button></div></div>`})();
   const pbBox=d.planB.trim()?`<div class="tdplanb${d.planBOn?' on':''}"><div><b>備案</b>${d.planBOn?'<span class="tchip">正在走備案</span>':''}</div>${d.planBOn?'':`<div>${nl(d.planB)}</div>`}<button class="mini" data-tplanb="${i}">${d.planBOn?'回到原本行程':'改走備案'}</button></div>`:'';
   const shops=T.shops.map((s,k)=>({s,k})).filter(x=>x.s.dayId===d.id&&x.s.name);
   const ex=T.expenses.map((x,k)=>({x,k})).filter(o=>o.x.date===date);const sum={JPY:0,TWD:0};ex.forEach(o=>sum[o.x.cur]+=parseFloat(String(o.x.amount).replace(/[,，\s]/g,''))||0);
@@ -2702,6 +2711,9 @@ function onField(e){
   if(el.dataset.photo){if(e.type==='change'&&el.files[0]){compress(el.files[0],/^custom\./.test(el.dataset.photo)?2000:1400).then(v=>{setPath(T,el.dataset.photo,v);if(/^places\.\d+\.photo$/.test(el.dataset.photo))setPath(T,el.dataset.photo+'Src',null);commit()}).catch(()=>toast('無法讀取這張圖片，請換成 JPG 或 PNG'))}return}
   if(el.dataset.sec){const k=el.dataset.sec;T.opts.hide=el.checked?T.opts.hide.filter(x=>x!==k):[...new Set([...T.opts.hide,k])];touch(true);return}
   if(el.dataset.pcat){const k=el.dataset.pcat;T.opts.phraseCats=el.checked?[...new Set([...T.opts.phraseCats,k])]:T.opts.phraseCats.filter(x=>x!==k);touch(true);return}
+  if(el.dataset.stay!=null){if(e.type!=='change')return;const[di,ij]=el.dataset.stay.split('.').map(Number),it=T.days[di]?.items[ij];if(!it)return;const a=hm(it.time);
+    if(a==null){el.value='';toast('先在左邊填開始時間（例：09:00），再選停留多久');return}
+    const m=+el.value,rest=String(it.time).replace(TIME_RE,'');it.time=fmtHM(a)+(m?'–'+fmtHM((a+m)%1440):'')+rest;touch(true);renderEditor();return}
   if(el.dataset.tlicons!=null){T.opts.tlIcons=el.checked;touch(true);return}
   if(el.dataset.pay!=null){const p=T.places[+el.dataset.pay],v=el.dataset.v;p.pay=el.checked?[...new Set([...p.pay,v])]:p.pay.filter(x=>x!==v);touch(true);return}
   if(el.dataset.closed!=null){const p=T.places[+el.dataset.closed],w=+el.dataset.w;p.closed=el.checked?[...new Set([...p.closed,w])]:p.closed.filter(x=>x!==w);touch(true);return}
@@ -2734,7 +2746,7 @@ function onField(e){
 }
 function move(arr,i,d){const j=i+d;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]]}
 /* 新增行程的預設時間：當天最晚的那筆 + 90 分鐘；當天還沒有時間就 09:00；超過 22:00 就留空 */
-function nextTime(d){const ts=d.items.map(it=>tkey(it.time)).filter(k=>k!=='99:99').sort();if(!ts.length)return '09:00';const [h,m]=ts[ts.length-1].split(':').map(Number),x=h*60+m+90;return x>22*60?'':String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
+function nextTime(d){const ts=d.items.map(it=>tkey(it.time)).filter(k=>k!=='99:99').sort();if(!ts.length)return '09:00';const [h,m]=ts[ts.length-1].split(':').map(Number),ends=d.items.map(it=>hmEnd(it.time)).filter(v=>v!=null),le=ends.length?Math.max(...ends):0,x=le>=h*60+m?Math.ceil((le+30)/5)*5:h*60+m+90;return x>22*60?'':String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
 const tkey=s=>{const m=String(s).match(/^(\d{1,2}):(\d{2})/);return m?m[1].padStart(2,'0')+':'+m[2]:'99:99'};
 function onAct(e){
   const b=e.target.closest('[data-act]');if(!b)return;e.preventDefault();const a=b.dataset.a,act=b.dataset.act;
